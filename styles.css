@@ -983,32 +983,79 @@ nav {
     display: block;
     font-size: 0.85rem;
     font-weight: 500;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
     color: var(--text-color);
 }
 
-.duration-selector select {
+.slider-container {
+    position: relative;
+    padding: 0 0.5rem;
+}
+
+.duration-selector input[type="range"] {
     width: 100%;
-    padding: 0.75rem 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    font-size: 1rem;
-    color: var(--text-color);
-    background: var(--white);
-    cursor: pointer;
-    transition: border-color 0.2s ease;
-}
-
-.duration-selector select:focus {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border-color);
     outline: none;
-    border-color: var(--primary-color);
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    transition: background 0.3s ease;
 }
 
-.duration-suggestion {
-    font-size: 0.8rem;
-    color: var(--accent-color);
+.duration-selector input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(233, 30, 140, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.duration-selector input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(233, 30, 140, 0.4);
+}
+
+.duration-selector input[type="range"]::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 8px rgba(233, 30, 140, 0.3);
+}
+
+.slider-labels {
+    display: flex;
+    justify-content: space-between;
     margin-top: 0.5rem;
-    margin-bottom: 0;
+    font-size: 0.75rem;
+    color: var(--text-light);
+}
+
+.duration-display {
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin: 0.75rem 0 0.25rem;
+}
+
+.duration-warning {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #e67700;
+    background: #fff8e6;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    margin: 0.5rem 0 0;
+    border: 1px solid #ffd480;
 }
 
 .price-breakdown {

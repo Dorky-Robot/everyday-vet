@@ -135,7 +135,9 @@ function isMobile() {
 // Visit Estimator
 function initEstimator() {
     const checkboxes = document.querySelectorAll('.service-checkbox input');
-    const durationSelect = document.getElementById('duration');
+    const durationSlider = document.getElementById('duration-slider');
+    const durationDisplay = document.getElementById('duration-display');
+    const durationWarning = document.getElementById('duration-warning');
     const resultEmpty = document.getElementById('result-empty');
     const resultContent = document.getElementById('result-content');
     const visitTypeValue = document.getElementById('visit-type-value');
@@ -144,19 +146,82 @@ function initEstimator() {
     const travelFeeLine = document.getElementById('travel-fee-line');
     const consultationFee = document.getElementById('consultation-fee');
     const totalPrice = document.getElementById('total-price');
-    const durationSuggestion = document.getElementById('duration-suggestion');
 
-    if (!checkboxes.length) return;
+    if (!checkboxes.length || !durationSlider) return;
 
     // Pricing: $75 for first 30 min, $50 per additional 30 min, $100 travel fee
     const FIRST_30_MIN = 75;
     const ADDITIONAL_30_MIN = 50;
     const TRAVEL_FEE = 100;
 
+    let recommendedDuration = 30;
+    let userHasOverridden = false;
+
     function calculateConsultationFee(duration) {
         if (duration <= 30) return FIRST_30_MIN;
         const additionalBlocks = (duration - 30) / 30;
         return FIRST_30_MIN + (additionalBlocks * ADDITIONAL_30_MIN);
+    }
+
+    function formatDuration(minutes) {
+        if (minutes === 30) return '30 minutes';
+        if (minutes === 60) return '1 hour';
+        if (minutes === 90) return '1.5 hours';
+        if (minutes === 120) return '2 hours';
+        return `${minutes} minutes`;
+    }
+
+    function animateSlider(targetValue) {
+        const currentValue = parseInt(durationSlider.value);
+        if (currentValue === targetValue) return;
+
+        const step = targetValue > currentValue ? 30 : -30;
+        let current = currentValue;
+
+        function animate() {
+            current += step;
+            durationSlider.value = current;
+            updateSliderDisplay();
+
+            if ((step > 0 && current < targetValue) || (step < 0 && current > targetValue)) {
+                requestAnimationFrame(animate);
+            }
+        }
+
+        requestAnimationFrame(animate);
+    }
+
+    function updateSliderDisplay() {
+        const duration = parseInt(durationSlider.value);
+        durationDisplay.textContent = formatDuration(duration);
+
+        // Show warning if below recommended
+        if (duration < recommendedDuration) {
+            durationWarning.style.display = 'block';
+        } else {
+            durationWarning.style.display = 'none';
+        }
+
+        updatePrice();
+    }
+
+    function updatePrice() {
+        const selectedServices = document.querySelectorAll('.service-checkbox input:checked');
+
+        // Check if any in-person services are selected
+        let requiresInPerson = false;
+        selectedServices.forEach(service => {
+            if (service.dataset.type === 'in-person') {
+                requiresInPerson = true;
+            }
+        });
+
+        const duration = parseInt(durationSlider.value);
+        const baseFee = calculateConsultationFee(duration);
+        const total = requiresInPerson ? baseFee + TRAVEL_FEE : baseFee;
+
+        consultationFee.textContent = `$${baseFee}`;
+        totalPrice.textContent = `$${total}`;
     }
 
     function calculateEstimate() {
@@ -165,6 +230,10 @@ function initEstimator() {
         if (selectedServices.length === 0) {
             resultEmpty.style.display = 'block';
             resultContent.style.display = 'none';
+            userHasOverridden = false;
+            recommendedDuration = 30;
+            durationSlider.value = 30;
+            updateSliderDisplay();
             return;
         }
 
@@ -195,38 +264,40 @@ function initEstimator() {
             travelFeeLine.style.display = 'none';
         }
 
-        // Suggest duration based on selected services
-        let suggestedDuration = 30;
+        // Calculate recommended duration based on selected services
         if (totalTime > 90) {
-            suggestedDuration = 120;
+            recommendedDuration = 120;
         } else if (totalTime > 60) {
-            suggestedDuration = 90;
+            recommendedDuration = 90;
         } else if (totalTime > 30) {
-            suggestedDuration = 60;
-        }
-
-        // Update suggestion text
-        if (totalTime > 30) {
-            durationSuggestion.textContent = `Based on your selections, we recommend ${suggestedDuration === 60 ? '1 hour' : suggestedDuration === 90 ? '1.5 hours' : suggestedDuration === 120 ? '2 hours' : '30 minutes'}`;
+            recommendedDuration = 60;
         } else {
-            durationSuggestion.textContent = '';
+            recommendedDuration = 30;
         }
 
-        // Calculate price
-        const duration = parseInt(durationSelect.value);
-        const baseFee = calculateConsultationFee(duration);
-        const total = requiresInPerson ? baseFee + TRAVEL_FEE : baseFee;
+        // Only auto-adjust slider if user hasn't manually overridden
+        if (!userHasOverridden) {
+            animateSlider(recommendedDuration);
+        } else {
+            // Still update the warning based on new recommendation
+            updateSliderDisplay();
+        }
 
-        consultationFee.textContent = `$${baseFee}`;
-        totalPrice.textContent = `$${total}`;
+        updatePrice();
     }
 
     // Add event listeners
     checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', calculateEstimate);
+        checkbox.addEventListener('change', () => {
+            userHasOverridden = false; // Reset override when services change
+            calculateEstimate();
+        });
     });
 
-    durationSelect.addEventListener('change', calculateEstimate);
+    durationSlider.addEventListener('input', () => {
+        userHasOverridden = true;
+        updateSliderDisplay();
+    });
 }
 
 // Initialize all effects

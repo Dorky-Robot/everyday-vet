@@ -211,14 +211,18 @@
                             </div>
 
                             <div class="duration-selector">
-                                <label for="duration">Appointment length:</label>
-                                <select id="duration">
-                                    <option value="30">30 minutes</option>
-                                    <option value="60">1 hour</option>
-                                    <option value="90">1.5 hours</option>
-                                    <option value="120">2 hours</option>
-                                </select>
-                                <p class="duration-suggestion" id="duration-suggestion"></p>
+                                <label>Appointment length:</label>
+                                <div class="slider-container">
+                                    <input type="range" id="duration-slider" min="30" max="120" step="30" value="30">
+                                    <div class="slider-labels">
+                                        <span>30 min</span>
+                                        <span>1 hr</span>
+                                        <span>1.5 hr</span>
+                                        <span>2 hr</span>
+                                    </div>
+                                </div>
+                                <p class="duration-display" id="duration-display">30 minutes</p>
+                                <p class="duration-warning" id="duration-warning" style="display: none;">This may not be enough time for all selected services</p>
                             </div>
 
                             <div class="price-breakdown">

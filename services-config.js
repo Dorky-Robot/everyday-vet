@@ -11,7 +11,7 @@ const SERVICES_CONFIG = {
     {
       id: "advice",
       title: "Advice & Guidance",
-      subtitle: "Virtual or in-person",
+      visitType: "both",
       defaultType: "virtual",
       timeMode: "smart",
       items: [
@@ -30,7 +30,7 @@ const SERVICES_CONFIG = {
     {
       id: "exam",
       title: "Physical Examination",
-      subtitle: "Requires in-person visit",
+      visitType: "in-person",
       defaultType: "in-person",
       timeMode: "additive",
       items: [
@@ -40,67 +40,66 @@ const SERVICES_CONFIG = {
     {
       id: "vaccines",
       title: "Vaccinations",
-      subtitle: "Requires in-person visit • Priced per vaccine",
+      visitType: "in-person",
+      pricingNote: "per vaccine",
       defaultType: "in-person",
       timeMode: "additive",
       note: "Select all vaccines needed. Each adds minimal time.",
       items: [
-        { id: "vaccine-rabies", label: "Rabies", time: 3, cost: 30 },
-        { id: "vaccine-dhpp", label: "DHPP / DAPP", time: 3, cost: 35, petType: "dog" },
-        { id: "vaccine-bordetella", label: "Bordetella (kennel cough)", time: 3, cost: 28, petType: "dog" },
-        { id: "vaccine-lepto", label: "Leptospirosis", time: 3, cost: 32, petType: "dog" },
-        { id: "vaccine-lyme", label: "Lyme disease", time: 3, cost: 40, petType: "dog" },
-        { id: "vaccine-fvrcp", label: "FVRCP", time: 3, cost: 35, petType: "cat" },
-        { id: "vaccine-felv", label: "FeLV", time: 3, cost: 35, petType: "cat" }
+        { id: "vaccine-rabies", label: "Rabies", time: 3, cost: 30, petType: "dog" },
+        { id: "vaccine-dhpp", label: "DHPP / DAPP / DHLPP", time: 3, cost: 35, petType: "dog" },
+        { id: "vaccine-bordetella", label: "Bordetella (kennel cough)", time: 3, cost: 30, petType: "dog" },
+        { id: "vaccine-lepto", label: "Leptospirosis", time: 3, cost: 30, petType: "dog" },
+        { id: "vaccine-lyme", label: "Lyme", time: 3, cost: 45, petType: "dog" },
+        { id: "vaccine-flu", label: "Flu", time: 3, cost: 40, petType: "dog" },
+        { id: "vaccine-fvrcp", label: "FVRCP", time: 3, cost: 30, petType: "cat" },
+        { id: "vaccine-felv", label: "FeLV", time: 3, cost: 40, petType: "cat" },
+        { id: "vaccine-rabies1", label: "Rabies 1 year", time: 3, cost: 30, petType: "cat" },
+        { id: "vaccine-rabies3", label: "Rabies 3 year", time: 3, cost: 75, petType: "cat" },
       ]
     },
     {
       id: "labs",
       title: "Lab Work",
-      subtitle: "Requires in-person visit • Priced per test",
+      visitType: "in-person",
+      pricingNote: "per test",
       defaultType: "in-person",
       timeMode: "additive",
-      note: "Sample collection included. Results reviewed at follow-up.",
+      note: "Sample collection included. Results reviewed via text or at follow-up.",
       items: [
-        { id: "lab-chemistry", label: "Blood chemistry panel", time: 5, cost: 120 },
-        { id: "lab-cbc", label: "Complete blood count (CBC)", time: 5, cost: 65 },
-        { id: "lab-urinalysis", label: "Urinalysis", time: 5, cost: 50 },
-        { id: "lab-fecal", label: "Fecal test", time: 3, cost: 40 },
-        { id: "lab-heartworm", label: "Heartworm test", time: 3, cost: 45, petType: "dog" },
+        { id: "lab-heartworm", label: "Heartworm test", time: 3, cost: 55, petType: "dog" },
         { id: "lab-felv-fiv", label: "FeLV/FIV test", time: 3, cost: 55, petType: "cat" }
       ]
     },
     {
       id: "procedures",
       title: "Procedures",
-      subtitle: "Requires in-person visit • Priced per service",
+      visitType: "in-person",
+      pricingNote: "per service",
       defaultType: "in-person",
       timeMode: "additive",
       items: [
-        { id: "proc-nail-trim", label: "Nail trim", time: 10, cost: 20 },
-        { id: "proc-anal-glands", label: "Anal gland expression", time: 10, cost: 25 },
-        { id: "proc-ear-clean", label: "Ear cleaning", time: 15, cost: 30 },
-        { id: "proc-microchip", label: "Microchip implant", time: 10, cost: 55 },
-        { id: "proc-subq-fluids", label: "Subcutaneous fluids", time: 20, cost: 45 },
-        { id: "proc-injection", label: "Injection (B12, medication)", time: 5, cost: 25 },
+        { id: "proc-nail-trim", label: "Nail trim", time: 10, cost: 30 },
+        { id: "proc-anal-glands", label: "Anal gland expression", time: 10, cost: 35, petType: "dog" },
+        { id: "proc-ear-clean", label: "Ear cleaning", time: 15, cost: 30, petType: "dog" },
         { id: "proc-wound-care", label: "Minor wound care", time: 20, cost: 50 }
       ]
     },
     {
       id: "special",
       title: "Special Services",
-      subtitle: "Requires in-person visit",
+      visitType: "in-person",
       defaultType: "in-person",
       timeMode: "additive",
       items: [
-        { id: "health-cert", label: "Health certificate", time: 25, cost: 75 },
+        { id: "health-cert", label: "Health certificate - interstate only", time: 25, cost: 75 },
         { id: "euthanasia", label: "End-of-life care / euthanasia", time: 45, note: "Contact for pricing" }
       ]
     },
     {
       id: "other",
       title: "Something Else?",
-      subtitle: "Search for other concerns",
+      visitType: "search",
       defaultType: "virtual",
       timeMode: "additive",
       isCustomInput: true

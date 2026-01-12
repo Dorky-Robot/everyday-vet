@@ -113,9 +113,9 @@ function renderPetTabs() {
         const tab = document.createElement('button');
         tab.className = `pet-tab${index === currentPetIndex ? ' active' : ''}`;
         tab.innerHTML = `
-            <span class="pet-icon">${pet.type === 'dog' ? '🐕' : '🐈'}</span>
+            <span class="pet-icon"><i class="ph ph${pet.type === 'dog' ? '-dog' : '-cat'}"></i></span>
             <span class="pet-name">${pet.name}</span>
-            <span class="remove-pet" data-index="${index}">&times;</span>
+            <span class="remove-pet" data-index="${index}"><i class="ph ph-x"></i></span>
         `;
 
         tab.addEventListener('click', (e) => {
@@ -216,6 +216,31 @@ function restoreSelectedServices() {
     });
 }
 
+function renderCategorySubtitle(category) {
+    let icons = '';
+    let text = '';
+
+    switch (category.visitType) {
+        case 'both':
+            icons = '<i class="ph ph-video-camera"></i><i class="ph ph-house"></i>';
+            break;
+        case 'in-person':
+            icons = '<i class="ph ph-house"></i>';
+            break;
+        case 'search':
+            icons = '<i class="ph ph-magnifying-glass"></i>';
+            break;
+        default:
+            icons = '<i class="ph ph-video-camera"></i>';
+    }
+
+    if (category.pricingNote) {
+        text = category.pricingNote;
+    }
+
+    return `<span class="subtitle-icons">${icons}</span>${text ? `<span class="subtitle-text">${text}</span>` : ''}`;
+}
+
 function renderServiceCategories(petType) {
     const container = document.getElementById('service-categories-container');
     if (!container || typeof SERVICES_CONFIG === 'undefined') return;
@@ -223,14 +248,16 @@ function renderServiceCategories(petType) {
     let html = '';
 
     SERVICES_CONFIG.categories.forEach(category => {
+        const subtitle = renderCategorySubtitle(category);
+
         if (category.isCustomInput) {
             // Render custom input section
             html += `
                 <div class="category-accordion">
                     <button class="category-header" data-category="${category.id}">
                         <span class="category-title">${category.title}</span>
-                        <span class="category-subtitle">${category.subtitle}</span>
-                        <span class="category-toggle">+</span>
+                        <span class="category-subtitle">${subtitle}</span>
+                        <span class="category-toggle"><i class="ph ph-plus"></i></span>
                     </button>
                     <div class="selected-chiclets" data-category="${category.id}"></div>
                     <div class="category-content" id="${category.id}-content">
@@ -255,8 +282,8 @@ function renderServiceCategories(petType) {
                     <div class="category-accordion">
                         <button class="category-header" data-category="${category.id}">
                             <span class="category-title">${category.title}</span>
-                            <span class="category-subtitle">${category.subtitle}</span>
-                            <span class="category-toggle">+</span>
+                            <span class="category-subtitle">${subtitle}</span>
+                            <span class="category-toggle"><i class="ph ph-plus"></i></span>
                         </button>
                         <div class="selected-chiclets" data-category="${category.id}"></div>
                         <div class="category-content" id="${category.id}-content">
@@ -552,7 +579,7 @@ function updateChiclets(accordion) {
         html += `
             <span class="service-chiclet" data-service-id="${checkbox.value}">
                 <span class="chiclet-label">${label}</span>
-                <span class="chiclet-remove">&times;</span>
+                <span class="chiclet-remove"><i class="ph ph-x"></i></span>
             </span>
         `;
     });
@@ -859,7 +886,7 @@ function initEstimator() {
                 breakdownHtml += `
                     <div class="pet-breakdown-item">
                         <span class="pet-breakdown-name">
-                            <span class="pet-icon">${pet.type === 'dog' ? '🐕' : '🐈'}</span>
+                            <span class="pet-icon"><i class="ph ph${pet.type === 'dog' ? '-dog' : '-cat'}"></i></span>
                             ${pet.name}
                         </span>
                         <span class="pet-breakdown-fee">$${perPetFee}${petItemizedCost > 0 ? ` + $${petItemizedCost}` : ''}</span>
@@ -1222,7 +1249,7 @@ function initCustomConcernAutocomplete(onChangeCallback) {
             return `
                 <span class="concern-tag ${tagClass}" data-label="${c.label}" data-type="${c.type}" data-time="${c.time}">
                     ${c.label}
-                    <button class="concern-tag-remove" data-label="${c.label}">&times;</button>
+                    <button class="concern-tag-remove" data-label="${c.label}"><i class="ph ph-x"></i></button>
                 </span>
             `;
         }).join('');

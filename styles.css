@@ -1135,6 +1135,10 @@ nav {
     color: var(--white);
 }
 
+.category-accordion.expanded .subtitle-icons i {
+    color: var(--white);
+}
+
 .category-accordion.expanded .category-toggle {
     color: var(--white);
     transform: rotate(45deg);
@@ -1148,18 +1152,39 @@ nav {
 }
 
 .category-subtitle {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
     font-size: 0.8rem;
     color: var(--text-light);
     flex: 1;
 }
 
+.subtitle-icons {
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+}
+
+.subtitle-icons i {
+    font-size: 1rem;
+    color: var(--primary-color);
+}
+
+.subtitle-text {
+    opacity: 0.9;
+}
+
 .category-toggle {
-    font-size: 1.25rem;
-    font-weight: 300;
+    font-size: 1.1rem;
     color: var(--primary-color);
     line-height: 1;
     transition: transform 0.2s ease, color 0.2s ease;
     flex-shrink: 0;
+}
+
+.category-toggle i {
+    display: block;
 }
 
 .category-content {

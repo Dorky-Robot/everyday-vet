@@ -8,7 +8,7 @@
     <meta name="description" content="Virtual veterinary consultations across Ohio and in-person house calls in Greater Cleveland. Stress-free, compassionate care for your pet.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&family=Pacifico&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -27,7 +27,7 @@
             <ul class="nav-links">
                 <li><a href="#about">About</a></li>
                 <li><a href="#services">Services</a></li>
-                <li><a href="#pricing">Pricing</a></li>
+                <li><a href="#schedule">Schedule</a></li>
                 <li><a href="#team">Our Team</a></li>
                 <li><a href="#contact">Contact</a></li>
             </ul>
@@ -111,9 +111,9 @@
             </div>
         </section>
 
-        <section id="pricing" class="fade-in">
-            <h2>Pricing</h2>
-            <p class="pricing-intro">Get an estimate for your visit. Select the services you need and we'll help you choose the right appointment type.</p>
+        <section id="schedule" class="fade-in">
+            <h2>Schedule</h2>
+            <p class="pricing-intro">Book your appointment in just a few steps. Select the services you need and we'll help you find the right time.</p>
 
             <div class="estimator-container">
                 <!-- Step Navigation Dots -->
@@ -200,26 +200,6 @@
                                         </button>
                                     </div>
 
-                                    <!-- Add Pet Modal -->
-                                    <div class="add-pet-modal" id="add-pet-modal" style="display: none;">
-                                        <div class="pet-modal-content">
-                                            <input type="text" id="pet-name-input" placeholder="Pet's name" maxlength="20">
-                                            <div class="pet-type-selector">
-                                                <button class="pet-type-btn" data-type="dog">
-                                                    <span class="pet-type-icon"><i class="ph ph-dog"></i></span>
-                                                    <span>Dog</span>
-                                                </button>
-                                                <button class="pet-type-btn" data-type="cat">
-                                                    <span class="pet-type-icon"><i class="ph ph-cat"></i></span>
-                                                    <span>Cat</span>
-                                                </button>
-                                            </div>
-                                            <div class="pet-modal-actions">
-                                                <button class="pet-modal-cancel" id="pet-modal-cancel">Cancel</button>
-                                                <button class="pet-modal-add" id="pet-modal-add" disabled>Add Pet</button>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
 
                                 <!-- Service Selection (shown after pet is selected) -->
@@ -397,6 +377,33 @@
         <p>&copy; 2025 Everyday Vet LLC. All rights reserved.</p>
         <p class="emergency-notice">We do not provide emergency services. For life-threatening situations, please contact your nearest 24/7 veterinary hospital.</p>
     </footer>
+
+    <!-- Floating Schedule Button -->
+    <a href="#schedule" class="floating-schedule-btn" id="floating-schedule-btn">
+        <i class="ph ph-calendar-plus"></i>
+        <span>Schedule</span>
+    </a>
+
+    <!-- Add Pet Modal (at body level for proper centering) -->
+    <div class="add-pet-modal" id="add-pet-modal" style="display: none;">
+        <div class="pet-modal-content">
+            <input type="text" id="pet-name-input" placeholder="Pet's name" maxlength="20">
+            <div class="pet-type-selector">
+                <button class="pet-type-btn" data-type="dog">
+                    <span class="pet-type-icon"><i class="ph ph-dog"></i></span>
+                    <span>Dog</span>
+                </button>
+                <button class="pet-type-btn" data-type="cat">
+                    <span class="pet-type-icon"><i class="ph ph-cat"></i></span>
+                    <span>Cat</span>
+                </button>
+            </div>
+            <div class="pet-modal-actions">
+                <button class="pet-modal-cancel" id="pet-modal-cancel">Cancel</button>
+                <button class="pet-modal-add" id="pet-modal-add" disabled>Add Pet</button>
+            </div>
+        </div>
+    </div>
 
     <script src="services-config.js"></script>
     <script src="script.js"></script>

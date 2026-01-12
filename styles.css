@@ -768,6 +768,7 @@ nav {
     padding: 2.5rem;
     border-radius: 30px;
     border: 1px solid rgba(233, 30, 140, 0.1);
+    margin-top: 3rem;
 }
 
 .pricing-notes h3 {
@@ -795,14 +796,287 @@ nav {
 
 /* Visit Estimator */
 .estimator-container {
+    max-width: 100%;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+/* Step Container - show/hide approach */
+.estimator-steps-wrapper {
+    position: relative;
+}
+
+.estimator-step {
+    display: none;
+    padding: 0 2rem;
+    box-sizing: border-box;
+    animation: fadeIn 0.3s ease;
+}
+
+.estimator-step.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* Compact first step */
+#step-customer-type .step-content-centered {
+    padding: 0.5rem 0;
+}
+
+#step-customer-type h3 {
+    margin-bottom: 0.25rem;
+    font-size: 1.25rem;
+}
+
+#step-customer-type .step-subtitle {
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.estimator-step-grid {
     display: grid;
     grid-template-columns: 1fr 400px;
     gap: 2rem;
-    max-width: 1000px;
-    margin: 0 auto 3rem;
-    position: relative;
-    z-index: 1;
     align-items: start;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.step-content-centered {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.step-content-centered h3 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.step-subtitle {
+    color: var(--text-light);
+    margin-bottom: 2rem;
+}
+
+/* Step Navigation Indicator */
+.step-nav {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.step-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--border-color);
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0;
+}
+
+.step-dot:hover {
+    background: var(--accent-color);
+}
+
+.step-dot.active {
+    background: var(--primary-color);
+    width: 28px;
+    border-radius: 5px;
+}
+
+/* Customer Type Selection */
+.customer-type-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.customer-type-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.25rem 1.5rem;
+    background: var(--white);
+    border: 2px solid var(--border-color);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.customer-type-btn:hover {
+    border-color: var(--primary-color);
+    background: var(--secondary-color);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(233, 30, 140, 0.15);
+}
+
+.customer-type-btn .btn-icon {
+    font-size: 2rem;
+    position: relative;
+    display: inline-block;
+}
+
+.customer-type-btn .icon-badge {
+    position: absolute;
+    top: -2px;
+    right: -10px;
+    background: var(--primary-color);
+    color: var(--white);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.customer-type-btn .btn-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.customer-type-btn .btn-desc {
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+/* New Customer Onboarding Card */
+.onboarding-card {
+    background: linear-gradient(135deg, var(--secondary-color) 0%, var(--white) 100%);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 2rem;
+    text-align: left;
+    max-width: 450px;
+    margin: 0 auto;
+}
+
+.onboarding-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.onboarding-header h4 {
+    color: var(--primary-color);
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+.onboarding-duration {
+    background: var(--primary-color);
+    color: var(--white);
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.onboarding-includes {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.5rem 0;
+}
+
+.onboarding-includes li {
+    padding: 0.5rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+    color: var(--text-color);
+    font-size: 0.95rem;
+}
+
+.onboarding-includes li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--primary-color);
+    font-weight: bold;
+}
+
+.onboarding-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.onboarding-option {
+    position: relative;
+}
+
+.onboarding-option input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.onboarding-option label {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 0.15rem 1rem;
+    padding: 1rem 1.25rem;
+    background: var(--white);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.onboarding-option input:checked + label {
+    border-color: var(--primary-color);
+    background: rgba(233, 30, 140, 0.05);
+}
+
+.onboarding-option label:hover {
+    border-color: var(--primary-color);
+}
+
+.onboarding-option .option-title {
+    font-weight: 600;
+    color: var(--text-color);
+    grid-row: 1;
+    grid-column: 1;
+}
+
+.onboarding-option .option-location {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    grid-row: 2;
+    grid-column: 1;
+}
+
+.onboarding-option .option-price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    grid-row: 1 / 3;
+    grid-column: 2;
+    align-self: center;
+}
+
+.onboarding-card .estimator-btn {
+    width: 100%;
+    text-align: center;
 }
 
 .estimator-services h3 {
@@ -814,6 +1088,122 @@ nav {
     color: var(--text-light);
     font-size: 0.9rem;
     margin-bottom: 1.5rem;
+}
+
+/* Category Accordion Styles */
+.category-accordion {
+    margin-bottom: 0.5rem;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--white);
+    border: 1px solid var(--border-color);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.category-accordion:hover {
+    border-color: rgba(233, 30, 140, 0.3);
+}
+
+.category-accordion.has-selection {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 1px rgba(233, 30, 140, 0.1);
+}
+
+.category-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1rem;
+    background: var(--secondary-color);
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s ease;
+}
+
+.category-header:hover {
+    background: #ffeef6;
+}
+
+.category-accordion.expanded .category-header {
+    background: var(--primary-color);
+}
+
+.category-accordion.expanded .category-title,
+.category-accordion.expanded .category-subtitle {
+    color: var(--white);
+}
+
+.category-accordion.expanded .category-toggle {
+    color: var(--white);
+    transform: rotate(45deg);
+}
+
+.category-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-color);
+    flex-shrink: 0;
+}
+
+.category-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    flex: 1;
+}
+
+.category-toggle {
+    font-size: 1.25rem;
+    font-weight: 300;
+    color: var(--primary-color);
+    line-height: 1;
+    transition: transform 0.2s ease, color 0.2s ease;
+    flex-shrink: 0;
+}
+
+.category-content {
+    max-height: 0;
+    overflow: hidden;
+    padding: 0 1rem;
+    background: var(--white);
+    transition: max-height 0.3s ease, padding 0.3s ease;
+}
+
+.category-accordion.expanded .category-content {
+    max-height: 500px;
+    padding: 0.75rem 1rem 1rem;
+}
+
+.category-note {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Service checkbox with price */
+.service-checkbox.has-price {
+    justify-content: flex-start;
+}
+
+.service-checkbox.has-price .checkbox-label {
+    flex: 1;
+}
+
+.item-price {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--primary-color);
+    margin-left: auto;
+}
+
+.checkbox-note {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    font-style: italic;
+    margin-left: auto;
 }
 
 .service-category {
@@ -1697,13 +2087,92 @@ footer p {
     }
 
     /* Estimator Mobile */
-    .estimator-container {
+    .estimator-step {
+        padding: 0 1rem;
+    }
+
+    .estimator-step-grid {
         grid-template-columns: 1fr;
         gap: 1.5rem;
     }
 
+    .customer-type-options {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        max-width: 300px;
+    }
+
+    .customer-type-btn {
+        padding: 1rem;
+        flex-direction: row;
+        gap: 0.75rem;
+        text-align: left;
+    }
+
+    .customer-type-btn .btn-icon {
+        font-size: 1.75rem;
+    }
+
+    .customer-type-btn .icon-badge {
+        width: 16px;
+        height: 16px;
+        font-size: 11px;
+        top: -2px;
+        right: -6px;
+    }
+
+    .customer-type-btn .btn-title {
+        font-size: 0.95rem;
+    }
+
+    .customer-type-btn .btn-desc {
+        font-size: 0.75rem;
+    }
+
+    .onboarding-card {
+        padding: 1.5rem;
+    }
+
+    .onboarding-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .onboarding-option .option-price {
+        font-size: 1.25rem;
+    }
+
     .estimator-services h3 {
         font-size: 1.25rem;
+    }
+
+    .category-accordion {
+        margin-bottom: 0.375rem;
+    }
+
+    .category-header {
+        padding: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .category-title {
+        font-size: 0.9rem;
+    }
+
+    .category-subtitle {
+        font-size: 0.7rem;
+        flex-basis: 100%;
+        order: 3;
+        margin-top: 0.25rem;
+    }
+
+    .category-toggle {
+        order: 2;
+    }
+
+    .category-content {
+        padding: 0.5rem 0.75rem 0.75rem;
     }
 
     .service-checkbox {
@@ -1717,6 +2186,10 @@ footer p {
 
     .checkbox-label {
         font-size: 0.9rem;
+    }
+
+    .item-price {
+        font-size: 0.85rem;
     }
 
     .estimator-result {

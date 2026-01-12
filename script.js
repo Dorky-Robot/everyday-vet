@@ -132,6 +132,108 @@ function isMobile() {
     return window.innerWidth <= 768;
 }
 
+// Multi-step Estimator Navigation
+function initEstimatorSteps() {
+    const wrapper = document.getElementById('estimator-steps-wrapper');
+    const stepNav = document.getElementById('step-nav');
+    const dots = stepNav?.querySelectorAll('.step-dot');
+    const btnNewCustomer = document.getElementById('btn-new-customer');
+    const btnExistingCustomer = document.getElementById('btn-existing-customer');
+    const newCustomerContent = document.getElementById('new-customer-content');
+    const existingCustomerContent = document.getElementById('existing-customer-content');
+    const steps = wrapper?.querySelectorAll('.estimator-step');
+
+    if (!wrapper || !dots || !steps) return;
+
+    let currentStep = 0;
+    let customerType = 'new'; // default
+
+    // Show specific step
+    function showStep(stepIndex) {
+        currentStep = stepIndex;
+
+        // Update steps visibility
+        steps.forEach((step, index) => {
+            step.classList.toggle('active', index === stepIndex);
+        });
+
+        // Update dots
+        dots.forEach((dot, index) => {
+            dot.classList.toggle('active', index === stepIndex);
+        });
+    }
+
+    // Show appropriate content for step 2
+    function showContentForType(type) {
+        customerType = type;
+        if (type === 'new') {
+            newCustomerContent.style.display = 'block';
+            existingCustomerContent.style.display = 'none';
+        } else {
+            newCustomerContent.style.display = 'none';
+            existingCustomerContent.style.display = 'grid';
+        }
+    }
+
+    // Dot click navigation
+    dots.forEach((dot, index) => {
+        dot.addEventListener('click', () => showStep(index));
+    });
+
+    // Customer type button clicks
+    if (btnNewCustomer) {
+        btnNewCustomer.addEventListener('click', () => {
+            showContentForType('new');
+            showStep(1);
+        });
+    }
+
+    if (btnExistingCustomer) {
+        btnExistingCustomer.addEventListener('click', () => {
+            showContentForType('existing');
+            showStep(1);
+        });
+    }
+
+    // Initial state
+    showContentForType('new');
+    showStep(0);
+}
+
+// Category Accordions
+function initAccordions() {
+    const accordions = document.querySelectorAll('.category-accordion');
+
+    accordions.forEach(accordion => {
+        const header = accordion.querySelector('.category-header');
+        const checkboxes = accordion.querySelectorAll('input[type="checkbox"]');
+
+        // Toggle accordion on header click
+        header.addEventListener('click', () => {
+            accordion.classList.toggle('expanded');
+        });
+
+        // Update accordion visual state when checkboxes change
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                updateAccordionState(accordion);
+            });
+        });
+
+        // Initial state check
+        updateAccordionState(accordion);
+    });
+}
+
+function updateAccordionState(accordion) {
+    const checkboxes = accordion.querySelectorAll('input[type="checkbox"]:checked');
+    if (checkboxes.length > 0) {
+        accordion.classList.add('has-selection');
+    } else {
+        accordion.classList.remove('has-selection');
+    }
+}
+
 // Visit Estimator
 function initEstimator() {
     const checkboxes = document.querySelectorAll('.service-checkbox input');
@@ -152,6 +254,8 @@ function initEstimator() {
     const travelFeeLine = document.getElementById('travel-fee-line');
     const travelLabel = document.getElementById('travel-label');
     const travelFeeEl = document.getElementById('travel-fee');
+    const itemizedFeeLine = document.getElementById('itemized-fee-line');
+    const itemizedFeeEl = document.getElementById('itemized-fee');
     const consultationFee = document.getElementById('consultation-fee');
     const totalPrice = document.getElementById('total-price');
 
@@ -299,6 +403,18 @@ function initEstimator() {
         updatePrice();
     }
 
+    function calculateItemizedCosts() {
+        const selectedServices = document.querySelectorAll('.service-checkbox input:checked[data-cost]');
+        let itemizedTotal = 0;
+
+        selectedServices.forEach(service => {
+            const cost = parseInt(service.dataset.cost) || 0;
+            itemizedTotal += cost;
+        });
+
+        return itemizedTotal;
+    }
+
     function updatePrice() {
         const selectedServices = document.querySelectorAll('.service-checkbox input:checked');
         const customConcerns = window.getCustomConcerns ? window.getCustomConcerns() : [];
@@ -322,10 +438,21 @@ function initEstimator() {
         const perVisitFee = calculateConsultationFee(duration);
         const perVisitTravel = requiresInPerson ? TRAVEL_FEE : 0;
 
+        // Calculate itemized costs (vaccines, labs, procedures)
+        const itemizedCosts = calculateItemizedCosts();
+
         // Calculate total based on number of visits
         const totalConsultationFees = perVisitFee * numberOfVisits;
         const totalTravelFees = perVisitTravel * numberOfVisits;
-        const total = totalConsultationFees + totalTravelFees;
+        const total = totalConsultationFees + totalTravelFees + itemizedCosts;
+
+        // Show/hide itemized costs line
+        if (itemizedCosts > 0) {
+            itemizedFeeLine.style.display = 'flex';
+            itemizedFeeEl.textContent = `$${itemizedCosts}`;
+        } else {
+            itemizedFeeLine.style.display = 'none';
+        }
 
         // Update UI for multiple visits
         if (numberOfVisits > 1) {
@@ -676,6 +803,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initLayeredParallax();
     initNavbarScroll();
     initMobileMenu();
+    initEstimatorSteps();
+    initAccordions();
     initEstimator();
 });
 

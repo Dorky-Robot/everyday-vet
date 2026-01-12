@@ -259,8 +259,12 @@
                                 <p>Some selected services require an in-person visit in the Greater Cleveland area.</p>
                             </div>
 
+                            <div class="multiple-visits-notice" id="multiple-visits-notice" style="display: none;">
+                                <p id="multiple-visits-text">This will likely require multiple visits to address everything thoroughly.</p>
+                            </div>
+
                             <div class="duration-selector">
-                                <label>Appointment length:</label>
+                                <label>Appointment length <span class="per-visit-label" id="per-visit-label">(per visit)</span>:</label>
                                 <div class="slider-container">
                                     <input type="range" id="duration-slider" min="30" max="120" step="30" value="30">
                                     <div class="slider-labels">
@@ -275,13 +279,17 @@
                             </div>
 
                             <div class="price-breakdown">
+                                <div class="price-line visits-count" id="visits-count-line" style="display: none;">
+                                    <span>Number of visits</span>
+                                    <span id="visits-count">1</span>
+                                </div>
                                 <div class="price-line">
-                                    <span>Consultation fee</span>
+                                    <span id="consultation-label">Consultation fee</span>
                                     <span id="consultation-fee">$75</span>
                                 </div>
                                 <div class="price-line travel-fee" id="travel-fee-line" style="display: none;">
-                                    <span>Travel fee</span>
-                                    <span>$100</span>
+                                    <span id="travel-label">Travel fee</span>
+                                    <span id="travel-fee">$100</span>
                                 </div>
                                 <div class="price-total">
                                     <span>Estimated Total</span>

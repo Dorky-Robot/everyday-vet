@@ -143,7 +143,15 @@ function initEstimator() {
     const visitTypeValue = document.getElementById('visit-type-value');
     const visitTypeLocation = document.getElementById('visit-type-location');
     const inPersonNotice = document.getElementById('in-person-notice');
+    const multipleVisitsNotice = document.getElementById('multiple-visits-notice');
+    const multipleVisitsText = document.getElementById('multiple-visits-text');
+    const perVisitLabel = document.getElementById('per-visit-label');
+    const visitsCountLine = document.getElementById('visits-count-line');
+    const visitsCount = document.getElementById('visits-count');
+    const consultationLabel = document.getElementById('consultation-label');
     const travelFeeLine = document.getElementById('travel-fee-line');
+    const travelLabel = document.getElementById('travel-label');
+    const travelFeeEl = document.getElementById('travel-fee');
     const consultationFee = document.getElementById('consultation-fee');
     const totalPrice = document.getElementById('total-price');
 
@@ -153,8 +161,11 @@ function initEstimator() {
     const FIRST_30_MIN = 75;
     const ADDITIONAL_30_MIN = 50;
     const TRAVEL_FEE = 100;
+    const MAX_VISIT_DURATION = 120; // 2 hours max per visit
 
     let recommendedDuration = 30;
+    let totalEstimatedTime = 0;
+    let numberOfVisits = 1;
     let userHasOverridden = false;
 
     function calculateConsultationFee(duration) {
@@ -225,10 +236,38 @@ function initEstimator() {
         });
 
         const duration = parseInt(durationSlider.value);
-        const baseFee = calculateConsultationFee(duration);
-        const total = requiresInPerson ? baseFee + TRAVEL_FEE : baseFee;
+        const perVisitFee = calculateConsultationFee(duration);
+        const perVisitTravel = requiresInPerson ? TRAVEL_FEE : 0;
 
-        consultationFee.textContent = `$${baseFee}`;
+        // Calculate total based on number of visits
+        const totalConsultationFees = perVisitFee * numberOfVisits;
+        const totalTravelFees = perVisitTravel * numberOfVisits;
+        const total = totalConsultationFees + totalTravelFees;
+
+        // Update UI for multiple visits
+        if (numberOfVisits > 1) {
+            multipleVisitsNotice.style.display = 'block';
+            multipleVisitsText.textContent = `Based on your selections, this will likely require ${numberOfVisits} visits.`;
+            perVisitLabel.style.display = 'inline';
+            visitsCountLine.style.display = 'flex';
+            visitsCount.textContent = numberOfVisits;
+            consultationLabel.textContent = `Consultation fees (${numberOfVisits} visits)`;
+            if (requiresInPerson) {
+                travelLabel.textContent = `Travel fees (${numberOfVisits} visits)`;
+                travelFeeEl.textContent = `$${totalTravelFees}`;
+            }
+        } else {
+            multipleVisitsNotice.style.display = 'none';
+            perVisitLabel.style.display = 'none';
+            visitsCountLine.style.display = 'none';
+            consultationLabel.textContent = 'Consultation fee';
+            travelLabel.textContent = 'Travel fee';
+            if (requiresInPerson) {
+                travelFeeEl.textContent = `$${TRAVEL_FEE}`;
+            }
+        }
+
+        consultationFee.textContent = `$${totalConsultationFees}`;
         totalPrice.textContent = `$${total}`;
     }
 
@@ -243,6 +282,8 @@ function initEstimator() {
             resultContent.style.display = 'none';
             userHasOverridden = false;
             recommendedDuration = 30;
+            numberOfVisits = 1;
+            totalEstimatedTime = 0;
             durationSlider.value = 30;
             updateSliderDisplay();
             return;
@@ -270,6 +311,8 @@ function initEstimator() {
             totalTime += concern.time || 0;
         });
 
+        totalEstimatedTime = totalTime;
+
         // Update visit type
         if (requiresInPerson) {
             visitTypeValue.textContent = 'In-Person Visit';
@@ -283,22 +326,36 @@ function initEstimator() {
             travelFeeLine.style.display = 'none';
         }
 
-        // Calculate recommended duration based on selected services
-        if (totalTime > 90) {
-            recommendedDuration = 120;
-        } else if (totalTime > 60) {
-            recommendedDuration = 90;
-        } else if (totalTime > 30) {
-            recommendedDuration = 60;
+        // Calculate number of visits needed if time exceeds max
+        if (totalTime > MAX_VISIT_DURATION) {
+            // For multiple visits, recommend 2-hour blocks
+            numberOfVisits = Math.ceil(totalTime / MAX_VISIT_DURATION);
+            recommendedDuration = MAX_VISIT_DURATION;
         } else {
-            recommendedDuration = 30;
+            numberOfVisits = 1;
+            // Calculate recommended duration for single visit
+            if (totalTime > 90) {
+                recommendedDuration = 120;
+            } else if (totalTime > 60) {
+                recommendedDuration = 90;
+            } else if (totalTime > 30) {
+                recommendedDuration = 60;
+            } else {
+                recommendedDuration = 30;
+            }
         }
 
         // Only auto-adjust slider if user hasn't manually overridden
         if (!userHasOverridden) {
             animateSlider(recommendedDuration);
         } else {
-            // Still update the warning based on new recommendation
+            // Recalculate visits based on user-selected duration
+            const userDuration = parseInt(durationSlider.value);
+            if (totalTime > userDuration) {
+                numberOfVisits = Math.ceil(totalTime / userDuration);
+            } else {
+                numberOfVisits = 1;
+            }
             updateSliderDisplay();
         }
 

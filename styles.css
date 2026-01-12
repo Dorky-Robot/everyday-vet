@@ -802,6 +802,7 @@ nav {
     margin: 0 auto 3rem;
     position: relative;
     z-index: 1;
+    align-items: start;
 }
 
 .estimator-services h3 {
@@ -1029,9 +1030,13 @@ nav {
 
 /* Estimator Result Card */
 .estimator-result {
+    position: sticky;
+    top: 100px;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
 }
 
 .result-card {
@@ -1039,8 +1044,6 @@ nav {
     border: 1px solid var(--border-color);
     border-radius: 20px;
     padding: 1.5rem;
-    position: sticky;
-    top: 100px;
 }
 
 .result-card h3 {
@@ -1101,6 +1104,31 @@ nav {
     margin: 0;
     font-size: 0.85rem;
     color: var(--primary-dark);
+}
+
+.multiple-visits-notice {
+    background: #e8f4fd;
+    border-left: 3px solid #3498db;
+    padding: 0.75rem 1rem;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 1rem;
+}
+
+.multiple-visits-notice p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #2471a3;
+}
+
+.per-visit-label {
+    font-weight: 400;
+    color: var(--text-light);
+    font-size: 0.85em;
+}
+
+.visits-count span:last-child {
+    font-weight: 600;
+    color: var(--primary-color);
 }
 
 .duration-selector {
@@ -1687,8 +1715,13 @@ footer p {
         font-size: 0.9rem;
     }
 
-    .result-card {
+    .estimator-result {
         position: static;
+        max-height: none;
+        overflow-y: visible;
+    }
+
+    .result-card {
         padding: 1.25rem;
     }
 

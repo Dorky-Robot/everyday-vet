@@ -185,294 +185,54 @@
                         <!-- Existing Customer Content -->
                         <div class="estimator-step-grid" id="existing-customer-content" style="display: none;">
                             <div class="estimator-services">
-                                <h3>What do you need help with?</h3>
-                    <p class="estimator-subtitle">Select all that apply</p>
+                                <!-- Pet Selector -->
+                                <div class="pet-selector">
+                                    <h3>Who are we seeing today?</h3>
+                                    <p class="estimator-subtitle">Add your pets to get started</p>
 
-                    <!-- Advice & Guidance (time-based, no itemized cost) -->
-                    <div class="category-accordion">
-                        <button class="category-header" data-category="advice">
-                            <span class="category-title">Advice & Guidance</span>
-                            <span class="category-subtitle">Virtual or in-person</span>
-                            <span class="category-toggle">+</span>
-                        </button>
-                        <div class="category-content" id="advice-content">
-                            <div class="service-options">
-                                <label class="service-checkbox">
-                                    <input type="checkbox" name="service" value="new-pet" data-type="virtual" data-group="advice" data-time="15">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">New pet consultation</span>
-                                </label>
-                                <label class="service-checkbox">
-                                    <input type="checkbox" name="service" value="diet" data-type="virtual" data-group="advice" data-time="10">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Diet & nutrition</span>
-                                </label>
-                                <label class="service-checkbox">
-                                    <input type="checkbox" name="service" value="behavior" data-type="virtual" data-group="advice" data-time="20">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Behavioral concerns</span>
-                                </label>
-                                <label class="service-checkbox">
-                                    <input type="checkbox" name="service" value="preventatives" data-type="virtual" data-group="advice" data-time="10">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Preventatives (flea, tick, heartworm)</span>
-                                </label>
-                                <label class="service-checkbox">
-                                    <input type="checkbox" name="service" value="skin-issues" data-type="virtual" data-group="advice" data-time="10">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Skin issues or allergies</span>
-                                </label>
-                                <label class="service-checkbox">
-                                    <input type="checkbox" name="service" value="gi-issues" data-type="virtual" data-group="advice" data-time="10">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Digestive issues</span>
-                                </label>
-                                <label class="service-checkbox">
-                                    <input type="checkbox" name="service" value="chronic" data-type="virtual" data-group="advice" data-time="15">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Chronic disease management</span>
-                                </label>
-                                <label class="service-checkbox">
-                                    <input type="checkbox" name="service" value="senior" data-type="virtual" data-group="advice" data-time="15">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Senior pet care</span>
-                                </label>
-                                <label class="service-checkbox">
-                                    <input type="checkbox" name="service" value="second-opinion" data-type="virtual" data-group="advice" data-time="20">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Second opinion</span>
-                                </label>
-                                <label class="service-checkbox">
-                                    <input type="checkbox" name="service" value="quality-of-life" data-type="virtual" data-group="advice" data-time="20">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Quality of life consultation</span>
-                                </label>
+                                    <div class="pet-tabs" id="pet-tabs">
+                                        <!-- Pet tabs will be added here dynamically -->
+                                        <button class="add-pet-btn" id="add-pet-btn">
+                                            <span class="add-pet-icon">+</span>
+                                            <span>Add Pet</span>
+                                        </button>
+                                    </div>
+
+                                    <!-- Add Pet Modal -->
+                                    <div class="add-pet-modal" id="add-pet-modal" style="display: none;">
+                                        <div class="pet-modal-content">
+                                            <input type="text" id="pet-name-input" placeholder="Pet's name" maxlength="20">
+                                            <div class="pet-type-selector">
+                                                <button class="pet-type-btn" data-type="dog">
+                                                    <span class="pet-type-icon">🐕</span>
+                                                    <span>Dog</span>
+                                                </button>
+                                                <button class="pet-type-btn" data-type="cat">
+                                                    <span class="pet-type-icon">🐈</span>
+                                                    <span>Cat</span>
+                                                </button>
+                                            </div>
+                                            <div class="pet-modal-actions">
+                                                <button class="pet-modal-cancel" id="pet-modal-cancel">Cancel</button>
+                                                <button class="pet-modal-add" id="pet-modal-add" disabled>Add Pet</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Service Selection (shown after pet is selected) -->
+                                <div class="pet-services-section" id="pet-services-section" style="display: none;">
+                                    <div class="pet-services-header">
+                                        <h3>Services for <span id="current-pet-name">your pet</span></h3>
+                                        <p class="estimator-subtitle">Select all that apply</p>
+                                    </div>
+
+                                    <!-- Service categories loaded dynamically -->
+                                    <div id="service-categories-container"></div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
 
-                    <!-- Physical Exam -->
-                    <div class="category-accordion">
-                        <button class="category-header" data-category="exam">
-                            <span class="category-title">Physical Examination</span>
-                            <span class="category-subtitle">Requires in-person visit</span>
-                            <span class="category-toggle">+</span>
-                        </button>
-                        <div class="category-content" id="exam-content">
-                            <div class="service-options">
-                                <label class="service-checkbox">
-                                    <input type="checkbox" name="service" value="exam" data-type="in-person" data-group="exam" data-time="15">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Comprehensive physical exam</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Vaccinations (itemized cost, minimal time) -->
-                    <div class="category-accordion">
-                        <button class="category-header" data-category="vaccines">
-                            <span class="category-title">Vaccinations</span>
-                            <span class="category-subtitle">Requires in-person visit • Priced per vaccine</span>
-                            <span class="category-toggle">+</span>
-                        </button>
-                        <div class="category-content" id="vaccines-content">
-                            <p class="category-note">Select all vaccines needed. Each adds minimal time.</p>
-                            <div class="service-options">
-                                <label class="service-checkbox has-price">
-                                    <input type="checkbox" name="service" value="vaccine-rabies" data-type="in-person" data-group="vaccines" data-time="3" data-cost="30">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Rabies</span>
-                                    <span class="item-price">$30</span>
-                                </label>
-                                <label class="service-checkbox has-price">
-                                    <input type="checkbox" name="service" value="vaccine-dhpp" data-type="in-person" data-group="vaccines" data-time="3" data-cost="35">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">DHPP / DAPP (dogs)</span>
-                                    <span class="item-price">$35</span>
-                                </label>
-                                <label class="service-checkbox has-price">
-                                    <input type="checkbox" name="service" value="vaccine-bordetella" data-type="in-person" data-group="vaccines" data-time="3" data-cost="28">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Bordetella (kennel cough)</span>
-                                    <span class="item-price">$28</span>
-                                </label>
-                                <label class="service-checkbox has-price">
-                                    <input type="checkbox" name="service" value="vaccine-lepto" data-type="in-person" data-group="vaccines" data-time="3" data-cost="32">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Leptospirosis</span>
-                                    <span class="item-price">$32</span>
-                                </label>
-                                <label class="service-checkbox has-price">
-                                    <input type="checkbox" name="service" value="vaccine-lyme" data-type="in-person" data-group="vaccines" data-time="3" data-cost="40">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Lyme disease</span>
-                                    <span class="item-price">$40</span>
-                                </label>
-                                <label class="service-checkbox has-price">
-                                    <input type="checkbox" name="service" value="vaccine-fvrcp" data-type="in-person" data-group="vaccines" data-time="3" data-cost="35">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">FVRCP (cats)</span>
-                                    <span class="item-price">$35</span>
-                                </label>
-                                <label class="service-checkbox has-price">
-                                    <input type="checkbox" name="service" value="vaccine-felv" data-type="in-person" data-group="vaccines" data-time="3" data-cost="35">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">FeLV (cats)</span>
-                                    <span class="item-price">$35</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Lab Work (itemized cost) -->
-                    <div class="category-accordion">
-                        <button class="category-header" data-category="labs">
-                            <span class="category-title">Lab Work</span>
-                            <span class="category-subtitle">Requires in-person visit • Priced per test</span>
-                            <span class="category-toggle">+</span>
-                        </button>
-                        <div class="category-content" id="labs-content">
-                            <p class="category-note">Sample collection included. Results reviewed at follow-up.</p>
-                            <div class="service-options">
-                                <label class="service-checkbox has-price">
-                                    <input type="checkbox" name="service" value="lab-chemistry" data-type="in-person" data-group="labs" data-time="5" data-cost="120">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Blood chemistry panel</span>
-                                    <span class="item-price">$120</span>
-                                </label>
-                                <label class="service-checkbox has-price">
-                                    <input type="checkbox" name="service" value="lab-cbc" data-type="in-person" data-group="labs" data-time="5" data-cost="65">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Complete blood count (CBC)</span>
-                                    <span class="item-price">$65</span>
-                                </label>
-                                <label class="service-checkbox has-price">
-                                    <input type="checkbox" name="service" value="lab-urinalysis" data-type="in-person" data-group="labs" data-time="5" data-cost="50">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Urinalysis</span>
-                                    <span class="item-price">$50</span>
-                                </label>
-                                <label class="service-checkbox has-price">
-                                    <input type="checkbox" name="service" value="lab-fecal" data-type="in-person" data-group="labs" data-time="3" data-cost="40">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Fecal test</span>
-                                    <span class="item-price">$40</span>
-                                </label>
-                                <label class="service-checkbox has-price">
-                                    <input type="checkbox" name="service" value="lab-heartworm" data-type="in-person" data-group="labs" data-time="3" data-cost="45">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Heartworm test</span>
-                                    <span class="item-price">$45</span>
-                                </label>
-                                <label class="service-checkbox has-price">
-                                    <input type="checkbox" name="service" value="lab-felv-fiv" data-type="in-person" data-group="labs" data-time="3" data-cost="55">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">FeLV/FIV test (cats)</span>
-                                    <span class="item-price">$55</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Procedures (itemized cost) -->
-                    <div class="category-accordion">
-                        <button class="category-header" data-category="procedures">
-                            <span class="category-title">Procedures</span>
-                            <span class="category-subtitle">Requires in-person visit • Priced per service</span>
-                            <span class="category-toggle">+</span>
-                        </button>
-                        <div class="category-content" id="procedures-content">
-                            <div class="service-options">
-                                <label class="service-checkbox has-price">
-                                    <input type="checkbox" name="service" value="proc-nail-trim" data-type="in-person" data-group="procedures" data-time="10" data-cost="20">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Nail trim</span>
-                                    <span class="item-price">$20</span>
-                                </label>
-                                <label class="service-checkbox has-price">
-                                    <input type="checkbox" name="service" value="proc-anal-glands" data-type="in-person" data-group="procedures" data-time="10" data-cost="25">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Anal gland expression</span>
-                                    <span class="item-price">$25</span>
-                                </label>
-                                <label class="service-checkbox has-price">
-                                    <input type="checkbox" name="service" value="proc-ear-clean" data-type="in-person" data-group="procedures" data-time="15" data-cost="30">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Ear cleaning</span>
-                                    <span class="item-price">$30</span>
-                                </label>
-                                <label class="service-checkbox has-price">
-                                    <input type="checkbox" name="service" value="proc-microchip" data-type="in-person" data-group="procedures" data-time="10" data-cost="55">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Microchip implant</span>
-                                    <span class="item-price">$55</span>
-                                </label>
-                                <label class="service-checkbox has-price">
-                                    <input type="checkbox" name="service" value="proc-subq-fluids" data-type="in-person" data-group="procedures" data-time="20" data-cost="45">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Subcutaneous fluids</span>
-                                    <span class="item-price">$45</span>
-                                </label>
-                                <label class="service-checkbox has-price">
-                                    <input type="checkbox" name="service" value="proc-injection" data-type="in-person" data-group="procedures" data-time="5" data-cost="25">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Injection (B12, medication)</span>
-                                    <span class="item-price">$25</span>
-                                </label>
-                                <label class="service-checkbox has-price">
-                                    <input type="checkbox" name="service" value="proc-wound-care" data-type="in-person" data-group="procedures" data-time="20" data-cost="50">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Minor wound care</span>
-                                    <span class="item-price">$50</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Special Services -->
-                    <div class="category-accordion">
-                        <button class="category-header" data-category="special">
-                            <span class="category-title">Special Services</span>
-                            <span class="category-subtitle">Requires in-person visit</span>
-                            <span class="category-toggle">+</span>
-                        </button>
-                        <div class="category-content" id="special-content">
-                            <div class="service-options">
-                                <label class="service-checkbox has-price">
-                                    <input type="checkbox" name="service" value="health-cert" data-type="in-person" data-group="special" data-time="25" data-cost="75">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">Health certificate</span>
-                                    <span class="item-price">$75</span>
-                                </label>
-                                <label class="service-checkbox">
-                                    <input type="checkbox" name="service" value="euthanasia" data-type="in-person" data-group="special" data-time="45">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-label">End-of-life care / euthanasia</span>
-                                    <span class="checkbox-note">Contact for pricing</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Something Else -->
-                    <div class="category-accordion">
-                        <button class="category-header" data-category="other">
-                            <span class="category-title">Something Else?</span>
-                            <span class="category-subtitle">Search for other concerns</span>
-                            <span class="category-toggle">+</span>
-                        </button>
-                        <div class="category-content" id="other-content">
-                            <div class="custom-concern-wrapper">
-                                <input type="text" id="custom-concern" class="custom-concern-input" placeholder="Type your concern..." autocomplete="off">
-                                <div id="autocomplete-list" class="autocomplete-list"></div>
-                                <div id="custom-concerns-tags" class="custom-concerns-tags"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="estimator-result">
+                            <div class="estimator-result">
                     <div class="result-card">
                         <h3>Your Estimate</h3>
 
@@ -486,6 +246,9 @@
                                 <span class="visit-type-value" id="visit-type-value">Virtual Visit</span>
                                 <span class="visit-type-location" id="visit-type-location">Anywhere in Ohio</span>
                             </div>
+
+                            <!-- Multi-pet breakdown -->
+                            <div class="pet-breakdown" id="pet-breakdown" style="display: none;"></div>
 
                             <div class="in-person-notice" id="in-person-notice" style="display: none;">
                                 <p>Some selected services require an in-person visit in the Greater Cleveland area.</p>
@@ -540,19 +303,19 @@
                     <div class="pricing-reference">
                         <h4>How Pricing Works</h4>
                         <ul class="pricing-breakdown-list">
-                            <li><strong>$75</strong> for the first 30 minutes</li>
+                            <li><strong>$75</strong> per pet for the first 30 minutes</li>
                             <li><strong>$50</strong> per additional 30 minutes</li>
-                            <li><strong>$100</strong> travel fee for in-person visits</li>
+                            <li><strong>$100</strong> travel fee (one-time, not per pet)</li>
                         </ul>
                         <div class="pricing-examples">
                             <p class="examples-label">Examples:</p>
                             <div class="example-row">
-                                <span>1 hour virtual</span>
-                                <span>$125</span>
+                                <span>1 pet, 30 min virtual</span>
+                                <span>$75</span>
                             </div>
                             <div class="example-row">
-                                <span>1 hour in-person</span>
-                                <span>$225</span>
+                                <span>2 pets, 30 min in-person</span>
+                                <span>$250</span>
                             </div>
                         </div>
                     </div>
@@ -633,6 +396,7 @@
         <p class="emergency-notice">We do not provide emergency services. For life-threatening situations, please contact your nearest 24/7 veterinary hospital.</p>
     </footer>
 
+    <script src="services-config.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

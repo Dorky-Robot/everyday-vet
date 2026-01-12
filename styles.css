@@ -1175,6 +1175,61 @@ nav {
     padding: 0.75rem 1rem 1rem;
 }
 
+/* Selected Service Chiclets */
+.selected-chiclets {
+    display: none;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem 0.75rem;
+    background: var(--white);
+    border-top: 1px solid var(--border-color);
+}
+
+.selected-chiclets:not(:empty) {
+    display: flex;
+}
+
+.category-accordion.expanded .selected-chiclets {
+    display: none !important;
+}
+
+.service-chiclet {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.6rem;
+    background: var(--secondary-color);
+    border: 1px solid rgba(233, 30, 140, 0.2);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: var(--primary-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.service-chiclet:hover {
+    background: rgba(233, 30, 140, 0.15);
+    border-color: var(--primary-color);
+}
+
+.service-chiclet .chiclet-label {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.service-chiclet .chiclet-remove {
+    font-size: 1rem;
+    line-height: 1;
+    opacity: 0.6;
+    transition: opacity 0.15s ease;
+}
+
+.service-chiclet:hover .chiclet-remove {
+    opacity: 1;
+}
+
 .category-note {
     font-size: 0.8rem;
     color: var(--text-light);
@@ -2175,6 +2230,20 @@ footer p {
         padding: 0.5rem 0.75rem 0.75rem;
     }
 
+    .selected-chiclets {
+        padding: 0.4rem 0.75rem 0.6rem;
+        gap: 0.3rem;
+    }
+
+    .service-chiclet {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .service-chiclet .chiclet-label {
+        max-width: 100px;
+    }
+
     .service-checkbox {
         padding: 0.6rem 0.75rem;
     }
@@ -2322,6 +2391,330 @@ footer p {
 .nav-overlay.active {
     display: block;
     opacity: 1;
+}
+
+/* ==================== */
+/* PET SELECTOR */
+/* ==================== */
+
+.pet-selector {
+    margin-bottom: 1.5rem;
+}
+
+.pet-selector h3 {
+    color: var(--primary-color);
+    margin-bottom: 0.25rem;
+}
+
+.pet-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.pet-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    background: var(--white);
+    border: 2px solid var(--border-color);
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.pet-tab:hover {
+    border-color: var(--primary-color);
+    background: var(--secondary-color);
+}
+
+.pet-tab.active {
+    border-color: var(--primary-color);
+    background: var(--primary-color);
+    color: var(--white);
+}
+
+.pet-tab .pet-icon {
+    font-size: 1.1rem;
+}
+
+.pet-tab .pet-name {
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pet-tab .remove-pet {
+    background: none;
+    border: none;
+    color: inherit;
+    opacity: 0.6;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 0.25rem;
+    font-size: 1rem;
+    line-height: 1;
+    transition: opacity 0.2s ease;
+}
+
+.pet-tab .remove-pet:hover {
+    opacity: 1;
+}
+
+.pet-tab.active .remove-pet {
+    color: var(--white);
+}
+
+.add-pet-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.6rem 1rem;
+    background: var(--secondary-color);
+    border: 2px dashed var(--border-color);
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+.add-pet-btn:hover {
+    border-color: var(--primary-color);
+    background: #ffeef6;
+}
+
+.add-pet-icon {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* Add Pet Modal */
+.add-pet-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+}
+
+.pet-modal-content {
+    background: var(--white);
+    padding: 1.75rem;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 340px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+#pet-name-input {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 1rem;
+    color: var(--text-color);
+    margin-bottom: 1rem;
+    transition: border-color 0.2s ease;
+}
+
+#pet-name-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+#pet-name-input::placeholder {
+    color: var(--text-light);
+}
+
+.pet-type-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.pet-type-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.25rem 1rem;
+    background: var(--white);
+    border: 2px solid var(--border-color);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.pet-type-btn:hover {
+    border-color: var(--primary-color);
+    background: var(--secondary-color);
+}
+
+.pet-type-btn.selected {
+    border-color: var(--primary-color);
+    background: var(--primary-color);
+    color: var(--white);
+}
+
+.pet-type-icon {
+    font-size: 2rem;
+}
+
+.pet-modal-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.pet-modal-cancel,
+.pet-modal-add {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pet-modal-cancel {
+    background: var(--white);
+    border: 2px solid var(--border-color);
+    color: var(--text-color);
+}
+
+.pet-modal-cancel:hover {
+    border-color: var(--text-light);
+    background: #f5f5f5;
+}
+
+.pet-modal-add {
+    background: var(--primary-color);
+    border: 2px solid var(--primary-color);
+    color: var(--white);
+}
+
+.pet-modal-add:hover:not(:disabled) {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+.pet-modal-add:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Pet Services Section */
+.pet-services-section {
+    animation: fadeIn 0.3s ease;
+}
+
+.pet-services-header {
+    margin-bottom: 1rem;
+}
+
+.pet-services-header h3 {
+    color: var(--primary-color);
+    margin-bottom: 0.25rem;
+}
+
+/* Multi-pet estimate breakdown */
+.pet-breakdown {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.pet-breakdown-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0;
+    font-size: 0.85rem;
+}
+
+.pet-breakdown-name {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--text-color);
+}
+
+.pet-breakdown-name .pet-icon {
+    font-size: 1rem;
+}
+
+.pet-breakdown-fee {
+    color: var(--text-color);
+}
+
+.pet-breakdown-services {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    margin-left: 1.4rem;
+}
+
+/* Pet Selector Mobile Styles */
+@media (max-width: 768px) {
+    .pet-tabs {
+        gap: 0.4rem;
+    }
+
+    .pet-tab {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+    }
+
+    .pet-tab .pet-icon {
+        font-size: 1rem;
+    }
+
+    .pet-tab .pet-name {
+        max-width: 70px;
+    }
+
+    .add-pet-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+    }
+
+    .pet-modal-content {
+        padding: 1.5rem;
+        max-width: 300px;
+    }
+
+    .pet-type-btn {
+        padding: 1rem 0.75rem;
+    }
+
+    .pet-type-icon {
+        font-size: 1.75rem;
+    }
+
+    .pet-breakdown-item {
+        flex-wrap: wrap;
+    }
+
+    .pet-breakdown-fee {
+        font-size: 0.8rem;
+    }
 }
 
 /* Reduced motion */

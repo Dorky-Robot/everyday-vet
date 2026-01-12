@@ -1,3 +1,301 @@
+// Load and render service categories from config
+// Config is loaded from services-config.js (SERVICES_CONFIG global variable)
+
+// Global pets state
+let pets = [];
+let currentPetIndex = -1;
+
+// Expose for debugging
+window.getPets = () => pets;
+window.getCurrentPetIndex = () => currentPetIndex;
+
+function loadServicesConfig() {
+    if (typeof SERVICES_CONFIG === 'undefined') {
+        console.error('SERVICES_CONFIG not found. Make sure services-config.js is loaded.');
+        return;
+    }
+    // Initialize pet management first
+    initPetManagement();
+}
+
+// Pet Management
+function initPetManagement() {
+    const addPetBtn = document.getElementById('add-pet-btn');
+    const modal = document.getElementById('add-pet-modal');
+    const nameInput = document.getElementById('pet-name-input');
+    const typeButtons = document.querySelectorAll('.pet-type-btn');
+    const cancelBtn = document.getElementById('pet-modal-cancel');
+    const addBtn = document.getElementById('pet-modal-add');
+    const petTabs = document.getElementById('pet-tabs');
+
+    if (!addPetBtn || !modal) return;
+
+    let selectedType = null;
+
+    // Open modal
+    addPetBtn.addEventListener('click', () => {
+        modal.style.display = 'flex';
+        nameInput.value = '';
+        selectedType = null;
+        typeButtons.forEach(btn => btn.classList.remove('selected'));
+        addBtn.disabled = true;
+        nameInput.focus();
+    });
+
+    // Close modal on cancel
+    cancelBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+
+    // Close modal on backdrop click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+
+    // Type selection
+    typeButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            typeButtons.forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            selectedType = btn.dataset.type;
+            updateAddButton();
+        });
+    });
+
+    // Name input validation
+    nameInput.addEventListener('input', updateAddButton);
+
+    function updateAddButton() {
+        addBtn.disabled = !nameInput.value.trim() || !selectedType;
+    }
+
+    // Add pet
+    addBtn.addEventListener('click', () => {
+        const name = nameInput.value.trim();
+        if (!name || !selectedType) return;
+
+        const pet = {
+            id: Date.now(),
+            name: name,
+            type: selectedType,
+            selectedServices: [],
+            customConcerns: []
+        };
+
+        pets.push(pet);
+        modal.style.display = 'none';
+
+        // Select the newly added pet
+        selectPet(pets.length - 1);
+        renderPetTabs();
+    });
+
+    // Initial render
+    renderPetTabs();
+}
+
+function renderPetTabs() {
+    const petTabs = document.getElementById('pet-tabs');
+    const addPetBtn = document.getElementById('add-pet-btn');
+    const servicesSection = document.getElementById('pet-services-section');
+    const currentPetNameEl = document.getElementById('current-pet-name');
+
+    if (!petTabs) return;
+
+    // Clear existing tabs (except add button)
+    const existingTabs = petTabs.querySelectorAll('.pet-tab');
+    existingTabs.forEach(tab => tab.remove());
+
+    // Render pet tabs
+    pets.forEach((pet, index) => {
+        const tab = document.createElement('button');
+        tab.className = `pet-tab${index === currentPetIndex ? ' active' : ''}`;
+        tab.innerHTML = `
+            <span class="pet-icon">${pet.type === 'dog' ? '🐕' : '🐈'}</span>
+            <span class="pet-name">${pet.name}</span>
+            <span class="remove-pet" data-index="${index}">&times;</span>
+        `;
+
+        tab.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (e.target.classList.contains('remove-pet')) {
+                removePet(index);
+            } else {
+                selectPet(index);
+            }
+        });
+
+        petTabs.insertBefore(tab, addPetBtn);
+    });
+
+    // Update services section visibility
+    if (pets.length > 0 && currentPetIndex >= 0) {
+        servicesSection.style.display = 'block';
+        const currentPet = pets[currentPetIndex];
+        currentPetNameEl.textContent = currentPet.name;
+
+        // Render services filtered by pet type
+        renderServiceCategories(currentPet.type);
+        initAccordions();
+        initEstimator();
+
+        // Restore selected services for current pet
+        restoreSelectedServices();
+
+        // Recalculate after restoring (services were restored after initEstimator ran)
+        if (typeof window.recalculateEstimate === 'function') {
+            window.recalculateEstimate();
+        }
+    } else {
+        servicesSection.style.display = 'none';
+        // Reset estimate display when no pets
+        const resultEmpty = document.getElementById('result-empty');
+        const resultContent = document.getElementById('result-content');
+        if (resultEmpty) resultEmpty.style.display = 'block';
+        if (resultContent) resultContent.style.display = 'none';
+    }
+}
+
+function selectPet(index) {
+    // Save current pet's selections before switching
+    if (currentPetIndex >= 0 && pets[currentPetIndex]) {
+        saveCurrentPetSelections();
+    }
+
+    currentPetIndex = index;
+    renderPetTabs();
+}
+
+function removePet(index) {
+    pets.splice(index, 1);
+
+    // Adjust current index if needed
+    if (pets.length === 0) {
+        currentPetIndex = -1;
+    } else if (currentPetIndex >= pets.length) {
+        currentPetIndex = pets.length - 1;
+    } else if (currentPetIndex > index) {
+        currentPetIndex--;
+    }
+
+    renderPetTabs();
+
+    // Recalculate estimate after pet is removed
+    if (typeof window.recalculateEstimate === 'function') {
+        window.recalculateEstimate();
+    }
+}
+
+function saveCurrentPetSelections() {
+    if (currentPetIndex < 0 || !pets[currentPetIndex]) return;
+
+    const selectedCheckboxes = document.querySelectorAll('.service-checkbox input:checked');
+    pets[currentPetIndex].selectedServices = Array.from(selectedCheckboxes).map(cb => cb.value);
+
+    // Save custom concerns too
+    if (window.getCustomConcerns) {
+        pets[currentPetIndex].customConcerns = window.getCustomConcerns();
+    }
+}
+
+function restoreSelectedServices() {
+    if (currentPetIndex < 0 || !pets[currentPetIndex]) return;
+
+    const pet = pets[currentPetIndex];
+    const checkboxes = document.querySelectorAll('.service-checkbox input');
+
+    checkboxes.forEach(cb => {
+        cb.checked = pet.selectedServices.includes(cb.value);
+    });
+
+    // Update accordion states
+    document.querySelectorAll('.category-accordion').forEach(accordion => {
+        updateAccordionState(accordion);
+    });
+}
+
+function renderServiceCategories(petType) {
+    const container = document.getElementById('service-categories-container');
+    if (!container || typeof SERVICES_CONFIG === 'undefined') return;
+
+    let html = '';
+
+    SERVICES_CONFIG.categories.forEach(category => {
+        if (category.isCustomInput) {
+            // Render custom input section
+            html += `
+                <div class="category-accordion">
+                    <button class="category-header" data-category="${category.id}">
+                        <span class="category-title">${category.title}</span>
+                        <span class="category-subtitle">${category.subtitle}</span>
+                        <span class="category-toggle">+</span>
+                    </button>
+                    <div class="selected-chiclets" data-category="${category.id}"></div>
+                    <div class="category-content" id="${category.id}-content">
+                        <div class="custom-concern-wrapper">
+                            <input type="text" id="custom-concern" class="custom-concern-input" placeholder="Type your concern..." autocomplete="off">
+                            <div id="autocomplete-list" class="autocomplete-list"></div>
+                            <div id="custom-concerns-tags" class="custom-concerns-tags"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Filter items by pet type
+            const filteredItems = category.items.filter(item => {
+                if (!item.petType) return true; // No petType means available for all
+                return item.petType === 'both' || item.petType === petType;
+            });
+
+            // Only render category if it has items
+            if (filteredItems.length > 0) {
+                html += `
+                    <div class="category-accordion">
+                        <button class="category-header" data-category="${category.id}">
+                            <span class="category-title">${category.title}</span>
+                            <span class="category-subtitle">${category.subtitle}</span>
+                            <span class="category-toggle">+</span>
+                        </button>
+                        <div class="selected-chiclets" data-category="${category.id}"></div>
+                        <div class="category-content" id="${category.id}-content">
+                            ${category.note ? `<p class="category-note">${category.note}</p>` : ''}
+                            <div class="service-options">
+                                ${filteredItems.map(item => renderServiceItem(item, category)).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+    });
+
+    container.innerHTML = html;
+}
+
+function renderServiceItem(item, category) {
+    const hasPrice = item.cost !== undefined;
+    const hasNote = item.note !== undefined;
+    const itemType = item.type || category.defaultType;
+
+    return `
+        <label class="service-checkbox${hasPrice ? ' has-price' : ''}">
+            <input type="checkbox" name="service"
+                value="${item.id}"
+                data-type="${itemType}"
+                data-group="${category.id}"
+                data-time="${item.time}"
+                data-time-mode="${category.timeMode}"
+                ${hasPrice ? `data-cost="${item.cost}"` : ''}>
+            <span class="checkbox-custom"></span>
+            <span class="checkbox-label">${item.label}</span>
+            ${hasPrice ? `<span class="item-price">$${item.cost}</span>` : ''}
+            ${hasNote ? `<span class="checkbox-note">${item.note}</span>` : ''}
+        </label>
+    `;
+}
+
 // Parallax effect for hero section
 function initParallax() {
     const hero = document.querySelector('#hero');
@@ -232,6 +530,47 @@ function updateAccordionState(accordion) {
     } else {
         accordion.classList.remove('has-selection');
     }
+
+    // Update chiclets
+    updateChiclets(accordion);
+}
+
+function updateChiclets(accordion) {
+    const chicletsContainer = accordion.querySelector('.selected-chiclets');
+    if (!chicletsContainer) return;
+
+    const selectedCheckboxes = accordion.querySelectorAll('input[type="checkbox"]:checked');
+
+    if (selectedCheckboxes.length === 0) {
+        chicletsContainer.innerHTML = '';
+        return;
+    }
+
+    let html = '';
+    selectedCheckboxes.forEach(checkbox => {
+        const label = checkbox.closest('.service-checkbox')?.querySelector('.checkbox-label')?.textContent || checkbox.value;
+        html += `
+            <span class="service-chiclet" data-service-id="${checkbox.value}">
+                <span class="chiclet-label">${label}</span>
+                <span class="chiclet-remove">&times;</span>
+            </span>
+        `;
+    });
+
+    chicletsContainer.innerHTML = html;
+
+    // Add click handlers to remove chiclets
+    chicletsContainer.querySelectorAll('.service-chiclet').forEach(chiclet => {
+        chiclet.addEventListener('click', () => {
+            const serviceId = chiclet.dataset.serviceId;
+            const checkbox = accordion.querySelector(`input[value="${serviceId}"]`);
+            if (checkbox) {
+                checkbox.checked = false;
+                // Trigger change event to update estimate
+                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+    });
 }
 
 // Visit Estimator
@@ -416,6 +755,13 @@ function initEstimator() {
     }
 
     function updatePrice() {
+        // For multi-pet visits, calculate across all pets
+        if (pets.length > 0) {
+            calculateMultiPetPrice();
+            return;
+        }
+
+        // Single pet / legacy calculation
         const selectedServices = document.querySelectorAll('.service-checkbox input:checked');
         const customConcerns = window.getCustomConcerns ? window.getCustomConcerns() : [];
 
@@ -481,11 +827,150 @@ function initEstimator() {
         totalPrice.textContent = `$${total}`;
     }
 
+    // Multi-pet pricing calculation
+    function calculateMultiPetPrice() {
+        const petBreakdown = document.getElementById('pet-breakdown');
+
+        let totalConsultationFees = 0;
+        let totalItemizedCosts = 0;
+        let requiresInPerson = false;
+        let petsWithServices = 0;
+
+        const duration = parseInt(durationSlider.value);
+        const perPetFee = calculateConsultationFee(duration);
+
+        let breakdownHtml = '';
+
+        pets.forEach(pet => {
+            const petItemizedCost = calculatePetItemizedCosts(pet);
+            const hasServices = pet.selectedServices.length > 0 || pet.customConcerns.length > 0;
+
+            if (hasServices) {
+                petsWithServices++;
+                totalConsultationFees += perPetFee;
+                totalItemizedCosts += petItemizedCost;
+
+                // Check if this pet requires in-person
+                const petRequiresInPerson = checkPetRequiresInPerson(pet);
+                if (petRequiresInPerson) {
+                    requiresInPerson = true;
+                }
+
+                breakdownHtml += `
+                    <div class="pet-breakdown-item">
+                        <span class="pet-breakdown-name">
+                            <span class="pet-icon">${pet.type === 'dog' ? '🐕' : '🐈'}</span>
+                            ${pet.name}
+                        </span>
+                        <span class="pet-breakdown-fee">$${perPetFee}${petItemizedCost > 0 ? ` + $${petItemizedCost}` : ''}</span>
+                    </div>
+                `;
+            }
+        });
+
+        // Update visit type
+        if (requiresInPerson) {
+            visitTypeValue.textContent = 'In-Person Visit';
+            visitTypeLocation.textContent = 'Greater Cleveland Area';
+            inPersonNotice.style.display = 'block';
+            travelFeeLine.style.display = 'flex';
+            travelFeeEl.textContent = `$${TRAVEL_FEE}`;
+        } else {
+            visitTypeValue.textContent = 'Virtual Visit';
+            visitTypeLocation.textContent = 'Anywhere in Ohio';
+            inPersonNotice.style.display = 'none';
+            travelFeeLine.style.display = 'none';
+        }
+
+        // Show pet breakdown if multiple pets have services
+        if (petsWithServices > 1) {
+            petBreakdown.innerHTML = breakdownHtml;
+            petBreakdown.style.display = 'block';
+            consultationLabel.textContent = `Consultation fees (${petsWithServices} pets)`;
+        } else {
+            petBreakdown.style.display = 'none';
+            consultationLabel.textContent = 'Consultation fee';
+        }
+
+        // Hide multiple visits notice for now (simplify for multi-pet)
+        multipleVisitsNotice.style.display = 'none';
+        perVisitLabel.style.display = 'none';
+        visitsCountLine.style.display = 'none';
+
+        // Show/hide itemized costs line
+        if (totalItemizedCosts > 0) {
+            itemizedFeeLine.style.display = 'flex';
+            itemizedFeeEl.textContent = `$${totalItemizedCosts}`;
+        } else {
+            itemizedFeeLine.style.display = 'none';
+        }
+
+        // Calculate total - travel fee is charged ONCE, not per pet
+        const travelFee = requiresInPerson ? TRAVEL_FEE : 0;
+        const total = totalConsultationFees + travelFee + totalItemizedCosts;
+
+        consultationFee.textContent = `$${totalConsultationFees}`;
+        totalPrice.textContent = `$${total}`;
+    }
+
+    // Calculate itemized costs for a specific pet
+    function calculatePetItemizedCosts(pet) {
+        let itemizedTotal = 0;
+
+        pet.selectedServices.forEach(serviceId => {
+            // Find the service in config to get its cost
+            for (const category of SERVICES_CONFIG.categories) {
+                if (category.items) {
+                    const item = category.items.find(i => i.id === serviceId);
+                    if (item && item.cost) {
+                        itemizedTotal += item.cost;
+                        break;
+                    }
+                }
+            }
+        });
+
+        return itemizedTotal;
+    }
+
+    // Check if a pet's services require in-person visit
+    function checkPetRequiresInPerson(pet) {
+        for (const serviceId of pet.selectedServices) {
+            for (const category of SERVICES_CONFIG.categories) {
+                if (category.items) {
+                    const item = category.items.find(i => i.id === serviceId);
+                    if (item) {
+                        const itemType = item.type || category.defaultType;
+                        if (itemType === 'in-person') {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check custom concerns
+        for (const concern of pet.customConcerns) {
+            if (concern.type === 'in-person') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     function calculateEstimate() {
         const selectedServices = document.querySelectorAll('.service-checkbox input:checked');
         const customConcerns = window.getCustomConcerns ? window.getCustomConcerns() : [];
 
-        const hasSelections = selectedServices.length > 0 || customConcerns.length > 0;
+        // For multi-pet, check if ANY pet has selections
+        let hasSelections = selectedServices.length > 0 || customConcerns.length > 0;
+
+        if (pets.length > 0) {
+            hasSelections = pets.some(pet =>
+                pet.selectedServices.length > 0 || pet.customConcerns.length > 0
+            );
+        }
 
         if (!hasSelections) {
             resultEmpty.style.display = 'block';
@@ -575,6 +1060,8 @@ function initEstimator() {
     checkboxes.forEach(checkbox => {
         checkbox.addEventListener('change', () => {
             userHasOverridden = false; // Reset override when services change
+            // Save current pet's selections when checkbox changes
+            saveCurrentPetSelections();
             calculateEstimate();
         });
     });
@@ -586,6 +1073,9 @@ function initEstimator() {
 
     // Custom concern autocomplete
     initCustomConcernAutocomplete(calculateEstimate);
+
+    // Expose calculateEstimate globally so it can be called when pets change
+    window.recalculateEstimate = calculateEstimate;
 }
 
 // Veterinary concerns database
@@ -804,8 +1294,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initNavbarScroll();
     initMobileMenu();
     initEstimatorSteps();
-    initAccordions();
-    initEstimator();
+    // Load services config (this will call initAccordions and initEstimator after rendering)
+    loadServicesConfig();
 });
 
 // Reinitialize horizontal scroll on resize

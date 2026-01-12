@@ -613,6 +613,78 @@ nav {
     margin-bottom: 3rem;
 }
 
+.pricing-base {
+    max-width: 500px;
+    margin: 0 auto 2rem;
+}
+
+.pricing-main {
+    text-align: center;
+}
+
+.pricing-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    max-width: 800px;
+    margin: 0 auto 3rem;
+}
+
+.pricing-option {
+    background: var(--white);
+    padding: 1.5rem;
+    border-radius: 20px;
+    border: 1px solid rgba(233, 30, 140, 0.1);
+    transition: all 0.3s ease;
+}
+
+.pricing-option:hover {
+    border-color: rgba(233, 30, 140, 0.3);
+    box-shadow: 0 10px 30px rgba(233, 30, 140, 0.1);
+}
+
+.option-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.option-header h4 {
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    margin: 0;
+}
+
+.option-price {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+}
+
+.option-availability {
+    color: var(--accent-color);
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+}
+
+.option-breakdown {
+    background: var(--secondary-color);
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    margin-bottom: 0.75rem;
+    display: inline-block;
+}
+
+.pricing-option p:last-child {
+    color: var(--text-light);
+    font-size: 0.9rem;
+    margin-bottom: 0;
+}
+
 .pricing-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -719,6 +791,156 @@ nav {
     font-size: 0.9rem;
     margin-bottom: 0;
     border-radius: 0 20px 20px 0;
+}
+
+/* Pricing Comparison Table */
+.pricing-table-wrapper {
+    max-width: 800px;
+    margin: 0 auto 3rem;
+    position: relative;
+    z-index: 1;
+    overflow-x: auto;
+}
+
+.pricing-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--white);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(233, 30, 140, 0.1);
+}
+
+.pricing-table thead tr {
+    background: linear-gradient(135deg, var(--secondary-color) 0%, var(--white) 100%);
+}
+
+.pricing-table th {
+    padding: 0;
+    text-align: center;
+    vertical-align: bottom;
+}
+
+.pricing-table th.feature-col {
+    width: 40%;
+}
+
+.pricing-table th.plan-col {
+    width: 30%;
+    border-left: 1px solid rgba(233, 30, 140, 0.1);
+}
+
+.plan-header {
+    padding: 2rem 1.5rem;
+}
+
+.plan-header h3 {
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.plan-location {
+    color: var(--accent-color);
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 0.75rem !important;
+}
+
+.plan-price {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.25rem !important;
+    line-height: 1.2;
+}
+
+.plan-breakdown {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-bottom: 0 !important;
+}
+
+.pricing-table tbody tr {
+    border-top: 1px solid rgba(233, 30, 140, 0.08);
+    transition: background-color 0.2s ease;
+}
+
+.pricing-table tbody tr:hover {
+    background: rgba(233, 30, 140, 0.02);
+}
+
+.pricing-table td {
+    padding: 1rem 1.5rem;
+    text-align: center;
+}
+
+.pricing-table td.feature-label {
+    text-align: left;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.pricing-table td.check {
+    color: var(--primary-color);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.pricing-table td.dash {
+    color: var(--text-light);
+    opacity: 0.5;
+    font-size: 1.25rem;
+}
+
+.pricing-table td:not(.feature-label) {
+    border-left: 1px solid rgba(233, 30, 140, 0.08);
+}
+
+/* Add-on Services */
+.pricing-addons {
+    max-width: 800px;
+    margin: 0 auto 3rem;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+.pricing-addons h3 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.pricing-addons > p {
+    color: var(--text-light);
+    margin-bottom: 1.5rem;
+}
+
+.addon-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.addon-item {
+    background: linear-gradient(135deg, var(--secondary-color) 0%, var(--white) 100%);
+    color: var(--primary-color);
+    padding: 0.6rem 1.25rem;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border: 1px solid rgba(233, 30, 140, 0.15);
+    transition: all 0.2s ease;
+}
+
+.addon-item:hover {
+    background: var(--white);
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 15px rgba(233, 30, 140, 0.1);
 }
 
 /* ==================== */
@@ -1065,6 +1287,10 @@ footer p {
     }
 
     /* Pricing */
+    .pricing-options {
+        grid-template-columns: 1fr;
+    }
+
     #pricing {
         padding: 4rem 1.5rem;
     }
@@ -1099,6 +1325,66 @@ footer p {
     .safety-note {
         padding: 1rem;
         border-radius: 0 15px 15px 0;
+    }
+
+    /* Pricing Table Mobile */
+    .pricing-table-wrapper {
+        margin-bottom: 2rem;
+    }
+
+    .pricing-table th.feature-col {
+        width: 35%;
+    }
+
+    .pricing-table th.plan-col {
+        width: 32.5%;
+    }
+
+    .plan-header {
+        padding: 1.25rem 0.75rem;
+    }
+
+    .plan-header h3 {
+        font-size: 1.1rem;
+    }
+
+    .plan-location {
+        font-size: 0.7rem;
+    }
+
+    .plan-price {
+        font-size: 1.75rem;
+    }
+
+    .plan-breakdown {
+        font-size: 0.65rem;
+    }
+
+    .pricing-table td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.85rem;
+    }
+
+    .pricing-table td.feature-label {
+        font-size: 0.8rem;
+    }
+
+    .pricing-table td.check,
+    .pricing-table td.dash {
+        font-size: 1rem;
+    }
+
+    .pricing-addons {
+        margin-bottom: 2rem;
+    }
+
+    .addon-list {
+        gap: 0.5rem;
+    }
+
+    .addon-item {
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
     }
 
     /* Team */

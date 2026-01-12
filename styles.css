@@ -567,7 +567,7 @@ nav {
     max-width: 100%;
     padding: 8rem 2rem;
     background: var(--white);
-    overflow: hidden;
+    overflow: clip;
 }
 
 /* Animated background blobs for pricing */

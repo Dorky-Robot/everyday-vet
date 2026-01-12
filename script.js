@@ -163,6 +163,26 @@ function initEstimator() {
     const TRAVEL_FEE = 100;
     const MAX_VISIT_DURATION = 120; // 2 hours max per visit
 
+    // Service groupings - related topics that overlap
+    const serviceGroups = {
+        nutrition: ['diet', 'supplements', 'new-pet', 'picky eating', 'weight'],
+        behavior: ['behavior', 'anxiety', 'aggression', 'house soiling', 'litter box', 'separation anxiety', 'barking', 'meowing', 'leash reactivity', 'food aggression'],
+        skin: ['skin-issues', 'allergy', 'itching', 'scratching', 'hair loss', 'hot spots'],
+        gi: ['gi-issues', 'diarrhea', 'vomiting', 'constipation', 'flatulence'],
+        respiratory: ['coughing', 'sneezing', 'nasal discharge', 'reverse sneezing'],
+        chronic: ['chronic', 'senior', 'diabetes', 'kidney', 'heart disease', 'thyroid', 'arthritis', 'seizure', 'cancer'],
+        preventatives: ['preventatives'],
+        eyes_ears: ['eye discharge', 'ear odor', 'ear-treatment', 'bad breath'],
+        mobility: ['limping', 'stiffness', 'mobility'],
+        wellness: ['second-opinion', 'quality-of-life', 'hospice', 'medication questions', 'prescription', 'lab results', 'post-surgery'],
+        // In-person procedures - these don't overlap much
+        exam: ['exam'],
+        vaccines: ['vaccines'],
+        labwork: ['labwork', 'fecal'],
+        procedures: ['wound-care', 'ear-treatment', 'subq-fluids', 'injection', 'microchip', 'health-cert', 'nail trim', 'anal gland', 'skin scraping', 'abscess', 'suture', 'bandage', 'deworming', 'allergy injection', 'insulin training', 'fluid therapy'],
+        euthanasia: ['euthanasia']
+    };
+
     let recommendedDuration = 30;
     let totalEstimatedTime = 0;
     let numberOfVisits = 1;
@@ -172,6 +192,69 @@ function initEstimator() {
         if (duration <= 30) return FIRST_30_MIN;
         const additionalBlocks = (duration - 30) / 30;
         return FIRST_30_MIN + (additionalBlocks * ADDITIONAL_30_MIN);
+    }
+
+    function getServiceGroup(serviceValue, serviceLabel) {
+        const searchTerms = [serviceValue.toLowerCase(), serviceLabel.toLowerCase()];
+
+        for (const [groupName, keywords] of Object.entries(serviceGroups)) {
+            for (const term of searchTerms) {
+                for (const keyword of keywords) {
+                    if (term.includes(keyword) || keyword.includes(term)) {
+                        return groupName;
+                    }
+                }
+            }
+        }
+        return 'other';
+    }
+
+    function calculateSmartTime(services, customConcerns) {
+        const groupedTimes = {};
+
+        // Group checkbox services
+        services.forEach(service => {
+            const label = service.closest('.service-checkbox')?.querySelector('.checkbox-label')?.textContent || '';
+            const group = getServiceGroup(service.value, label);
+            const time = parseInt(service.dataset.time) || 0;
+
+            if (!groupedTimes[group]) {
+                groupedTimes[group] = [];
+            }
+            groupedTimes[group].push(time);
+        });
+
+        // Group custom concerns
+        customConcerns.forEach(concern => {
+            const group = getServiceGroup(concern.label, concern.label);
+            const time = concern.time || 0;
+
+            if (!groupedTimes[group]) {
+                groupedTimes[group] = [];
+            }
+            groupedTimes[group].push(time);
+        });
+
+        // Calculate total: for each group, take max time + small increment for extras
+        let totalTime = 0;
+        for (const [group, times] of Object.entries(groupedTimes)) {
+            if (times.length === 0) continue;
+
+            // Sort descending to get max first
+            times.sort((a, b) => b - a);
+
+            // Take the max time
+            const maxTime = times[0];
+
+            // Add small increment (5 min) for each additional item in same group (up to 10 min extra)
+            const extraItems = Math.min(times.length - 1, 2);
+            const extraTime = extraItems * 5;
+
+            totalTime += maxTime + extraTime;
+        }
+
+        // Minimum 30 minutes
+        return Math.max(30, totalTime);
     }
 
     function formatDuration(minutes) {
@@ -294,13 +377,11 @@ function initEstimator() {
 
         // Check if any in-person services are selected
         let requiresInPerson = false;
-        let totalTime = 0;
 
         selectedServices.forEach(service => {
             if (service.dataset.type === 'in-person') {
                 requiresInPerson = true;
             }
-            totalTime += parseInt(service.dataset.time) || 0;
         });
 
         // Include custom concerns in calculation
@@ -308,9 +389,10 @@ function initEstimator() {
             if (concern.type === 'in-person') {
                 requiresInPerson = true;
             }
-            totalTime += concern.time || 0;
         });
 
+        // Use smart time calculation that groups related topics
+        const totalTime = calculateSmartTime(selectedServices, customConcerns);
         totalEstimatedTime = totalTime;
 
         // Update visit type

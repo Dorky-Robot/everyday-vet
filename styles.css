@@ -256,9 +256,8 @@ nav {
 }
 
 .logo-icon {
-    width: 48px;
-    height: auto;
-    color: var(--primary-color);
+    font-size: 1.75rem;
+    line-height: 1;
 }
 
 .logo-text {
@@ -2047,7 +2046,7 @@ footer p {
 
     /* Logo */
     .logo-icon {
-        width: 40px;
+        font-size: 1.5rem;
     }
 
     .logo-text {
@@ -2387,7 +2386,7 @@ footer p {
     }
 
     .logo-icon {
-        width: 36px;
+        font-size: 1.25rem;
     }
 
     #hero h1 {

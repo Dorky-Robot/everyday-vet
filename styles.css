@@ -900,6 +900,15 @@ nav {
     border-left: 1px solid rgba(233, 30, 140, 0.08);
 }
 
+.table-note {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text-light);
+    margin-top: 1rem;
+    margin-bottom: 0;
+    font-style: italic;
+}
+
 /* Add-on Services */
 .pricing-addons {
     max-width: 800px;

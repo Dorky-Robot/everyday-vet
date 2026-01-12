@@ -793,163 +793,320 @@ nav {
     border-radius: 0 20px 20px 0;
 }
 
-/* Pricing Comparison Table */
-.pricing-table-wrapper {
-    max-width: 800px;
+/* Visit Estimator */
+.estimator-container {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 2rem;
+    max-width: 1000px;
     margin: 0 auto 3rem;
     position: relative;
     z-index: 1;
-    overflow-x: auto;
 }
 
-.pricing-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: var(--white);
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 10px 40px rgba(233, 30, 140, 0.1);
-}
-
-.pricing-table thead tr {
-    background: linear-gradient(135deg, var(--secondary-color) 0%, var(--white) 100%);
-}
-
-.pricing-table th {
-    padding: 0;
-    text-align: center;
-    vertical-align: bottom;
-}
-
-.pricing-table th.feature-col {
-    width: 40%;
-}
-
-.pricing-table th.plan-col {
-    width: 30%;
-    border-left: 1px solid rgba(233, 30, 140, 0.1);
-}
-
-.plan-header {
-    padding: 2rem 1.5rem;
-}
-
-.plan-header h3 {
+.estimator-services h3 {
     color: var(--primary-color);
-    font-size: 1.5rem;
     margin-bottom: 0.25rem;
 }
 
-.plan-location {
-    color: var(--accent-color);
-    font-size: 0.85rem;
-    font-weight: 500;
-    margin-bottom: 0.75rem !important;
-}
-
-.plan-price {
-    font-size: 2.5rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 0.25rem !important;
-    line-height: 1.2;
-}
-
-.plan-breakdown {
-    font-size: 0.8rem;
+.estimator-subtitle {
     color: var(--text-light);
-    margin-bottom: 0 !important;
-}
-
-.pricing-table tbody tr {
-    border-top: 1px solid rgba(233, 30, 140, 0.08);
-    transition: background-color 0.2s ease;
-}
-
-.pricing-table tbody tr:hover {
-    background: rgba(233, 30, 140, 0.02);
-}
-
-.pricing-table td {
-    padding: 1rem 1.5rem;
-    text-align: center;
-}
-
-.pricing-table td.feature-label {
-    text-align: left;
-    color: var(--text-color);
-    font-weight: 500;
-}
-
-.pricing-table td.check {
-    color: var(--primary-color);
-    font-size: 1.25rem;
-    font-weight: 600;
-}
-
-.pricing-table td.dash {
-    color: var(--text-light);
-    opacity: 0.5;
-    font-size: 1.25rem;
-}
-
-.pricing-table td:not(.feature-label) {
-    border-left: 1px solid rgba(233, 30, 140, 0.08);
-}
-
-.table-note {
-    text-align: center;
-    font-size: 0.85rem;
-    color: var(--text-light);
-    margin-top: 1rem;
-    margin-bottom: 0;
-    font-style: italic;
-}
-
-/* Add-on Services */
-.pricing-addons {
-    max-width: 800px;
-    margin: 0 auto 3rem;
-    text-align: center;
-    position: relative;
-    z-index: 1;
-}
-
-.pricing-addons h3 {
-    color: var(--primary-color);
-    margin-bottom: 0.5rem;
-}
-
-.pricing-addons > p {
-    color: var(--text-light);
+    font-size: 0.9rem;
     margin-bottom: 1.5rem;
 }
 
-.addon-list {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.75rem;
+.service-category {
+    margin-bottom: 1.5rem;
 }
 
-.addon-item {
-    background: linear-gradient(135deg, var(--secondary-color) 0%, var(--white) 100%);
-    color: var(--primary-color);
-    padding: 0.6rem 1.25rem;
-    border-radius: 50px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    border: 1px solid rgba(233, 30, 140, 0.15);
+.service-category h4 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-light);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.service-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.service-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--white);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    cursor: pointer;
     transition: all 0.2s ease;
 }
 
-.addon-item:hover {
-    background: var(--white);
+.service-checkbox:hover {
     border-color: var(--primary-color);
-    box-shadow: 0 4px 15px rgba(233, 30, 140, 0.1);
+    background: var(--secondary-color);
+}
+
+.service-checkbox input {
+    display: none;
+}
+
+.checkbox-custom {
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.checkbox-custom::after {
+    content: '✓';
+    color: var(--white);
+    font-size: 14px;
+    font-weight: bold;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.2s ease;
+}
+
+.service-checkbox input:checked + .checkbox-custom {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.service-checkbox input:checked + .checkbox-custom::after {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.service-checkbox input:checked ~ .checkbox-label {
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.checkbox-label {
+    font-size: 0.95rem;
+    color: var(--text-color);
+    transition: all 0.2s ease;
+}
+
+/* Estimator Result Card */
+.estimator-result {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.result-card {
+    background: linear-gradient(135deg, var(--secondary-color) 0%, var(--white) 100%);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 1.5rem;
+    position: sticky;
+    top: 100px;
+}
+
+.result-card h3 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.result-empty {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--text-light);
+}
+
+.result-empty p {
+    margin: 0;
+}
+
+.visit-type {
+    text-align: center;
+    padding: 1rem;
+    background: var(--white);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+}
+
+.visit-type-label {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-light);
+    margin-bottom: 0.25rem;
+}
+
+.visit-type-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.visit-type-location {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--accent-color);
+}
+
+.in-person-notice {
+    background: rgba(233, 30, 140, 0.08);
+    border-left: 3px solid var(--primary-color);
+    padding: 0.75rem 1rem;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 1rem;
+}
+
+.in-person-notice p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--primary-dark);
+}
+
+.duration-selector {
+    margin-bottom: 1rem;
+}
+
+.duration-selector label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+}
+
+.duration-selector select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 1rem;
+    color: var(--text-color);
+    background: var(--white);
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+.duration-selector select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.duration-suggestion {
+    font-size: 0.8rem;
+    color: var(--accent-color);
+    margin-top: 0.5rem;
+    margin-bottom: 0;
+}
+
+.price-breakdown {
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.price-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    font-size: 0.95rem;
+    color: var(--text-color);
+}
+
+.price-total {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem 0 0;
+    border-top: 1px solid var(--border-color);
+    margin-top: 0.5rem;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.price-total span:last-child {
+    color: var(--primary-color);
+    font-size: 1.5rem;
+}
+
+.estimator-btn {
+    width: 100%;
+    text-align: center;
+    margin-top: 0.5rem;
+}
+
+/* Pricing Reference */
+.pricing-reference {
+    background: var(--white);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1.25rem;
+}
+
+.pricing-reference h4 {
+    font-size: 0.9rem;
+    color: var(--text-color);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.pricing-breakdown-list {
+    list-style: none;
+    margin: 0 0 1rem 0;
+    padding: 0;
+}
+
+.pricing-breakdown-list li {
+    padding: 0.5rem 0;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.pricing-breakdown-list li:last-child {
+    border-bottom: none;
+}
+
+.pricing-breakdown-list strong {
+    color: var(--primary-color);
+}
+
+.pricing-examples {
+    background: var(--secondary-color);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+}
+
+.examples-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-light);
+    margin-bottom: 0.5rem;
+}
+
+.example-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    padding: 0.25rem 0;
+    color: var(--text-color);
+}
+
+.example-row span:last-child {
+    font-weight: 600;
+    color: var(--primary-color);
 }
 
 /* ==================== */
@@ -1296,10 +1453,6 @@ footer p {
     }
 
     /* Pricing */
-    .pricing-options {
-        grid-template-columns: 1fr;
-    }
-
     #pricing {
         padding: 4rem 1.5rem;
     }
@@ -1336,63 +1489,47 @@ footer p {
         border-radius: 0 15px 15px 0;
     }
 
-    /* Pricing Table Mobile */
-    .pricing-table-wrapper {
-        margin-bottom: 2rem;
+    /* Estimator Mobile */
+    .estimator-container {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
     }
 
-    .pricing-table th.feature-col {
-        width: 35%;
+    .estimator-services h3 {
+        font-size: 1.25rem;
     }
 
-    .pricing-table th.plan-col {
-        width: 32.5%;
+    .service-checkbox {
+        padding: 0.6rem 0.75rem;
     }
 
-    .plan-header {
-        padding: 1.25rem 0.75rem;
+    .checkbox-custom {
+        width: 20px;
+        height: 20px;
     }
 
-    .plan-header h3 {
-        font-size: 1.1rem;
+    .checkbox-label {
+        font-size: 0.9rem;
     }
 
-    .plan-location {
-        font-size: 0.7rem;
+    .result-card {
+        position: static;
+        padding: 1.25rem;
     }
 
-    .plan-price {
-        font-size: 1.75rem;
+    .visit-type-value {
+        font-size: 1.25rem;
     }
 
-    .plan-breakdown {
-        font-size: 0.65rem;
+    .pricing-reference {
+        padding: 1rem;
     }
 
-    .pricing-table td {
-        padding: 0.75rem 0.5rem;
+    .pricing-breakdown-list li {
         font-size: 0.85rem;
     }
 
-    .pricing-table td.feature-label {
-        font-size: 0.8rem;
-    }
-
-    .pricing-table td.check,
-    .pricing-table td.dash {
-        font-size: 1rem;
-    }
-
-    .pricing-addons {
-        margin-bottom: 2rem;
-    }
-
-    .addon-list {
-        gap: 0.5rem;
-    }
-
-    .addon-item {
-        padding: 0.5rem 1rem;
+    .example-row {
         font-size: 0.8rem;
     }
 

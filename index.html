@@ -111,84 +111,154 @@
 
         <section id="pricing" class="fade-in">
             <h2>Pricing</h2>
-            <p class="pricing-intro">We believe in clear, upfront communication about costs. Each 30-minute consultation focuses on one topic or concern—choose the type that works best for you and your pet.</p>
+            <p class="pricing-intro">Get an estimate for your visit. Select the services you need and we'll help you choose the right appointment type.</p>
 
-            <div class="pricing-table-wrapper">
-                <table class="pricing-table">
-                    <thead>
-                        <tr>
-                            <th class="feature-col"></th>
-                            <th class="plan-col">
-                                <div class="plan-header">
-                                    <h3>Virtual</h3>
-                                    <p class="plan-location">Anywhere in Ohio</p>
-                                    <p class="plan-price">$75</p>
-                                </div>
-                            </th>
-                            <th class="plan-col">
-                                <div class="plan-header">
-                                    <h3>In-Person</h3>
-                                    <p class="plan-location">Greater Cleveland Area</p>
-                                    <p class="plan-price">$175</p>
-                                    <p class="plan-breakdown">$75 consultation + $100 travel</p>
-                                </div>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="feature-label">30-minute consultation (one topic)</td>
-                            <td class="check">✓</td>
-                            <td class="check">✓</td>
-                        </tr>
-                        <tr>
-                            <td class="feature-label">Wellness & preventive guidance</td>
-                            <td class="check">✓</td>
-                            <td class="check">✓</td>
-                        </tr>
-                        <tr>
-                            <td class="feature-label">Behavioral medicine</td>
-                            <td class="check">✓</td>
-                            <td class="check">✓</td>
-                        </tr>
-                        <tr>
-                            <td class="feature-label">Allergy management</td>
-                            <td class="check">✓</td>
-                            <td class="check">✓</td>
-                        </tr>
-                        <tr>
-                            <td class="feature-label">Chronic disease management</td>
-                            <td class="check">✓</td>
-                            <td class="check">✓</td>
-                        </tr>
-                        <tr>
-                            <td class="feature-label">Urgent care (non-emergency)</td>
-                            <td class="check">✓</td>
-                            <td class="check">✓</td>
-                        </tr>
-                        <tr>
-                            <td class="feature-label">Physical examination</td>
-                            <td class="dash">—</td>
-                            <td class="check">✓</td>
-                        </tr>
-                        <tr>
-                            <td class="feature-label">Hands-on procedures</td>
-                            <td class="dash">—</td>
-                            <td class="check">✓</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <p class="table-note">✓ indicates what type of concern can be addressed during a consultation</p>
-            </div>
+            <div class="estimator-container">
+                <div class="estimator-services">
+                    <h3>What do you need help with?</h3>
+                    <p class="estimator-subtitle">Select all that apply</p>
 
-            <div class="pricing-addons">
-                <h3>Add-On Services</h3>
-                <p>Available during in-person visits. Pricing varies based on specific needs.</p>
-                <div class="addon-list">
-                    <span class="addon-item">Vaccinations</span>
-                    <span class="addon-item">Lab work</span>
-                    <span class="addon-item">Medications</span>
-                    <span class="addon-item">Extended consultations</span>
+                    <div class="service-category">
+                        <h4>Available Virtual or In-Person</h4>
+                        <div class="service-options">
+                            <label class="service-checkbox">
+                                <input type="checkbox" name="service" value="diet" data-type="virtual" data-time="15">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">Diet recommendations</span>
+                            </label>
+                            <label class="service-checkbox">
+                                <input type="checkbox" name="service" value="preventatives" data-type="virtual" data-time="15">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">Preventatives (flea, tick, heartworm)</span>
+                            </label>
+                            <label class="service-checkbox">
+                                <input type="checkbox" name="service" value="supplements" data-type="virtual" data-time="10">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">Supplement recommendations</span>
+                            </label>
+                            <label class="service-checkbox">
+                                <input type="checkbox" name="service" value="mild-infection" data-type="virtual" data-time="20">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">Mild infection or superficial wound</span>
+                            </label>
+                            <label class="service-checkbox">
+                                <input type="checkbox" name="service" value="gi-issues" data-type="virtual" data-time="20">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">Mild diarrhea or vomiting</span>
+                            </label>
+                            <label class="service-checkbox">
+                                <input type="checkbox" name="service" value="behavior" data-type="virtual" data-time="30">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">Behavioral consultation</span>
+                            </label>
+                            <label class="service-checkbox">
+                                <input type="checkbox" name="service" value="allergy" data-type="virtual" data-time="25">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">Allergy management</span>
+                            </label>
+                            <label class="service-checkbox">
+                                <input type="checkbox" name="service" value="chronic" data-type="virtual" data-time="25">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">Chronic disease management</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="service-category">
+                        <h4>Requires In-Person Visit</h4>
+                        <div class="service-options">
+                            <label class="service-checkbox">
+                                <input type="checkbox" name="service" value="exam" data-type="in-person" data-time="20">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">Physical examination</span>
+                            </label>
+                            <label class="service-checkbox">
+                                <input type="checkbox" name="service" value="vaccines" data-type="in-person" data-time="15">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">Vaccinations</span>
+                            </label>
+                            <label class="service-checkbox">
+                                <input type="checkbox" name="service" value="labwork" data-type="in-person" data-time="20">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">Lab work (blood, urine, etc.)</span>
+                            </label>
+                            <label class="service-checkbox">
+                                <input type="checkbox" name="service" value="procedure" data-type="in-person" data-time="30">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">Hands-on procedure</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="estimator-result">
+                    <div class="result-card">
+                        <h3>Your Estimate</h3>
+
+                        <div class="result-empty" id="result-empty">
+                            <p>Select services above to see your estimate</p>
+                        </div>
+
+                        <div class="result-content" id="result-content" style="display: none;">
+                            <div class="visit-type" id="visit-type">
+                                <span class="visit-type-label">Recommended</span>
+                                <span class="visit-type-value" id="visit-type-value">Virtual Visit</span>
+                                <span class="visit-type-location" id="visit-type-location">Anywhere in Ohio</span>
+                            </div>
+
+                            <div class="in-person-notice" id="in-person-notice" style="display: none;">
+                                <p>Some selected services require an in-person visit in the Greater Cleveland area.</p>
+                            </div>
+
+                            <div class="duration-selector">
+                                <label for="duration">Appointment length:</label>
+                                <select id="duration">
+                                    <option value="30">30 minutes</option>
+                                    <option value="60">1 hour</option>
+                                    <option value="90">1.5 hours</option>
+                                    <option value="120">2 hours</option>
+                                </select>
+                                <p class="duration-suggestion" id="duration-suggestion"></p>
+                            </div>
+
+                            <div class="price-breakdown">
+                                <div class="price-line">
+                                    <span>Consultation fee</span>
+                                    <span id="consultation-fee">$75</span>
+                                </div>
+                                <div class="price-line travel-fee" id="travel-fee-line" style="display: none;">
+                                    <span>Travel fee</span>
+                                    <span>$100</span>
+                                </div>
+                                <div class="price-total">
+                                    <span>Estimated Total</span>
+                                    <span id="total-price">$75</span>
+                                </div>
+                            </div>
+
+                            <a href="#contact" class="btn estimator-btn">Book Appointment</a>
+                        </div>
+                    </div>
+
+                    <div class="pricing-reference">
+                        <h4>How Pricing Works</h4>
+                        <ul class="pricing-breakdown-list">
+                            <li><strong>$75</strong> for the first 30 minutes</li>
+                            <li><strong>$50</strong> per additional 30 minutes</li>
+                            <li><strong>$100</strong> travel fee for in-person visits</li>
+                        </ul>
+                        <div class="pricing-examples">
+                            <p class="examples-label">Examples:</p>
+                            <div class="example-row">
+                                <span>1 hour virtual</span>
+                                <span>$125</span>
+                            </div>
+                            <div class="example-row">
+                                <span>1 hour in-person</span>
+                                <span>$225</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 

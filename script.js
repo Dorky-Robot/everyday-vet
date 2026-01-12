@@ -132,6 +132,103 @@ function isMobile() {
     return window.innerWidth <= 768;
 }
 
+// Visit Estimator
+function initEstimator() {
+    const checkboxes = document.querySelectorAll('.service-checkbox input');
+    const durationSelect = document.getElementById('duration');
+    const resultEmpty = document.getElementById('result-empty');
+    const resultContent = document.getElementById('result-content');
+    const visitTypeValue = document.getElementById('visit-type-value');
+    const visitTypeLocation = document.getElementById('visit-type-location');
+    const inPersonNotice = document.getElementById('in-person-notice');
+    const travelFeeLine = document.getElementById('travel-fee-line');
+    const consultationFee = document.getElementById('consultation-fee');
+    const totalPrice = document.getElementById('total-price');
+    const durationSuggestion = document.getElementById('duration-suggestion');
+
+    if (!checkboxes.length) return;
+
+    // Pricing: $75 for first 30 min, $50 per additional 30 min, $100 travel fee
+    const FIRST_30_MIN = 75;
+    const ADDITIONAL_30_MIN = 50;
+    const TRAVEL_FEE = 100;
+
+    function calculateConsultationFee(duration) {
+        if (duration <= 30) return FIRST_30_MIN;
+        const additionalBlocks = (duration - 30) / 30;
+        return FIRST_30_MIN + (additionalBlocks * ADDITIONAL_30_MIN);
+    }
+
+    function calculateEstimate() {
+        const selectedServices = document.querySelectorAll('.service-checkbox input:checked');
+
+        if (selectedServices.length === 0) {
+            resultEmpty.style.display = 'block';
+            resultContent.style.display = 'none';
+            return;
+        }
+
+        resultEmpty.style.display = 'none';
+        resultContent.style.display = 'block';
+
+        // Check if any in-person services are selected
+        let requiresInPerson = false;
+        let totalTime = 0;
+
+        selectedServices.forEach(service => {
+            if (service.dataset.type === 'in-person') {
+                requiresInPerson = true;
+            }
+            totalTime += parseInt(service.dataset.time) || 0;
+        });
+
+        // Update visit type
+        if (requiresInPerson) {
+            visitTypeValue.textContent = 'In-Person Visit';
+            visitTypeLocation.textContent = 'Greater Cleveland Area';
+            inPersonNotice.style.display = 'block';
+            travelFeeLine.style.display = 'flex';
+        } else {
+            visitTypeValue.textContent = 'Virtual Visit';
+            visitTypeLocation.textContent = 'Anywhere in Ohio';
+            inPersonNotice.style.display = 'none';
+            travelFeeLine.style.display = 'none';
+        }
+
+        // Suggest duration based on selected services
+        let suggestedDuration = 30;
+        if (totalTime > 90) {
+            suggestedDuration = 120;
+        } else if (totalTime > 60) {
+            suggestedDuration = 90;
+        } else if (totalTime > 30) {
+            suggestedDuration = 60;
+        }
+
+        // Update suggestion text
+        if (totalTime > 30) {
+            durationSuggestion.textContent = `Based on your selections, we recommend ${suggestedDuration === 60 ? '1 hour' : suggestedDuration === 90 ? '1.5 hours' : suggestedDuration === 120 ? '2 hours' : '30 minutes'}`;
+        } else {
+            durationSuggestion.textContent = '';
+        }
+
+        // Calculate price
+        const duration = parseInt(durationSelect.value);
+        const baseFee = calculateConsultationFee(duration);
+        const total = requiresInPerson ? baseFee + TRAVEL_FEE : baseFee;
+
+        consultationFee.textContent = `$${baseFee}`;
+        totalPrice.textContent = `$${total}`;
+    }
+
+    // Add event listeners
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', calculateEstimate);
+    });
+
+    durationSelect.addEventListener('change', calculateEstimate);
+}
+
 // Initialize all effects
 document.addEventListener('DOMContentLoaded', () => {
     initParallax();
@@ -142,6 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initLayeredParallax();
     initNavbarScroll();
     initMobileMenu();
+    initEstimator();
 });
 
 // Reinitialize horizontal scroll on resize

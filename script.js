@@ -207,11 +207,19 @@ function initEstimator() {
 
     function updatePrice() {
         const selectedServices = document.querySelectorAll('.service-checkbox input:checked');
+        const customConcerns = window.getCustomConcerns ? window.getCustomConcerns() : [];
 
         // Check if any in-person services are selected
         let requiresInPerson = false;
         selectedServices.forEach(service => {
             if (service.dataset.type === 'in-person') {
+                requiresInPerson = true;
+            }
+        });
+
+        // Check custom concerns too
+        customConcerns.forEach(concern => {
+            if (concern.type === 'in-person') {
                 requiresInPerson = true;
             }
         });
@@ -226,8 +234,11 @@ function initEstimator() {
 
     function calculateEstimate() {
         const selectedServices = document.querySelectorAll('.service-checkbox input:checked');
+        const customConcerns = window.getCustomConcerns ? window.getCustomConcerns() : [];
 
-        if (selectedServices.length === 0) {
+        const hasSelections = selectedServices.length > 0 || customConcerns.length > 0;
+
+        if (!hasSelections) {
             resultEmpty.style.display = 'block';
             resultContent.style.display = 'none';
             userHasOverridden = false;
@@ -249,6 +260,14 @@ function initEstimator() {
                 requiresInPerson = true;
             }
             totalTime += parseInt(service.dataset.time) || 0;
+        });
+
+        // Include custom concerns in calculation
+        customConcerns.forEach(concern => {
+            if (concern.type === 'in-person') {
+                requiresInPerson = true;
+            }
+            totalTime += concern.time || 0;
         });
 
         // Update visit type
@@ -297,6 +316,214 @@ function initEstimator() {
     durationSlider.addEventListener('input', () => {
         userHasOverridden = true;
         updateSliderDisplay();
+    });
+
+    // Custom concern autocomplete
+    initCustomConcernAutocomplete(calculateEstimate);
+}
+
+// Veterinary concerns database
+const veterinaryConcerns = [
+    // Virtual-eligible concerns
+    { label: 'Anxiety or fear issues', type: 'virtual', time: 30 },
+    { label: 'Aggression concerns', type: 'virtual', time: 30 },
+    { label: 'House soiling / litter box issues', type: 'virtual', time: 25 },
+    { label: 'Excessive barking or meowing', type: 'virtual', time: 20 },
+    { label: 'Separation anxiety', type: 'virtual', time: 30 },
+    { label: 'Leash reactivity', type: 'virtual', time: 25 },
+    { label: 'Food aggression', type: 'virtual', time: 25 },
+    { label: 'Itching or scratching', type: 'virtual', time: 20 },
+    { label: 'Hair loss or bald patches', type: 'virtual', time: 20 },
+    { label: 'Hot spots', type: 'virtual', time: 15 },
+    { label: 'Ear odor or discharge', type: 'virtual', time: 15 },
+    { label: 'Eye discharge or redness', type: 'virtual', time: 15 },
+    { label: 'Coughing', type: 'virtual', time: 20 },
+    { label: 'Sneezing or nasal discharge', type: 'virtual', time: 15 },
+    { label: 'Reverse sneezing', type: 'virtual', time: 15 },
+    { label: 'Bad breath', type: 'virtual', time: 15 },
+    { label: 'Weight loss concerns', type: 'virtual', time: 20 },
+    { label: 'Weight gain / obesity', type: 'virtual', time: 20 },
+    { label: 'Increased thirst or urination', type: 'virtual', time: 20 },
+    { label: 'Decreased appetite', type: 'virtual', time: 20 },
+    { label: 'Picky eating', type: 'virtual', time: 15 },
+    { label: 'Constipation', type: 'virtual', time: 15 },
+    { label: 'Flatulence', type: 'virtual', time: 15 },
+    { label: 'Limping (mild, no trauma)', type: 'virtual', time: 20 },
+    { label: 'Stiffness or mobility issues', type: 'virtual', time: 20 },
+    { label: 'Arthritis management', type: 'virtual', time: 25 },
+    { label: 'Post-surgery follow-up', type: 'virtual', time: 20 },
+    { label: 'Medication questions', type: 'virtual', time: 15 },
+    { label: 'Prescription refill', type: 'virtual', time: 10 },
+    { label: 'Lab results review', type: 'virtual', time: 20 },
+    { label: 'Diabetes management', type: 'virtual', time: 25 },
+    { label: 'Kidney disease management', type: 'virtual', time: 25 },
+    { label: 'Heart disease management', type: 'virtual', time: 25 },
+    { label: 'Thyroid disorder management', type: 'virtual', time: 20 },
+    { label: 'Seizure management', type: 'virtual', time: 25 },
+    { label: 'Cancer supportive care', type: 'virtual', time: 30 },
+    { label: 'Hospice care planning', type: 'virtual', time: 30 },
+    { label: 'Pet insurance questions', type: 'virtual', time: 15 },
+    { label: 'Travel with pets', type: 'virtual', time: 20 },
+    { label: 'Introducing new pet', type: 'virtual', time: 20 },
+    { label: 'Puppy or kitten care', type: 'virtual', time: 25 },
+    { label: 'Lump or bump (assessment)', type: 'virtual', time: 15 },
+    { label: 'Scooting or anal gland issues', type: 'virtual', time: 15 },
+
+    // In-person required
+    { label: 'Nail trim', type: 'in-person', time: 10 },
+    { label: 'Anal gland expression', type: 'in-person', time: 10 },
+    { label: 'Skin scraping or cytology', type: 'in-person', time: 15 },
+    { label: 'Abscess drainage', type: 'in-person', time: 25 },
+    { label: 'Suture or staple removal', type: 'in-person', time: 15 },
+    { label: 'Bandage change', type: 'in-person', time: 15 },
+    { label: 'Fecal sample collection', type: 'in-person', time: 10 },
+    { label: 'Deworming treatment', type: 'in-person', time: 10 },
+    { label: 'Allergy injection', type: 'in-person', time: 15 },
+    { label: 'Insulin training', type: 'in-person', time: 30 },
+    { label: 'Fluid therapy training', type: 'in-person', time: 30 },
+
+    // Not available at mobile practice
+    { label: 'Dental cleaning', type: 'unavailable', time: 0, note: 'Requires anesthesia equipment - referral needed' },
+    { label: 'Tooth extraction', type: 'unavailable', time: 0, note: 'Requires anesthesia equipment - referral needed' },
+    { label: 'Spay surgery', type: 'unavailable', time: 0, note: 'Surgical procedure - referral needed' },
+    { label: 'Neuter surgery', type: 'unavailable', time: 0, note: 'Surgical procedure - referral needed' },
+    { label: 'Mass removal', type: 'unavailable', time: 0, note: 'Surgical procedure - referral needed' },
+    { label: 'X-rays / radiographs', type: 'unavailable', time: 0, note: 'Requires imaging equipment - referral needed' },
+    { label: 'Ultrasound', type: 'unavailable', time: 0, note: 'Requires imaging equipment - referral needed' },
+    { label: 'Emergency care', type: 'unavailable', time: 0, note: 'Please contact 24/7 emergency hospital' },
+    { label: 'Hospitalization', type: 'unavailable', time: 0, note: 'No facility for overnight care - referral needed' },
+    { label: 'Blood transfusion', type: 'unavailable', time: 0, note: 'Requires hospital setting - referral needed' },
+    { label: 'Orthopedic surgery', type: 'unavailable', time: 0, note: 'Specialist referral needed' },
+    { label: 'ACL / cruciate repair', type: 'unavailable', time: 0, note: 'Specialist referral needed' },
+    { label: 'Fracture repair', type: 'unavailable', time: 0, note: 'Specialist referral needed' },
+    { label: 'Eye surgery', type: 'unavailable', time: 0, note: 'Specialist referral needed' },
+    { label: 'Endoscopy', type: 'unavailable', time: 0, note: 'Requires specialized equipment - referral needed' },
+    { label: 'CT scan or MRI', type: 'unavailable', time: 0, note: 'Requires imaging facility - referral needed' },
+];
+
+function initCustomConcernAutocomplete(onChangeCallback) {
+    const input = document.getElementById('custom-concern');
+    const list = document.getElementById('autocomplete-list');
+    const tagsContainer = document.getElementById('custom-concerns-tags');
+
+    if (!input || !list || !tagsContainer) return;
+
+    let selectedConcerns = [];
+    let highlightedIndex = -1;
+
+    function filterConcerns(query) {
+        if (!query) return [];
+        const lowerQuery = query.toLowerCase();
+        return veterinaryConcerns.filter(c =>
+            c.label.toLowerCase().includes(lowerQuery)
+        ).slice(0, 8);
+    }
+
+    function renderList(concerns) {
+        if (concerns.length === 0) {
+            list.classList.remove('active');
+            return;
+        }
+
+        list.innerHTML = concerns.map((c, i) => {
+            const typeLabel = c.type === 'virtual' ? 'Can discuss virtually' :
+                             c.type === 'in-person' ? 'Requires in-person visit' :
+                             c.note || 'Not available';
+            const unavailableClass = c.type === 'unavailable' ? 'autocomplete-item-unavailable' : '';
+
+            return `
+                <div class="autocomplete-item ${unavailableClass}" data-index="${i}">
+                    <div class="autocomplete-item-label">${c.label}</div>
+                    <div class="autocomplete-item-type">${typeLabel}</div>
+                </div>
+            `;
+        }).join('');
+
+        list.classList.add('active');
+        highlightedIndex = -1;
+    }
+
+    function selectConcern(concern) {
+        if (selectedConcerns.find(c => c.label === concern.label)) return;
+
+        selectedConcerns.push(concern);
+        renderTags();
+        input.value = '';
+        list.classList.remove('active');
+        onChangeCallback();
+    }
+
+    function removeConcern(label) {
+        selectedConcerns = selectedConcerns.filter(c => c.label !== label);
+        renderTags();
+        onChangeCallback();
+    }
+
+    function renderTags() {
+        tagsContainer.innerHTML = selectedConcerns.map(c => {
+            const tagClass = c.type === 'in-person' ? 'in-person' :
+                            c.type === 'unavailable' ? 'unavailable' : '';
+            return `
+                <span class="concern-tag ${tagClass}" data-label="${c.label}" data-type="${c.type}" data-time="${c.time}">
+                    ${c.label}
+                    <button class="concern-tag-remove" data-label="${c.label}">&times;</button>
+                </span>
+            `;
+        }).join('');
+
+        // Add remove event listeners
+        tagsContainer.querySelectorAll('.concern-tag-remove').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                removeConcern(btn.dataset.label);
+            });
+        });
+    }
+
+    // Get custom concerns for estimate calculation
+    window.getCustomConcerns = function() {
+        return selectedConcerns;
+    };
+
+    input.addEventListener('input', () => {
+        const filtered = filterConcerns(input.value);
+        renderList(filtered);
+    });
+
+    input.addEventListener('keydown', (e) => {
+        const items = list.querySelectorAll('.autocomplete-item');
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            highlightedIndex = Math.min(highlightedIndex + 1, items.length - 1);
+            items.forEach((item, i) => item.classList.toggle('highlighted', i === highlightedIndex));
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            highlightedIndex = Math.max(highlightedIndex - 1, 0);
+            items.forEach((item, i) => item.classList.toggle('highlighted', i === highlightedIndex));
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (highlightedIndex >= 0 && items[highlightedIndex]) {
+                const filtered = filterConcerns(input.value);
+                selectConcern(filtered[highlightedIndex]);
+            }
+        } else if (e.key === 'Escape') {
+            list.classList.remove('active');
+        }
+    });
+
+    list.addEventListener('click', (e) => {
+        const item = e.target.closest('.autocomplete-item');
+        if (item) {
+            const filtered = filterConcerns(input.value);
+            selectConcern(filtered[parseInt(item.dataset.index)]);
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.custom-concern-wrapper')) {
+            list.classList.remove('active');
+        }
     });
 }
 

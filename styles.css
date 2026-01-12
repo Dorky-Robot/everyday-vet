@@ -899,6 +899,134 @@ nav {
     transition: all 0.2s ease;
 }
 
+/* Custom Concern Autocomplete */
+.custom-concern-wrapper {
+    position: relative;
+}
+
+.custom-concern-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 0.95rem;
+    color: var(--text-color);
+    background: var(--white);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.custom-concern-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(233, 30, 140, 0.1);
+}
+
+.custom-concern-input::placeholder {
+    color: var(--text-light);
+}
+
+.autocomplete-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--white);
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 10;
+    display: none;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.autocomplete-list.active {
+    display: block;
+}
+
+.autocomplete-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.highlighted {
+    background: var(--secondary-color);
+}
+
+.autocomplete-item-label {
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
+
+.autocomplete-item-type {
+    font-size: 0.75rem;
+    color: var(--accent-color);
+    margin-top: 0.15rem;
+}
+
+.autocomplete-item-unavailable {
+    opacity: 0.6;
+}
+
+.autocomplete-item-unavailable .autocomplete-item-type {
+    color: #e67700;
+}
+
+.custom-concerns-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.concern-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--secondary-color);
+    color: var(--primary-color);
+    padding: 0.4rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid rgba(233, 30, 140, 0.2);
+}
+
+.concern-tag-remove {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    cursor: pointer;
+    padding: 0;
+    font-size: 1.1rem;
+    line-height: 1;
+    opacity: 0.7;
+    transition: opacity 0.15s ease;
+}
+
+.concern-tag-remove:hover {
+    opacity: 1;
+}
+
+.concern-tag.in-person {
+    background: #fff0f5;
+    border-color: var(--primary-color);
+}
+
+.concern-tag.unavailable {
+    background: #fff8e6;
+    color: #e67700;
+    border-color: #ffd480;
+}
+
 /* Estimator Result Card */
 .estimator-result {
     display: flex;

@@ -122,9 +122,14 @@
                         <h4>Available Virtual or In-Person</h4>
                         <div class="service-options">
                             <label class="service-checkbox">
+                                <input type="checkbox" name="service" value="new-pet" data-type="virtual" data-time="20">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">New pet consultation</span>
+                            </label>
+                            <label class="service-checkbox">
                                 <input type="checkbox" name="service" value="diet" data-type="virtual" data-time="15">
                                 <span class="checkbox-custom"></span>
-                                <span class="checkbox-label">Diet recommendations</span>
+                                <span class="checkbox-label">Diet & nutrition guidance</span>
                             </label>
                             <label class="service-checkbox">
                                 <input type="checkbox" name="service" value="preventatives" data-type="virtual" data-time="15">
@@ -132,34 +137,39 @@
                                 <span class="checkbox-label">Preventatives (flea, tick, heartworm)</span>
                             </label>
                             <label class="service-checkbox">
-                                <input type="checkbox" name="service" value="supplements" data-type="virtual" data-time="10">
-                                <span class="checkbox-custom"></span>
-                                <span class="checkbox-label">Supplement recommendations</span>
-                            </label>
-                            <label class="service-checkbox">
-                                <input type="checkbox" name="service" value="mild-infection" data-type="virtual" data-time="20">
-                                <span class="checkbox-custom"></span>
-                                <span class="checkbox-label">Mild infection or superficial wound</span>
-                            </label>
-                            <label class="service-checkbox">
-                                <input type="checkbox" name="service" value="gi-issues" data-type="virtual" data-time="20">
-                                <span class="checkbox-custom"></span>
-                                <span class="checkbox-label">Mild diarrhea or vomiting</span>
-                            </label>
-                            <label class="service-checkbox">
                                 <input type="checkbox" name="service" value="behavior" data-type="virtual" data-time="30">
                                 <span class="checkbox-custom"></span>
                                 <span class="checkbox-label">Behavioral consultation</span>
                             </label>
                             <label class="service-checkbox">
-                                <input type="checkbox" name="service" value="allergy" data-type="virtual" data-time="25">
+                                <input type="checkbox" name="service" value="skin-issues" data-type="virtual" data-time="20">
                                 <span class="checkbox-custom"></span>
-                                <span class="checkbox-label">Allergy management</span>
+                                <span class="checkbox-label">Skin issues or allergies</span>
+                            </label>
+                            <label class="service-checkbox">
+                                <input type="checkbox" name="service" value="gi-issues" data-type="virtual" data-time="20">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">Digestive issues (vomiting, diarrhea)</span>
                             </label>
                             <label class="service-checkbox">
                                 <input type="checkbox" name="service" value="chronic" data-type="virtual" data-time="25">
                                 <span class="checkbox-custom"></span>
                                 <span class="checkbox-label">Chronic disease management</span>
+                            </label>
+                            <label class="service-checkbox">
+                                <input type="checkbox" name="service" value="senior" data-type="virtual" data-time="25">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">Senior pet care</span>
+                            </label>
+                            <label class="service-checkbox">
+                                <input type="checkbox" name="service" value="second-opinion" data-type="virtual" data-time="30">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">Second opinion</span>
+                            </label>
+                            <label class="service-checkbox">
+                                <input type="checkbox" name="service" value="quality-of-life" data-type="virtual" data-time="30">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">Quality of life consultation</span>
                             </label>
                         </div>
                     </div>
@@ -178,15 +188,54 @@
                                 <span class="checkbox-label">Vaccinations</span>
                             </label>
                             <label class="service-checkbox">
-                                <input type="checkbox" name="service" value="labwork" data-type="in-person" data-time="20">
+                                <input type="checkbox" name="service" value="labwork" data-type="in-person" data-time="15">
                                 <span class="checkbox-custom"></span>
-                                <span class="checkbox-label">Lab work (blood, urine, etc.)</span>
+                                <span class="checkbox-label">Lab work (blood draw, urine collection)</span>
                             </label>
                             <label class="service-checkbox">
-                                <input type="checkbox" name="service" value="procedure" data-type="in-person" data-time="30">
+                                <input type="checkbox" name="service" value="ear-treatment" data-type="in-person" data-time="15">
                                 <span class="checkbox-custom"></span>
-                                <span class="checkbox-label">Hands-on procedure</span>
+                                <span class="checkbox-label">Ear cleaning or treatment</span>
                             </label>
+                            <label class="service-checkbox">
+                                <input type="checkbox" name="service" value="wound-care" data-type="in-person" data-time="20">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">Minor wound care</span>
+                            </label>
+                            <label class="service-checkbox">
+                                <input type="checkbox" name="service" value="subq-fluids" data-type="in-person" data-time="20">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">Subcutaneous fluid administration</span>
+                            </label>
+                            <label class="service-checkbox">
+                                <input type="checkbox" name="service" value="injection" data-type="in-person" data-time="10">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">Injection (medication, B12, etc.)</span>
+                            </label>
+                            <label class="service-checkbox">
+                                <input type="checkbox" name="service" value="microchip" data-type="in-person" data-time="10">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">Microchipping</span>
+                            </label>
+                            <label class="service-checkbox">
+                                <input type="checkbox" name="service" value="health-cert" data-type="in-person" data-time="25">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">Health certificate</span>
+                            </label>
+                            <label class="service-checkbox">
+                                <input type="checkbox" name="service" value="euthanasia" data-type="in-person" data-time="45">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">End-of-life care / euthanasia</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="service-category">
+                        <h4>Something Else?</h4>
+                        <div class="custom-concern-wrapper">
+                            <input type="text" id="custom-concern" class="custom-concern-input" placeholder="Type your concern..." autocomplete="off">
+                            <div id="autocomplete-list" class="autocomplete-list"></div>
+                            <div id="custom-concerns-tags" class="custom-concerns-tags"></div>
                         </div>
                     </div>
                 </div>

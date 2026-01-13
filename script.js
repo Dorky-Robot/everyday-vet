@@ -1568,12 +1568,14 @@ function initCustomConcernAutocomplete(onChangeCallback) {
         renderTags();
         input.value = '';
         list.classList.remove('active');
+        saveCurrentPetSelections();
         onChangeCallback();
     }
 
     function removeConcern(label) {
         selectedConcerns = selectedConcerns.filter(c => c.label !== label);
         renderTags();
+        saveCurrentPetSelections();
         onChangeCallback();
     }
 

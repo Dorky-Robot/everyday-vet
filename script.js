@@ -564,14 +564,30 @@ function initEstimatorSteps() {
         }
     }
 
+    // Reset form state (clear pets and storage)
+    function resetFormState() {
+        pets = [];
+        currentPetIndex = -1;
+        clearStorage();
+        renderPetTabs();
+    }
+
     // Dot click navigation
     dots.forEach((dot, index) => {
-        dot.addEventListener('click', () => showStep(index));
+        dot.addEventListener('click', () => {
+            // Going back to step 0 resets everything
+            if (index === 0) {
+                resetFormState();
+            }
+            showStep(index);
+        });
     });
 
     // Customer type button clicks
     if (btnNewCustomer) {
         btnNewCustomer.addEventListener('click', () => {
+            // Clear any existing pet data when choosing "New Customer"
+            resetFormState();
             showContentForType('new');
             showStep(1);
         });

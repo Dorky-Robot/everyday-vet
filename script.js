@@ -9,10 +9,11 @@ let currentPetIndex = -1;
 const STORAGE_KEY = 'everydayvet_schedule';
 
 // Save state to localStorage
-function saveToStorage() {
+function saveToStorage(step) {
     const state = {
         pets: pets,
-        currentPetIndex: currentPetIndex
+        currentPetIndex: currentPetIndex,
+        currentStep: step !== undefined ? step : (window._currentEstimatorStep || 0)
     };
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -30,6 +31,7 @@ function loadFromStorage() {
             if (state.pets && Array.isArray(state.pets)) {
                 pets = state.pets;
                 currentPetIndex = state.currentPetIndex ?? (pets.length > 0 ? 0 : -1);
+                window._savedEstimatorStep = state.currentStep || 0;
                 return true;
             }
         }
@@ -529,11 +531,12 @@ function initEstimatorSteps() {
     if (!wrapper || !dots || !steps) return;
 
     let currentStep = 0;
-    let customerType = 'new'; // default
+    let customerType = 'existing'; // default to existing (most users will be returning)
 
     // Show specific step
     function showStep(stepIndex) {
         currentStep = stepIndex;
+        window._currentEstimatorStep = stepIndex;
 
         // Update steps visibility
         steps.forEach((step, index) => {
@@ -544,6 +547,9 @@ function initEstimatorSteps() {
         dots.forEach((dot, index) => {
             dot.classList.toggle('active', index === stepIndex);
         });
+
+        // Save step to localStorage
+        saveToStorage(stepIndex);
     }
 
     // Show appropriate content for step 2
@@ -578,9 +584,20 @@ function initEstimatorSteps() {
         });
     }
 
-    // Initial state
-    showContentForType('new');
-    showStep(0);
+    // Initial state - check for saved data
+    if (pets.length > 0 && window._savedEstimatorStep !== undefined) {
+        // User has saved pets, restore to their step
+        showContentForType('existing');
+        showStep(window._savedEstimatorStep);
+    } else if (pets.length > 0) {
+        // Has pets but no saved step, go to services
+        showContentForType('existing');
+        showStep(1);
+    } else {
+        // No saved data, start fresh
+        showContentForType('new');
+        showStep(0);
+    }
 }
 
 // Category Accordions

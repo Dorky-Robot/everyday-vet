@@ -9,11 +9,12 @@ let currentPetIndex = -1;
 const STORAGE_KEY = 'everydayvet_schedule';
 
 // Save state to localStorage
-function saveToStorage(step) {
+function saveToStorage(step, customerType) {
     const state = {
         pets: pets,
         currentPetIndex: currentPetIndex,
-        currentStep: step !== undefined ? step : (window._currentEstimatorStep || 0)
+        currentStep: step !== undefined ? step : (window._currentEstimatorStep || 0),
+        customerType: customerType !== undefined ? customerType : (window._currentCustomerType || 'new')
     };
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -28,12 +29,11 @@ function loadFromStorage() {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
             const state = JSON.parse(saved);
-            if (state.pets && Array.isArray(state.pets)) {
-                pets = state.pets;
-                currentPetIndex = state.currentPetIndex ?? (pets.length > 0 ? 0 : -1);
-                window._savedEstimatorStep = state.currentStep || 0;
-                return true;
-            }
+            pets = state.pets && Array.isArray(state.pets) ? state.pets : [];
+            currentPetIndex = state.currentPetIndex ?? (pets.length > 0 ? 0 : -1);
+            window._savedEstimatorStep = state.currentStep ?? 0;
+            window._savedCustomerType = state.customerType || 'new';
+            return true;
         }
     } catch (e) {
         console.warn('Could not load from localStorage:', e);
@@ -548,13 +548,14 @@ function initEstimatorSteps() {
             dot.classList.toggle('active', index === stepIndex);
         });
 
-        // Save step to localStorage
-        saveToStorage(stepIndex);
+        // Save step and customer type to localStorage
+        saveToStorage(stepIndex, customerType);
     }
 
-    // Show appropriate content for step 2
+    // Show appropriate content for step 1
     function showContentForType(type) {
         customerType = type;
+        window._currentCustomerType = type;
         if (type === 'new') {
             newCustomerContent.style.display = 'block';
             existingCustomerContent.style.display = 'none';
@@ -601,9 +602,10 @@ function initEstimatorSteps() {
     }
 
     // Initial state - check for saved data
-    if (pets.length > 0 && window._savedEstimatorStep !== undefined) {
-        // User has saved pets, restore to their step
-        showContentForType('existing');
+    if (window._savedEstimatorStep !== undefined && window._savedEstimatorStep > 0) {
+        // User has a saved step, restore their position
+        const savedType = window._savedCustomerType || 'new';
+        showContentForType(savedType);
         showStep(window._savedEstimatorStep);
     } else if (pets.length > 0) {
         // Has pets but no saved step, go to services

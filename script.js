@@ -733,6 +733,85 @@ function initEstimator() {
         return Math.max(30, totalTime);
     }
 
+    // Calculate time for a single pet based on stored service IDs
+    function calculatePetTime(pet) {
+        if (!pet.selectedServices || pet.selectedServices.length === 0) {
+            // Check custom concerns
+            if (!pet.customConcerns || pet.customConcerns.length === 0) {
+                return 0;
+            }
+        }
+
+        const groupedTimes = {};
+
+        // Get service times from config
+        pet.selectedServices.forEach(serviceId => {
+            // Find the service in config
+            let serviceTime = 10; // default
+            let serviceLabel = serviceId;
+
+            for (const category of SERVICES_CONFIG.categories) {
+                if (category.items) {
+                    const item = category.items.find(i => i.id === serviceId);
+                    if (item) {
+                        serviceTime = item.time || 10;
+                        serviceLabel = item.label || serviceId;
+                        break;
+                    }
+                }
+            }
+
+            const group = getServiceGroup(serviceId, serviceLabel);
+            if (!groupedTimes[group]) {
+                groupedTimes[group] = [];
+            }
+            groupedTimes[group].push(serviceTime);
+        });
+
+        // Add custom concerns
+        if (pet.customConcerns) {
+            pet.customConcerns.forEach(concern => {
+                const group = getServiceGroup(concern.label, concern.label);
+                const time = concern.time || 10;
+
+                if (!groupedTimes[group]) {
+                    groupedTimes[group] = [];
+                }
+                groupedTimes[group].push(time);
+            });
+        }
+
+        // Calculate total with smart grouping
+        let totalTime = 0;
+        for (const [group, times] of Object.entries(groupedTimes)) {
+            if (times.length === 0) continue;
+            times.sort((a, b) => b - a);
+            const maxTime = times[0];
+            const extraItems = Math.min(times.length - 1, 2);
+            const extraTime = extraItems * 5;
+            totalTime += maxTime + extraTime;
+        }
+
+        return totalTime;
+    }
+
+    // Calculate total time across all pets
+    function calculateTotalTimeAllPets() {
+        if (pets.length === 0) {
+            // Fall back to DOM selection for single-pet mode
+            const selectedServices = document.querySelectorAll('.service-checkbox input:checked');
+            const customConcerns = window.getCustomConcerns ? window.getCustomConcerns() : [];
+            return calculateSmartTime(selectedServices, customConcerns);
+        }
+
+        let totalTime = 0;
+        pets.forEach(pet => {
+            totalTime += calculatePetTime(pet);
+        });
+
+        return Math.max(30, totalTime);
+    }
+
     function formatDuration(minutes) {
         if (minutes === 30) return '30 minutes';
         if (minutes === 60) return '1 hour';
@@ -1020,24 +1099,28 @@ function initEstimator() {
         resultEmpty.style.display = 'none';
         resultContent.style.display = 'block';
 
-        // Check if any in-person services are selected
+        // Check if any in-person services are selected (across ALL pets)
         let requiresInPerson = false;
 
-        selectedServices.forEach(service => {
-            if (service.dataset.type === 'in-person') {
-                requiresInPerson = true;
-            }
-        });
+        if (pets.length > 0) {
+            // Check all pets for in-person services
+            requiresInPerson = pets.some(pet => checkPetRequiresInPerson(pet));
+        } else {
+            // Single pet mode - check DOM
+            selectedServices.forEach(service => {
+                if (service.dataset.type === 'in-person') {
+                    requiresInPerson = true;
+                }
+            });
+            customConcerns.forEach(concern => {
+                if (concern.type === 'in-person') {
+                    requiresInPerson = true;
+                }
+            });
+        }
 
-        // Include custom concerns in calculation
-        customConcerns.forEach(concern => {
-            if (concern.type === 'in-person') {
-                requiresInPerson = true;
-            }
-        });
-
-        // Use smart time calculation that groups related topics
-        const totalTime = calculateSmartTime(selectedServices, customConcerns);
+        // Use total time calculation across ALL pets
+        const totalTime = calculateTotalTimeAllPets();
         totalEstimatedTime = totalTime;
 
         // Update visit type

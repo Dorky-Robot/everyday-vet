@@ -120,7 +120,8 @@ function renderPetTabs() {
 
         tab.addEventListener('click', (e) => {
             e.stopPropagation();
-            if (e.target.classList.contains('remove-pet')) {
+            const removeBtn = e.target.closest('.remove-pet');
+            if (removeBtn) {
                 removePet(index);
             } else {
                 selectPet(index);

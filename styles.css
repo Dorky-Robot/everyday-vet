@@ -1206,8 +1206,13 @@ nav {
 }
 
 .category-accordion.expanded .category-content {
-    max-height: 500px;
+    max-height: 800px;
     padding: 0.75rem 1rem 1rem;
+    overflow-y: auto;
+}
+
+/* Only the "Something Else?" accordion needs overflow visible for autocomplete dropdown */
+.category-accordion[data-category="other"].expanded .category-content {
     overflow: visible;
 }
 

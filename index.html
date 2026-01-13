@@ -240,19 +240,10 @@
                                 <p id="multiple-visits-text">This will likely require multiple visits to address everything thoroughly.</p>
                             </div>
 
-                            <div class="duration-selector">
-                                <label>Appointment length <span class="per-visit-label" id="per-visit-label">(per visit)</span>:</label>
-                                <div class="slider-container">
-                                    <input type="range" id="duration-slider" min="30" max="120" step="30" value="30">
-                                    <div class="slider-labels">
-                                        <span>30 min</span>
-                                        <span>1 hr</span>
-                                        <span>1.5 hr</span>
-                                        <span>2 hr</span>
-                                    </div>
-                                </div>
-                                <p class="duration-display" id="duration-display">30 minutes</p>
-                                <p class="duration-warning" id="duration-warning" style="display: none;">This may not be enough time for all selected services</p>
+                            <div class="estimated-duration">
+                                <span class="duration-label">Estimated Appointment Length</span>
+                                <span class="duration-value" id="duration-display">30 minutes</span>
+                                <p class="duration-reasoning" id="duration-reasoning"></p>
                             </div>
 
                             <div class="price-breakdown">

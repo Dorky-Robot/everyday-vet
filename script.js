@@ -842,12 +842,176 @@ function updateChiclets(accordion) {
     });
 }
 
+// Smart Appointment Time Estimator
+// Understands that many activities overlap or don't accumulate linearly
+function estimateAppointmentTime(appointmentData) {
+    const { adviceTopics, vaccines, labs, procedures, physicalExam, customConcerns, numPets } = appointmentData;
+
+    let totalMinutes = 0;
+    let reasoning = [];
+
+    // Base setup time for any appointment (greeting, getting settled)
+    const baseSetupTime = 5;
+    totalMinutes += baseSetupTime;
+
+    // ADVICE & DISCUSSION TOPICS
+    // These largely overlap - discussing 3 topics vs 6 topics doesn't double the time
+    // The vet addresses related concerns together naturally
+    if (adviceTopics.length > 0 || customConcerns.length > 0) {
+        const totalTopics = adviceTopics.length + customConcerns.length;
+        // Base discussion time: 15 min
+        // Additional topics add diminishing time: +3 min for topics 2-3, +2 min for 4-6, +1 min beyond
+        let discussionTime = 15;
+        if (totalTopics > 1) {
+            const tier1 = Math.min(totalTopics - 1, 2); // topics 2-3
+            const tier2 = Math.min(Math.max(totalTopics - 3, 0), 3); // topics 4-6
+            const tier3 = Math.max(totalTopics - 6, 0); // topics 7+
+            discussionTime += (tier1 * 3) + (tier2 * 2) + (tier1 * 1);
+        }
+        totalMinutes += discussionTime;
+        reasoning.push(`Discussion: ~${discussionTime} min`);
+    }
+
+    // PHYSICAL EXAMINATION
+    // Comprehensive exam is thorough; quick exam (for vaccines) is faster
+    if (physicalExam === 'comprehensive') {
+        totalMinutes += 15;
+        reasoning.push('Comprehensive exam: ~15 min');
+    } else if (physicalExam === 'quick') {
+        totalMinutes += 5;
+        reasoning.push('Quick exam: ~5 min');
+    }
+
+    // VACCINES
+    // The prep is what takes time, not the injections themselves
+    // 1 vaccine or 10 vaccines = similar time (prep once, inject quickly)
+    if (vaccines.length > 0) {
+        // Prep time (drawing up vaccines, organizing): 5 min
+        // Actual injections: ~1 min total regardless of count
+        const vaccineTime = 6;
+        totalMinutes += vaccineTime;
+        reasoning.push(`Vaccines (${vaccines.length}): ~${vaccineTime} min`);
+    }
+
+    // LAB WORK
+    // Each type of sample collection has its own time
+    if (labs.length > 0) {
+        // Blood draw: 3-5 min, other samples: 2-3 min each
+        const labTime = Math.min(labs.length * 4, 12); // Cap at 12 min
+        totalMinutes += labTime;
+        reasoning.push(`Lab collection: ~${labTime} min`);
+    }
+
+    // PROCEDURES
+    // Each procedure is somewhat independent but some can be combined
+    if (procedures.length > 0) {
+        let procedureTime = 0;
+        procedures.forEach(proc => {
+            // Nail trim: 5-10 min, Anal glands: 5 min, Wound care: 10-20 min, etc.
+            const procTime = proc.time || 10;
+            procedureTime += procTime;
+        });
+        // Slight efficiency when doing multiple procedures back-to-back
+        if (procedures.length > 1) {
+            procedureTime = Math.round(procedureTime * 0.85);
+        }
+        totalMinutes += procedureTime;
+        reasoning.push(`Procedures: ~${procedureTime} min`);
+    }
+
+    // MULTIPLE PETS
+    // Second pet doesn't double the time - vet is already set up
+    // Add ~60-70% of base time for each additional pet
+    if (numPets > 1) {
+        const additionalPetTime = Math.round((totalMinutes - baseSetupTime) * 0.65 * (numPets - 1));
+        totalMinutes += additionalPetTime;
+        reasoning.push(`Additional pet(s): ~${additionalPetTime} min`);
+    }
+
+    // Round to nearest 5 minutes for cleaner display
+    totalMinutes = Math.round(totalMinutes / 5) * 5;
+
+    // Minimum appointment is 15 minutes
+    totalMinutes = Math.max(totalMinutes, 15);
+
+    return {
+        minutes: totalMinutes,
+        formatted: formatDuration(totalMinutes),
+        reasoning: reasoning.join(' • ')
+    };
+}
+
+function formatDuration(minutes) {
+    if (minutes < 60) {
+        return `${minutes} minutes`;
+    } else if (minutes === 60) {
+        return '1 hour';
+    } else if (minutes < 120) {
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        return mins > 0 ? `${hours} hr ${mins} min` : `${hours} hour`;
+    } else {
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        return mins > 0 ? `${hours} hrs ${mins} min` : `${hours} hours`;
+    }
+}
+
+// Gather all appointment data from current selections
+function gatherAppointmentData() {
+    const data = {
+        adviceTopics: [],
+        vaccines: [],
+        labs: [],
+        procedures: [],
+        physicalExam: null,
+        customConcerns: [],
+        numPets: Math.max(pets.length, 1)
+    };
+
+    // Get advice topics
+    const getAdviceTopics = window['getAdviceTopics_advice'];
+    if (getAdviceTopics) {
+        data.adviceTopics = getAdviceTopics();
+    }
+
+    // Get custom concerns from "Something Else?"
+    if (window.getCustomConcerns) {
+        data.customConcerns = window.getCustomConcerns();
+    }
+
+    // Get selected checkboxes
+    const selectedServices = document.querySelectorAll('.service-checkbox input:checked, .single-toggle-checkbox input:checked');
+    selectedServices.forEach(service => {
+        const group = service.dataset.group;
+        const time = parseInt(service.dataset.time) || 10;
+        const label = service.closest('.service-checkbox')?.querySelector('.checkbox-label')?.textContent ||
+                     service.closest('.single-toggle-checkbox')?.querySelector('.single-toggle-title')?.textContent ||
+                     service.value;
+
+        if (group === 'exam') {
+            data.physicalExam = 'comprehensive';
+        } else if (group === 'vaccines') {
+            data.vaccines.push({ id: service.value, label, time });
+            // Vaccines require quick exam
+            if (!data.physicalExam) {
+                data.physicalExam = 'quick';
+            }
+        } else if (group === 'labs') {
+            data.labs.push({ id: service.value, label, time });
+        } else if (group === 'procedures' || group === 'special') {
+            data.procedures.push({ id: service.value, label, time });
+        }
+    });
+
+    return data;
+}
+
 // Visit Estimator
 function initEstimator() {
     const checkboxes = document.querySelectorAll('.service-checkbox input, .single-toggle-checkbox input');
-    const durationSlider = document.getElementById('duration-slider');
     const durationDisplay = document.getElementById('duration-display');
-    const durationWarning = document.getElementById('duration-warning');
+    const durationReasoning = document.getElementById('duration-reasoning');
     const resultEmpty = document.getElementById('result-empty');
     const resultContent = document.getElementById('result-content');
     const visitTypeValue = document.getElementById('visit-type-value');
@@ -855,7 +1019,6 @@ function initEstimator() {
     const inPersonNotice = document.getElementById('in-person-notice');
     const multipleVisitsNotice = document.getElementById('multiple-visits-notice');
     const multipleVisitsText = document.getElementById('multiple-visits-text');
-    const perVisitLabel = document.getElementById('per-visit-label');
     const visitsCountLine = document.getElementById('visits-count-line');
     const visitsCount = document.getElementById('visits-count');
     const consultationLabel = document.getElementById('consultation-label');
@@ -867,7 +1030,7 @@ function initEstimator() {
     const consultationFee = document.getElementById('consultation-fee');
     const totalPrice = document.getElementById('total-price');
 
-    if (!checkboxes.length || !durationSlider) return;
+    if (!checkboxes.length) return;
 
     // Pricing: $75 for first 30 min, $50 per additional 30 min, $100 travel fee
     const FIRST_30_MIN = 75;
@@ -895,10 +1058,7 @@ function initEstimator() {
         euthanasia: ['euthanasia']
     };
 
-    let recommendedDuration = 30;
-    let totalEstimatedTime = 0;
     let numberOfVisits = 1;
-    let userHasOverridden = false;
 
     function calculateConsultationFee(duration) {
         if (duration <= 30) return FIRST_30_MIN;
@@ -1054,40 +1214,6 @@ function initEstimator() {
         if (minutes === 90) return '1.5 hours';
         if (minutes === 120) return '2 hours';
         return `${minutes} minutes`;
-    }
-
-    function animateSlider(targetValue) {
-        const currentValue = parseInt(durationSlider.value);
-        if (currentValue === targetValue) return;
-
-        const step = targetValue > currentValue ? 30 : -30;
-        let current = currentValue;
-
-        function animate() {
-            current += step;
-            durationSlider.value = current;
-            updateSliderDisplay();
-
-            if ((step > 0 && current < targetValue) || (step < 0 && current > targetValue)) {
-                requestAnimationFrame(animate);
-            }
-        }
-
-        requestAnimationFrame(animate);
-    }
-
-    function updateSliderDisplay() {
-        const duration = parseInt(durationSlider.value);
-        durationDisplay.textContent = formatDuration(duration);
-
-        // Show warning if below recommended
-        if (duration < recommendedDuration) {
-            durationWarning.style.display = 'block';
-        } else {
-            durationWarning.style.display = 'none';
-        }
-
-        updatePrice();
     }
 
     function calculateItemizedCosts() {
@@ -1560,12 +1686,8 @@ function initEstimator() {
         if (!hasSelections) {
             resultEmpty.style.display = 'block';
             resultContent.style.display = 'none';
-            userHasOverridden = false;
-            recommendedDuration = 30;
-            numberOfVisits = 1;
-            totalEstimatedTime = 0;
-            durationSlider.value = 30;
-            updateSliderDisplay();
+            durationDisplay.textContent = '—';
+            if (durationReasoning) durationReasoning.textContent = '';
             return;
         }
 
@@ -1592,10 +1714,6 @@ function initEstimator() {
             });
         }
 
-        // Use total time calculation across ALL pets
-        const totalTime = calculateTotalTimeAllPets();
-        totalEstimatedTime = totalTime;
-
         // Update visit type
         if (requiresInPerson) {
             visitTypeValue.textContent = 'In-Person Visit';
@@ -1609,37 +1727,31 @@ function initEstimator() {
             travelFeeLine.style.display = 'none';
         }
 
-        // Calculate number of visits needed if time exceeds max
-        if (totalTime > MAX_VISIT_DURATION) {
-            // For multiple visits, recommend 2-hour blocks
-            numberOfVisits = Math.ceil(totalTime / MAX_VISIT_DURATION);
-            recommendedDuration = MAX_VISIT_DURATION;
-        } else {
-            numberOfVisits = 1;
-            // Calculate recommended duration for single visit
-            if (totalTime > 90) {
-                recommendedDuration = 120;
-            } else if (totalTime > 60) {
-                recommendedDuration = 90;
-            } else if (totalTime > 30) {
-                recommendedDuration = 60;
-            } else {
-                recommendedDuration = 30;
-            }
+        // Use smart time estimation
+        const appointmentData = gatherAppointmentData();
+        const timeEstimate = estimateAppointmentTime(appointmentData);
+
+        // Update duration display
+        durationDisplay.textContent = timeEstimate.formatted;
+        if (durationReasoning && timeEstimate.reasoning) {
+            durationReasoning.textContent = timeEstimate.reasoning;
+            durationReasoning.style.display = 'block';
+        } else if (durationReasoning) {
+            durationReasoning.style.display = 'none';
         }
 
-        // Only auto-adjust slider if user hasn't manually overridden
-        if (!userHasOverridden) {
-            animateSlider(recommendedDuration);
+        // Check if multiple visits needed (over 2 hours)
+        const MAX_VISIT_DURATION = 120;
+        if (timeEstimate.minutes > MAX_VISIT_DURATION) {
+            numberOfVisits = Math.ceil(timeEstimate.minutes / MAX_VISIT_DURATION);
+            multipleVisitsNotice.style.display = 'block';
+            multipleVisitsText.textContent = `This may require ${numberOfVisits} visits to complete thoroughly.`;
+            visitsCountLine.style.display = 'flex';
+            visitsCount.textContent = numberOfVisits;
         } else {
-            // Recalculate visits based on user-selected duration
-            const userDuration = parseInt(durationSlider.value);
-            if (totalTime > userDuration) {
-                numberOfVisits = Math.ceil(totalTime / userDuration);
-            } else {
-                numberOfVisits = 1;
-            }
-            updateSliderDisplay();
+            numberOfVisits = 1;
+            multipleVisitsNotice.style.display = 'none';
+            visitsCountLine.style.display = 'none';
         }
 
         updatePrice();
@@ -1648,16 +1760,10 @@ function initEstimator() {
     // Add event listeners
     checkboxes.forEach(checkbox => {
         checkbox.addEventListener('change', () => {
-            userHasOverridden = false; // Reset override when services change
             // Save current pet's selections when checkbox changes
             saveCurrentPetSelections();
             calculateEstimate();
         });
-    });
-
-    durationSlider.addEventListener('input', () => {
-        userHasOverridden = true;
-        updateSliderDisplay();
     });
 
     // Custom concern autocomplete

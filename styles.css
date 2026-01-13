@@ -837,12 +837,10 @@ nav {
 }
 
 .estimator-step-grid {
-    display: grid;
-    grid-template-columns: 1fr 400px;
-    gap: 2rem;
-    align-items: start;
-    max-width: 1000px;
+    display: block;
+    max-width: 550px;
     margin: 0 auto;
+    padding-right: 420px; /* Space for fixed estimate card */
 }
 
 .step-content-centered {
@@ -1529,13 +1527,16 @@ nav {
 
 /* Estimator Result Card */
 .estimator-result {
-    position: sticky;
+    position: fixed;
     top: 80px;
+    right: 2rem;
+    width: 380px;
     display: flex;
     flex-direction: column;
     gap: 1rem;
     max-height: calc(100vh - 100px);
     overflow-y: auto;
+    z-index: 50;
 }
 
 .result-card {
@@ -2266,8 +2267,8 @@ footer p {
     }
 
     .estimator-step-grid {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
+        max-width: 100%;
+        padding-right: 0;
         padding-bottom: 320px; /* Space for fixed estimate card */
     }
 

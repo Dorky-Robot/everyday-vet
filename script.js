@@ -102,42 +102,25 @@ function calculateConsultationFee() {
 
 /**
  * Check if any pet has advice/guidance selected
+ * Reads from centralized state only
  */
 function hasAnyAdviceSelected() {
-    // Check current DOM state
-    const getTopics = window.getAdviceTopics_advice;
-    const getContext = window.getAdviceContext_advice;
-    const currentTopics = getTopics ? getTopics() : [];
-    const currentContext = getContext ? getContext() : '';
-
-    if (currentTopics.length > 0 || currentContext.trim()) return true;
-
-    // Check all pets' stored data
     for (const pet of state.household.pets) {
         if (pet.services.adviceTopics?.length > 0) return true;
         if (pet.services.adviceContext?.trim()) return true;
+        if (pet.services.customConcerns?.length > 0) return true;
     }
-
     return false;
 }
 
 /**
  * Calculate total line item costs (vaccines, labs, procedures)
+ * Reads from centralized state only
  */
 function calculateLineItemCosts() {
     let total = 0;
 
-    // Current pet's DOM selections
-    const checkedServices = document.querySelectorAll('.service-checkbox input:checked, .single-toggle-checkbox input:checked');
-    checkedServices.forEach(cb => {
-        const cost = parseInt(cb.dataset.cost) || 0;
-        total += cost;
-    });
-
-    // Other pets' stored selections
     for (const pet of state.household.pets) {
-        if (pet.id === state.currentPetId) continue; // Already counted from DOM
-
         for (const serviceId of (pet.services.selectedIds || [])) {
             const cost = getServiceCost(serviceId);
             total += cost;
@@ -159,28 +142,16 @@ function getServiceCost(serviceId) {
 
 /**
  * Determine if visit requires in-person
+ * Reads from centralized state only
  */
 function requiresInPersonVisit() {
-    // Check current DOM
-    const checkedServices = document.querySelectorAll('.service-checkbox input:checked, .single-toggle-checkbox input:checked');
-    for (const cb of checkedServices) {
-        if (cb.dataset.type === 'in-person') return true;
-    }
-
-    // Check custom concerns
-    const concerns = window.getCustomConcerns ? window.getCustomConcerns() : [];
-    for (const c of concerns) {
-        if (c.type === 'in-person') return true;
-    }
-
-    // Check other pets' stored services
     for (const pet of state.household.pets) {
-        if (pet.id === state.currentPetId) continue;
-
+        // Check selected services
         for (const serviceId of (pet.services.selectedIds || [])) {
             if (isServiceInPerson(serviceId)) return true;
         }
 
+        // Check custom concerns
         for (const concern of (pet.services.customConcerns || [])) {
             if (concern.type === 'in-person') return true;
         }
@@ -265,9 +236,9 @@ function estimateAppointmentTime() {
         reasoning.push(`Procedures: ~${procTime} min`);
     }
 
-    // Multiple pets: +65% for each additional
-    if (data.numPets > 1) {
-        const additionalTime = Math.round((minutes - 5) * 0.65 * (data.numPets - 1));
+    // Multiple pets receiving services: +65% for each additional
+    if (data.petsWithServices > 1) {
+        const additionalTime = Math.round((minutes - 5) * 0.65 * (data.petsWithServices - 1));
         minutes += additionalTime;
         reasoning.push(`Additional pets: ~${additionalTime} min`);
     }
@@ -282,6 +253,9 @@ function estimateAppointmentTime() {
     };
 }
 
+/**
+ * Gather appointment data from ALL pets' centralized state
+ */
 function gatherAppointmentData() {
     const data = {
         adviceTopics: [],
@@ -290,33 +264,75 @@ function gatherAppointmentData() {
         labs: [],
         procedures: [],
         physicalExam: null,
-        numPets: Math.max(state.household.pets.length, 1)
+        petsWithServices: 0
     };
 
-    // Current pet's DOM state
-    const getTopics = window.getAdviceTopics_advice;
-    data.adviceTopics = getTopics ? getTopics() : [];
-    data.customConcerns = window.getCustomConcerns ? window.getCustomConcerns() : [];
+    for (const pet of state.household.pets) {
+        let petHasServices = false;
 
-    const checkedServices = document.querySelectorAll('.service-checkbox input:checked, .single-toggle-checkbox input:checked');
-    checkedServices.forEach(cb => {
-        const group = cb.dataset.group;
-        const time = parseInt(cb.dataset.time) || 10;
-        const label = cb.closest('.service-checkbox')?.querySelector('.checkbox-label')?.textContent || cb.value;
-
-        if (group === 'exam') {
-            data.physicalExam = 'comprehensive';
-        } else if (group === 'vaccines') {
-            data.vaccines.push({ id: cb.value, label, time });
-            if (!data.physicalExam) data.physicalExam = 'quick'; // Auto quick exam
-        } else if (group === 'labs') {
-            data.labs.push({ id: cb.value, label, time });
-        } else if (group === 'procedures' || group === 'special') {
-            data.procedures.push({ id: cb.value, label, time });
+        // Advice topics
+        if (pet.services.adviceTopics?.length > 0) {
+            data.adviceTopics.push(...pet.services.adviceTopics);
+            petHasServices = true;
         }
-    });
+
+        // Custom concerns
+        if (pet.services.customConcerns?.length > 0) {
+            data.customConcerns.push(...pet.services.customConcerns);
+            petHasServices = true;
+        }
+
+        // Categorize selected services
+        for (const serviceId of (pet.services.selectedIds || [])) {
+            const serviceInfo = getServiceInfo(serviceId);
+            if (!serviceInfo) continue;
+
+            petHasServices = true;
+
+            if (serviceInfo.group === 'exam') {
+                data.physicalExam = 'comprehensive';
+            } else if (serviceInfo.group === 'vaccines') {
+                data.vaccines.push(serviceInfo);
+                if (!data.physicalExam) data.physicalExam = 'quick';
+            } else if (serviceInfo.group === 'labs') {
+                data.labs.push(serviceInfo);
+            } else if (serviceInfo.group === 'procedures' || serviceInfo.group === 'special') {
+                data.procedures.push(serviceInfo);
+            }
+        }
+
+        if (petHasServices) data.petsWithServices++;
+    }
 
     return data;
+}
+
+/**
+ * Get service info from config by ID
+ */
+function getServiceInfo(serviceId) {
+    for (const category of SERVICES_CONFIG.categories) {
+        if (category.item?.id === serviceId) {
+            return {
+                id: serviceId,
+                label: category.item.label,
+                time: category.item.time || 10,
+                group: category.id
+            };
+        }
+        if (category.items) {
+            const item = category.items.find(i => i.id === serviceId);
+            if (item) {
+                return {
+                    id: serviceId,
+                    label: item.label,
+                    time: item.time || 10,
+                    group: category.id
+                };
+            }
+        }
+    }
+    return null;
 }
 
 function formatDuration(minutes) {
@@ -1022,27 +1038,17 @@ function updateEstimateDisplay() {
     document.getElementById('total-price').textContent = `$${total}`;
 }
 
+/**
+ * Check if any pet has any selections
+ * Reads from centralized state only
+ */
 function hasAnySelections() {
-    // Current DOM
-    if (document.querySelectorAll('.service-checkbox input:checked, .single-toggle-checkbox input:checked').length > 0) return true;
-
-    const concerns = window.getCustomConcerns ? window.getCustomConcerns() : [];
-    if (concerns.length > 0) return true;
-
-    const getTopics = window.getAdviceTopics_advice;
-    const getContext = window.getAdviceContext_advice;
-    if (getTopics && getTopics().length > 0) return true;
-    if (getContext && getContext().trim()) return true;
-
-    // Other pets
     for (const pet of state.household.pets) {
-        if (pet.id === state.currentPetId) continue;
         if (pet.services.selectedIds?.length > 0) return true;
         if (pet.services.adviceTopics?.length > 0) return true;
         if (pet.services.adviceContext?.trim()) return true;
         if (pet.services.customConcerns?.length > 0) return true;
     }
-
     return false;
 }
 

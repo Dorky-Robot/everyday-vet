@@ -2064,3 +2064,27 @@ window.addEventListener('resize', () => {
         initHorizontalScroll();
     }
 });
+
+// Quote Contact Form
+function initQuoteContactForm() {
+    const emailCheckbox = document.querySelector('input[name="contact-method"][value="email"]');
+    const phoneCheckbox = document.querySelector('input[name="contact-method"][value="phone"]');
+    const emailField = document.getElementById('email-field');
+    const phoneField = document.getElementById('phone-field');
+
+    if (!emailCheckbox || !phoneCheckbox || !emailField || !phoneField) return;
+
+    function updateFields() {
+        emailField.style.display = emailCheckbox.checked ? 'block' : 'none';
+        phoneField.style.display = phoneCheckbox.checked ? 'block' : 'none';
+    }
+
+    emailCheckbox.addEventListener('change', updateFields);
+    phoneCheckbox.addEventListener('change', updateFields);
+
+    // Initial state
+    updateFields();
+}
+
+// Initialize quote form when DOM is ready
+document.addEventListener('DOMContentLoaded', initQuoteContactForm);

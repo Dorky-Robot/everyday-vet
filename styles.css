@@ -1971,6 +1971,96 @@ nav {
     font-size: 1.25rem;
 }
 
+/* Quote Contact Form */
+.quote-contact-form {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.quote-contact-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+.quote-contact-options {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.quote-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
+
+.quote-option input {
+    display: none;
+}
+
+.quote-option-check {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.quote-option-check::after {
+    content: '✓';
+    color: var(--white);
+    font-size: 12px;
+    font-weight: bold;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.2s ease;
+}
+
+.quote-option input:checked + .quote-option-check {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.quote-option input:checked + .quote-option-check::after {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.quote-contact-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.quote-field input {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.quote-field input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(233, 30, 140, 0.1);
+}
+
+.quote-field input::placeholder {
+    color: var(--text-light);
+}
+
 .estimator-btn {
     width: 100%;
     text-align: center;

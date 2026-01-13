@@ -220,3 +220,144 @@ Reference section explaining the pricing model (collapsed by default)
 4. **Multiple pets, mixed services**: Single visit, single travel fee, household consultation fee if any advice selected
 5. **Euthanasia selected**: Don't show price, show "Contact for pricing"
 6. **Household with pets not receiving services today**: Still count toward household size for consultation fee pricing
+
+---
+
+## Step 4: Scheduling (Levee Integration)
+
+After service selection, user proceeds to actual date/time booking via Levee backend.
+
+### Architecture
+
+```
+everyday_vet (static site)  →  Levee API (https://levee.everyday.vet)
+                                    ↓
+                               PostgreSQL
+```
+
+Levee provides a **general-purpose public scheduling API** that can be reused by any site.
+
+### New Levee Endpoints
+
+| Endpoint | Method | Auth | Purpose |
+|----------|--------|------|---------|
+| `/api/public/slots` | GET | API Key | Get available time slots |
+| `/api/public/schedule` | POST | API Key | Create appointment + client + patients |
+
+### `GET /api/public/slots`
+
+Fetch available slots without requiring a booking token.
+
+**Query params:**
+- `siteKey` - API key for the site
+- `date` - YYYY-MM-DD
+- `duration` - minutes (calculated from service selection)
+
+**Response:**
+```json
+{
+  "date": "2025-01-20",
+  "isWorkday": true,
+  "officeHours": { "start": "09:00", "end": "17:00", "timezone": "America/New_York" },
+  "slots": [
+    { "time": "09:00", "display": "9:00 AM" },
+    { "time": "09:30", "display": "9:30 AM" }
+  ]
+}
+```
+
+### `POST /api/public/schedule`
+
+Create client, patients, and appointment in one transaction.
+
+**Request:**
+```json
+{
+  "siteKey": "evv_xxxxx",
+  "client": {
+    "name": "John Smith",
+    "email": "john@example.com",
+    "phone": "+1234567890"
+  },
+  "household": [
+    {
+      "name": "Luna",
+      "species": "dog",
+      "services": {
+        "adviceTopics": ["Anxiety or fear issues"],
+        "selectedIds": ["vaccine-rabies", "vaccine-dhpp"]
+      }
+    }
+  ],
+  "appointment": {
+    "date": "2025-01-20",
+    "time": "10:00",
+    "visitType": "in-person",
+    "durationMinutes": 45,
+    "notes": "Luna has been anxious during thunderstorms"
+  },
+  "pricing": {
+    "consultationFee": 85,
+    "lineItems": 95,
+    "travelFee": 100,
+    "total": 280
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "confirmationCode": "EV-2025-001234",
+  "appointment": {
+    "id": "apt_xxx",
+    "date": "2025-01-20",
+    "time": "10:00",
+    "displayTime": "10:00 AM"
+  },
+  "calendarLinks": {
+    "googleCalendar": "https://calendar.google.com/...",
+    "icsDownload": "data:text/calendar;..."
+  }
+}
+```
+
+### Site Registration
+
+Sites are registered in Levee with API keys:
+
+```sql
+CREATE TABLE public_sites (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  site_key VARCHAR(50) UNIQUE NOT NULL,  -- e.g., "evv_everyday_vet"
+  name VARCHAR(255) NOT NULL,
+  domain VARCHAR(255),
+  settings JSONB DEFAULT '{}',
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+### Step 4 UI (everyday_vet)
+
+1. **Date Selection**
+   - Calendar showing available dates
+   - Grays out past dates, closed days
+
+2. **Time Selection**
+   - Shows available slots for selected date
+   - Slots fetched from `/api/public/slots`
+
+3. **Client Info**
+   - Name, email, phone
+   - Checkbox for SMS reminders
+
+4. **Confirmation**
+   - Summary of appointment
+   - Total price
+   - "Confirm Appointment" button
+
+5. **Success Screen**
+   - Confirmation code
+   - Add to calendar buttons (Google, iCal)
+   - "We'll send a confirmation to your email"

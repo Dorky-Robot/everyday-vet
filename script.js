@@ -127,7 +127,9 @@ function initPetManagement() {
             name: name,
             type: selectedType,
             selectedServices: [],
-            customConcerns: []
+            customConcerns: [],
+            adviceTopics: [],
+            adviceContext: ''
         };
 
         pets.push(pet);
@@ -248,13 +250,27 @@ function removePet(index) {
 function saveCurrentPetSelections() {
     if (currentPetIndex < 0 || !pets[currentPetIndex]) return;
 
-    const selectedCheckboxes = document.querySelectorAll('.service-checkbox input:checked');
+    const selectedCheckboxes = document.querySelectorAll('.service-checkbox input:checked, .single-toggle-checkbox input:checked, .single-toggle-checkbox input:checked');
     pets[currentPetIndex].selectedServices = Array.from(selectedCheckboxes).map(cb => cb.value);
 
     // Save custom concerns too
     if (window.getCustomConcerns) {
         pets[currentPetIndex].customConcerns = window.getCustomConcerns();
     }
+
+    // Save advice topics and context for each topic selector category
+    SERVICES_CONFIG.categories.forEach(category => {
+        if (category.isTopicSelector) {
+            const getTopics = window[`getAdviceTopics_${category.id}`];
+            const getContext = window[`getAdviceContext_${category.id}`];
+            if (getTopics) {
+                pets[currentPetIndex][`${category.id}Topics`] = getTopics();
+            }
+            if (getContext) {
+                pets[currentPetIndex][`${category.id}Context`] = getContext();
+            }
+        }
+    });
 
     // Persist to localStorage
     saveToStorage();
@@ -264,7 +280,7 @@ function restoreSelectedServices() {
     if (currentPetIndex < 0 || !pets[currentPetIndex]) return;
 
     const pet = pets[currentPetIndex];
-    const checkboxes = document.querySelectorAll('.service-checkbox input');
+    const checkboxes = document.querySelectorAll('.service-checkbox input, .single-toggle-checkbox input');
 
     checkboxes.forEach(cb => {
         cb.checked = pet.selectedServices.includes(cb.value);
@@ -274,6 +290,20 @@ function restoreSelectedServices() {
     if (window.setCustomConcerns && pet.customConcerns) {
         window.setCustomConcerns(pet.customConcerns);
     }
+
+    // Restore advice topics and context for each topic selector category
+    SERVICES_CONFIG.categories.forEach(category => {
+        if (category.isTopicSelector) {
+            const setTopics = window[`setAdviceTopics_${category.id}`];
+            const setContext = window[`setAdviceContext_${category.id}`];
+            if (setTopics) {
+                setTopics(pet[`${category.id}Topics`] || []);
+            }
+            if (setContext) {
+                setContext(pet[`${category.id}Context`] || '');
+            }
+        }
+    });
 
     // Update accordion states
     document.querySelectorAll('.category-accordion').forEach(accordion => {
@@ -315,7 +345,33 @@ function renderServiceCategories(petType) {
     SERVICES_CONFIG.categories.forEach(category => {
         const subtitle = renderCategorySubtitle(category);
 
-        if (category.isCustomInput) {
+        if (category.isTopicSelector) {
+            // Render topic selector with autocomplete and freeform textarea
+            html += `
+                <div class="category-accordion" data-category="${category.id}">
+                    <button class="category-header">
+                        <span class="category-title">${category.title}</span>
+                        <span class="category-subtitle">${subtitle}</span>
+                        <span class="category-toggle"><i class="ph ph-plus"></i></span>
+                    </button>
+                    <div class="selected-chiclets" data-category="${category.id}"></div>
+                    <div class="category-content" id="${category.id}-content">
+                        ${category.subtitle ? `<p class="category-note">${category.subtitle}</p>` : ''}
+                        <div class="topic-selector-wrapper">
+                            <div class="topic-input-wrapper">
+                                <input type="text" id="topic-input-${category.id}" class="topic-input" placeholder="Search topics or type your own..." autocomplete="off">
+                                <div id="topic-autocomplete-${category.id}" class="autocomplete-list"></div>
+                            </div>
+                            <div id="topic-tags-${category.id}" class="topic-tags"></div>
+                        </div>
+                        <div class="topic-context-wrapper">
+                            <label for="topic-context-${category.id}" class="topic-context-label">Anything else you'd like to share?</label>
+                            <textarea id="topic-context-${category.id}" class="topic-context-textarea" placeholder="Feel free to share any additional context that would help the vet prepare for your conversation..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else if (category.isCustomInput) {
             // Render custom input section
             html += `
                 <div class="category-accordion" data-category="${category.id}">
@@ -336,7 +392,25 @@ function renderServiceCategories(petType) {
                     </div>
                 </div>
             `;
-        } else {
+        } else if (category.isSingleToggle && category.item) {
+            // Render single toggle checkbox (not an accordion)
+            const item = category.item;
+            html += `
+                <div class="category-single-toggle" data-category="${category.id}">
+                    <label class="single-toggle-checkbox">
+                        <input type="checkbox" name="service"
+                            value="${item.id}"
+                            data-type="${category.defaultType}"
+                            data-group="${category.id}"
+                            data-time="${item.time}"
+                            data-time-mode="${category.timeMode}">
+                        <span class="checkbox-custom"></span>
+                        <span class="single-toggle-title">${category.title}</span>
+                        <span class="single-toggle-subtitle">${subtitle}</span>
+                    </label>
+                </div>
+            `;
+        } else if (category.items) {
             // Filter items by pet type
             const filteredItems = category.items.filter(item => {
                 if (!item.petType) return true; // No petType means available for all
@@ -653,8 +727,11 @@ function initAccordions() {
 function updateAccordionState(accordion) {
     const checkboxes = accordion.querySelectorAll('input[type="checkbox"]:checked');
     const customConcernTags = accordion.querySelectorAll('.concern-tag');
+    const topicTags = accordion.querySelectorAll('.topic-tag');
+    const contextTextarea = accordion.querySelector('.topic-context-textarea');
+    const hasContext = contextTextarea && contextTextarea.value.trim().length > 0;
 
-    if (checkboxes.length > 0 || customConcernTags.length > 0) {
+    if (checkboxes.length > 0 || customConcernTags.length > 0 || topicTags.length > 0 || hasContext) {
         accordion.classList.add('has-selection');
     } else {
         accordion.classList.remove('has-selection');
@@ -668,16 +745,31 @@ function updateChiclets(accordion) {
     const chicletsContainer = accordion.querySelector('.selected-chiclets');
     if (!chicletsContainer) return;
 
+    const categoryId = accordion.dataset.category;
     const selectedCheckboxes = accordion.querySelectorAll('input[type="checkbox"]:checked');
-    const isOtherCategory = accordion.dataset.category === 'other';
+    const isOtherCategory = categoryId === 'other';
+    const isVaccinesCategory = categoryId === 'vaccines';
     const customConcerns = isOtherCategory && window.getCustomConcerns ? window.getCustomConcerns() : [];
 
-    if (selectedCheckboxes.length === 0 && customConcerns.length === 0) {
+    // Get advice topics for topic selector categories
+    const getTopics = window[`getAdviceTopics_${categoryId}`];
+    const adviceTopics = getTopics ? getTopics() : [];
+
+    if (selectedCheckboxes.length === 0 && customConcerns.length === 0 && adviceTopics.length === 0) {
         chicletsContainer.innerHTML = '';
         return;
     }
 
     let html = '';
+
+    // For vaccines category, add automatic "Quick Examination" chiclet first
+    if (isVaccinesCategory && selectedCheckboxes.length > 0) {
+        html += `
+            <span class="service-chiclet chiclet-auto" data-auto="quick-exam" title="A quick examination is required before administering vaccines to ensure your pet is healthy enough to receive them safely.">
+                <span class="chiclet-label">Quick Examination</span>
+            </span>
+        `;
+    }
 
     // Checkbox-based chiclets
     selectedCheckboxes.forEach(checkbox => {
@@ -695,6 +787,16 @@ function updateChiclets(accordion) {
         html += `
             <span class="service-chiclet" data-concern-label="${concern.label}">
                 <span class="chiclet-label">${concern.label}</span>
+                <span class="chiclet-remove"><i class="ph ph-x"></i></span>
+            </span>
+        `;
+    });
+
+    // Advice topic chiclets
+    adviceTopics.forEach(topic => {
+        html += `
+            <span class="service-chiclet" data-topic="${topic}">
+                <span class="chiclet-label">${topic}</span>
                 <span class="chiclet-remove"><i class="ph ph-x"></i></span>
             </span>
         `;
@@ -726,11 +828,23 @@ function updateChiclets(accordion) {
             }
         });
     });
+
+    // Add click handlers to remove advice topic chiclets
+    chicletsContainer.querySelectorAll('.service-chiclet[data-topic]').forEach(chiclet => {
+        chiclet.addEventListener('click', () => {
+            const topic = chiclet.dataset.topic;
+            // Find and click the remove button on the topic tag
+            const tagRemoveBtn = accordion.querySelector(`.topic-tag-remove[data-topic="${topic}"]`);
+            if (tagRemoveBtn) {
+                tagRemoveBtn.click();
+            }
+        });
+    });
 }
 
 // Visit Estimator
 function initEstimator() {
-    const checkboxes = document.querySelectorAll('.service-checkbox input');
+    const checkboxes = document.querySelectorAll('.service-checkbox input, .single-toggle-checkbox input');
     const durationSlider = document.getElementById('duration-slider');
     const durationDisplay = document.getElementById('duration-display');
     const durationWarning = document.getElementById('duration-warning');
@@ -921,7 +1035,7 @@ function initEstimator() {
     function calculateTotalTimeAllPets() {
         if (pets.length === 0) {
             // Fall back to DOM selection for single-pet mode
-            const selectedServices = document.querySelectorAll('.service-checkbox input:checked');
+            const selectedServices = document.querySelectorAll('.service-checkbox input:checked, .single-toggle-checkbox input:checked');
             const customConcerns = window.getCustomConcerns ? window.getCustomConcerns() : [];
             return calculateSmartTime(selectedServices, customConcerns);
         }
@@ -977,7 +1091,7 @@ function initEstimator() {
     }
 
     function calculateItemizedCosts() {
-        const selectedServices = document.querySelectorAll('.service-checkbox input:checked[data-cost]');
+        const selectedServices = document.querySelectorAll('.service-checkbox input:checked, .single-toggle-checkbox input:checked[data-cost]');
         let itemizedTotal = 0;
 
         selectedServices.forEach(service => {
@@ -996,7 +1110,7 @@ function initEstimator() {
         }
 
         // Single pet / legacy calculation
-        const selectedServices = document.querySelectorAll('.service-checkbox input:checked');
+        const selectedServices = document.querySelectorAll('.service-checkbox input:checked, .single-toggle-checkbox input:checked');
         const customConcerns = window.getCustomConcerns ? window.getCustomConcerns() : [];
 
         // Check if any in-person services are selected
@@ -1262,12 +1376,23 @@ function initEstimator() {
             return true;
         }
 
+        // Check advice topics for topic selector categories
+        for (const category of SERVICES_CONFIG.categories) {
+            if (category.isTopicSelector && category.requiresConsultation) {
+                const topics = pet[`${category.id}Topics`] || [];
+                const context = pet[`${category.id}Context`] || '';
+                if (topics.length > 0 || context.trim().length > 0) {
+                    return true;
+                }
+            }
+        }
+
         return false;
     }
 
     // Check if DOM-selected services require consultation (for single pet mode)
     function checkSelectedServicesRequireConsultation() {
-        const selectedServices = document.querySelectorAll('.service-checkbox input:checked');
+        const selectedServices = document.querySelectorAll('.service-checkbox input:checked, .single-toggle-checkbox input:checked');
 
         for (const service of selectedServices) {
             const group = service.dataset.group;
@@ -1281,6 +1406,19 @@ function initEstimator() {
         const customConcerns = window.getCustomConcerns ? window.getCustomConcerns() : [];
         if (customConcerns.length > 0) {
             return true;
+        }
+
+        // Check advice topics for topic selector categories
+        for (const category of SERVICES_CONFIG.categories) {
+            if (category.isTopicSelector && category.requiresConsultation) {
+                const getTopics = window[`getAdviceTopics_${category.id}`];
+                const getContext = window[`getAdviceContext_${category.id}`];
+                const topics = getTopics ? getTopics() : [];
+                const context = getContext ? getContext() : '';
+                if (topics.length > 0 || context.trim().length > 0) {
+                    return true;
+                }
+            }
         }
 
         return false;
@@ -1308,6 +1446,23 @@ function initEstimator() {
             });
         }
 
+        // Advice topics count as consultation time (base 30 min + 5 min per additional topic)
+        for (const category of SERVICES_CONFIG.categories) {
+            if (category.isTopicSelector && category.requiresConsultation) {
+                const topics = pet[`${category.id}Topics`] || [];
+                const context = pet[`${category.id}Context`] || '';
+                if (topics.length > 0 || context.trim().length > 0) {
+                    // Base time for advice consultation
+                    totalTime += 30;
+                    // Add small increment for multiple topics (up to 15 min extra)
+                    const extraTopics = Math.min(topics.length - 1, 3);
+                    if (extraTopics > 0) {
+                        totalTime += extraTopics * 5;
+                    }
+                }
+            }
+        }
+
         return totalTime;
     }
 
@@ -1315,7 +1470,7 @@ function initEstimator() {
     function calculateTotalConsultationTime() {
         if (pets.length === 0) {
             // Single pet mode - check DOM
-            const selectedServices = document.querySelectorAll('.service-checkbox input:checked');
+            const selectedServices = document.querySelectorAll('.service-checkbox input:checked, .single-toggle-checkbox input:checked');
             let totalTime = 0;
 
             selectedServices.forEach(service => {
@@ -1332,6 +1487,25 @@ function initEstimator() {
                 totalTime += concern.time || 10;
             });
 
+            // Add advice topics time
+            for (const category of SERVICES_CONFIG.categories) {
+                if (category.isTopicSelector && category.requiresConsultation) {
+                    const getTopics = window[`getAdviceTopics_${category.id}`];
+                    const getContext = window[`getAdviceContext_${category.id}`];
+                    const topics = getTopics ? getTopics() : [];
+                    const context = getContext ? getContext() : '';
+                    if (topics.length > 0 || context.trim().length > 0) {
+                        // Base time for advice consultation
+                        totalTime += 30;
+                        // Add small increment for multiple topics
+                        const extraTopics = Math.min(topics.length - 1, 3);
+                        if (extraTopics > 0) {
+                            totalTime += extraTopics * 5;
+                        }
+                    }
+                }
+            }
+
             return Math.max(0, totalTime);
         }
 
@@ -1344,16 +1518,43 @@ function initEstimator() {
     }
 
     function calculateEstimate() {
-        const selectedServices = document.querySelectorAll('.service-checkbox input:checked');
+        const selectedServices = document.querySelectorAll('.service-checkbox input:checked, .single-toggle-checkbox input:checked');
         const customConcerns = window.getCustomConcerns ? window.getCustomConcerns() : [];
 
         // For multi-pet, check if ANY pet has selections
         let hasSelections = selectedServices.length > 0 || customConcerns.length > 0;
 
+        // Check advice topics in DOM (for single pet mode)
+        for (const category of SERVICES_CONFIG.categories) {
+            if (category.isTopicSelector) {
+                const getTopics = window[`getAdviceTopics_${category.id}`];
+                const getContext = window[`getAdviceContext_${category.id}`];
+                const topics = getTopics ? getTopics() : [];
+                const context = getContext ? getContext() : '';
+                if (topics.length > 0 || context.trim().length > 0) {
+                    hasSelections = true;
+                    break;
+                }
+            }
+        }
+
         if (pets.length > 0) {
-            hasSelections = pets.some(pet =>
-                pet.selectedServices.length > 0 || pet.customConcerns.length > 0
-            );
+            hasSelections = pets.some(pet => {
+                if (pet.selectedServices.length > 0 || pet.customConcerns.length > 0) {
+                    return true;
+                }
+                // Check advice topics for this pet
+                for (const category of SERVICES_CONFIG.categories) {
+                    if (category.isTopicSelector) {
+                        const topics = pet[`${category.id}Topics`] || [];
+                        const context = pet[`${category.id}Context`] || '';
+                        if (topics.length > 0 || context.trim().length > 0) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            });
         }
 
         if (!hasSelections) {
@@ -1462,20 +1663,21 @@ function initEstimator() {
     // Custom concern autocomplete
     initCustomConcernAutocomplete(calculateEstimate);
 
+    // Initialize topic selectors for isTopicSelector categories
+    SERVICES_CONFIG.categories.forEach(category => {
+        if (category.isTopicSelector && category.topics) {
+            initTopicSelectorAutocomplete(category.id, category.topics, calculateEstimate);
+        }
+    });
+
     // Expose calculateEstimate globally so it can be called when pets change
     window.recalculateEstimate = calculateEstimate;
 }
 
-// Veterinary concerns database
+// Veterinary concerns database - physical symptoms and specific procedures
+// (Advice/guidance topics are in the Advice & Guidance section)
 const veterinaryConcerns = [
-    // Virtual-eligible concerns
-    { label: 'Anxiety or fear issues', type: 'virtual', time: 30 },
-    { label: 'Aggression concerns', type: 'virtual', time: 30 },
-    { label: 'House soiling / litter box issues', type: 'virtual', time: 25 },
-    { label: 'Excessive barking or meowing', type: 'virtual', time: 20 },
-    { label: 'Separation anxiety', type: 'virtual', time: 30 },
-    { label: 'Leash reactivity', type: 'virtual', time: 25 },
-    { label: 'Food aggression', type: 'virtual', time: 25 },
+    // Physical symptoms (can discuss virtually)
     { label: 'Itching or scratching', type: 'virtual', time: 20 },
     { label: 'Hair loss or bald patches', type: 'virtual', time: 20 },
     { label: 'Hot spots', type: 'virtual', time: 15 },
@@ -1485,35 +1687,20 @@ const veterinaryConcerns = [
     { label: 'Sneezing or nasal discharge', type: 'virtual', time: 15 },
     { label: 'Reverse sneezing', type: 'virtual', time: 15 },
     { label: 'Bad breath', type: 'virtual', time: 15 },
-    { label: 'Weight loss concerns', type: 'virtual', time: 20 },
-    { label: 'Weight gain / obesity', type: 'virtual', time: 20 },
-    { label: 'Increased thirst or urination', type: 'virtual', time: 20 },
-    { label: 'Decreased appetite', type: 'virtual', time: 20 },
-    { label: 'Picky eating', type: 'virtual', time: 15 },
+    { label: 'Vomiting', type: 'virtual', time: 20 },
+    { label: 'Diarrhea', type: 'virtual', time: 20 },
     { label: 'Constipation', type: 'virtual', time: 15 },
     { label: 'Flatulence', type: 'virtual', time: 15 },
+    { label: 'Increased thirst or urination', type: 'virtual', time: 20 },
+    { label: 'Decreased appetite', type: 'virtual', time: 20 },
     { label: 'Limping (mild, no trauma)', type: 'virtual', time: 20 },
     { label: 'Stiffness or mobility issues', type: 'virtual', time: 20 },
-    { label: 'Arthritis management', type: 'virtual', time: 25 },
-    { label: 'Post-surgery follow-up', type: 'virtual', time: 20 },
-    { label: 'Medication questions', type: 'virtual', time: 15 },
-    { label: 'Prescription refill', type: 'virtual', time: 10 },
-    { label: 'Lab results review', type: 'virtual', time: 20 },
-    { label: 'Diabetes management', type: 'virtual', time: 25 },
-    { label: 'Kidney disease management', type: 'virtual', time: 25 },
-    { label: 'Heart disease management', type: 'virtual', time: 25 },
-    { label: 'Thyroid disorder management', type: 'virtual', time: 20 },
-    { label: 'Seizure management', type: 'virtual', time: 25 },
-    { label: 'Cancer supportive care', type: 'virtual', time: 30 },
-    { label: 'Hospice care planning', type: 'virtual', time: 30 },
-    { label: 'Pet insurance questions', type: 'virtual', time: 15 },
-    { label: 'Travel with pets', type: 'virtual', time: 20 },
-    { label: 'Introducing new pet', type: 'virtual', time: 20 },
-    { label: 'Puppy or kitten care', type: 'virtual', time: 25 },
     { label: 'Lump or bump (assessment)', type: 'virtual', time: 15 },
     { label: 'Scooting or anal gland issues', type: 'virtual', time: 15 },
+    { label: 'Excessive shedding', type: 'virtual', time: 15 },
+    { label: 'Skin rash or redness', type: 'virtual', time: 15 },
 
-    // In-person required
+    // In-person procedures
     { label: 'Nail trim', type: 'in-person', time: 10 },
     { label: 'Anal gland expression', type: 'in-person', time: 10 },
     { label: 'Skin scraping or cytology', type: 'in-person', time: 15 },
@@ -1692,6 +1879,166 @@ function initCustomConcernAutocomplete(onChangeCallback) {
             list.classList.remove('active');
         }
     });
+}
+
+// Topic selector for Advice & Guidance
+function initTopicSelectorAutocomplete(categoryId, topics, onChangeCallback) {
+    const input = document.getElementById(`topic-input-${categoryId}`);
+    const list = document.getElementById(`topic-autocomplete-${categoryId}`);
+    const tagsContainer = document.getElementById(`topic-tags-${categoryId}`);
+    const contextTextarea = document.getElementById(`topic-context-${categoryId}`);
+
+    if (!input || !list || !tagsContainer) return;
+
+    let selectedTopics = [];
+    let highlightedIndex = -1;
+
+    function filterTopics(query) {
+        if (!query) return topics.slice(0, 8); // Show first 8 when empty
+        const lowerQuery = query.toLowerCase();
+        return topics.filter(t =>
+            t.toLowerCase().includes(lowerQuery)
+        ).slice(0, 8);
+    }
+
+    function renderList(topicList) {
+        if (topicList.length === 0) {
+            list.classList.remove('active');
+            return;
+        }
+
+        list.innerHTML = topicList.map((topic, i) => `
+            <div class="autocomplete-item" data-index="${i}">
+                <div class="autocomplete-item-label">${topic}</div>
+            </div>
+        `).join('');
+
+        list.classList.add('active');
+        highlightedIndex = -1;
+    }
+
+    function selectTopic(topic) {
+        if (selectedTopics.includes(topic)) return;
+
+        selectedTopics.push(topic);
+        renderTags();
+        input.value = '';
+        list.classList.remove('active');
+        saveCurrentPetSelections();
+        // Update accordion state for chiclets
+        const accordion = input.closest('.category-accordion');
+        if (accordion) updateAccordionState(accordion);
+        onChangeCallback();
+    }
+
+    function removeTopic(topic) {
+        selectedTopics = selectedTopics.filter(t => t !== topic);
+        renderTags();
+        saveCurrentPetSelections();
+        // Update accordion state for chiclets
+        const accordion = input.closest('.category-accordion');
+        if (accordion) updateAccordionState(accordion);
+        onChangeCallback();
+    }
+
+    function renderTags() {
+        tagsContainer.innerHTML = selectedTopics.map(topic => `
+            <span class="topic-tag" data-topic="${topic}">
+                ${topic}
+                <button class="topic-tag-remove" data-topic="${topic}"><i class="ph ph-x"></i></button>
+            </span>
+        `).join('');
+
+        // Add remove event listeners
+        tagsContainer.querySelectorAll('.topic-tag-remove').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                removeTopic(btn.dataset.topic);
+            });
+        });
+    }
+
+    // Expose getters/setters for this category
+    window[`getAdviceTopics_${categoryId}`] = function() {
+        return selectedTopics;
+    };
+
+    window[`setAdviceTopics_${categoryId}`] = function(topics) {
+        selectedTopics = topics || [];
+        renderTags();
+    };
+
+    window[`getAdviceContext_${categoryId}`] = function() {
+        return contextTextarea ? contextTextarea.value : '';
+    };
+
+    window[`setAdviceContext_${categoryId}`] = function(context) {
+        if (contextTextarea) {
+            contextTextarea.value = context || '';
+        }
+    };
+
+    // Show dropdown on focus
+    input.addEventListener('focus', () => {
+        const filtered = filterTopics(input.value);
+        renderList(filtered);
+    });
+
+    input.addEventListener('input', () => {
+        const filtered = filterTopics(input.value);
+        renderList(filtered);
+    });
+
+    input.addEventListener('keydown', (e) => {
+        const items = list.querySelectorAll('.autocomplete-item');
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            highlightedIndex = Math.min(highlightedIndex + 1, items.length - 1);
+            items.forEach((item, i) => item.classList.toggle('highlighted', i === highlightedIndex));
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            highlightedIndex = Math.max(highlightedIndex - 1, 0);
+            items.forEach((item, i) => item.classList.toggle('highlighted', i === highlightedIndex));
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            const filtered = filterTopics(input.value);
+            if (highlightedIndex >= 0 && items[highlightedIndex]) {
+                // Select highlighted autocomplete item
+                selectTopic(filtered[highlightedIndex]);
+            } else if (input.value.trim()) {
+                // Add as custom topic
+                selectTopic(input.value.trim());
+            }
+        } else if (e.key === 'Escape') {
+            list.classList.remove('active');
+        }
+    });
+
+    list.addEventListener('click', (e) => {
+        const item = e.target.closest('.autocomplete-item');
+        if (item) {
+            const filtered = filterTopics(input.value);
+            selectTopic(filtered[parseInt(item.dataset.index)]);
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.topic-selector-wrapper')) {
+            list.classList.remove('active');
+        }
+    });
+
+    // Save context on change
+    if (contextTextarea) {
+        contextTextarea.addEventListener('input', () => {
+            saveCurrentPetSelections();
+            // Update accordion state to show has-selection
+            const accordion = contextTextarea.closest('.category-accordion');
+            if (accordion) updateAccordionState(accordion);
+            onChangeCallback();
+        });
+    }
 }
 
 // Initialize all effects

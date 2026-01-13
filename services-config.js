@@ -11,33 +11,74 @@ const SERVICES_CONFIG = {
     {
       id: "advice",
       title: "Advice & Guidance",
+      subtitle: "What would you like to discuss?",
       visitType: "both",
       defaultType: "virtual",
       timeMode: "smart",
       requiresConsultation: true,
-      items: [
-        { id: "new-pet", label: "New pet consultation", time: 15 },
-        { id: "diet", label: "Diet & nutrition", time: 10 },
-        { id: "behavior", label: "Behavioral concerns", time: 20 },
-        { id: "preventatives", label: "Preventatives (flea, tick, heartworm)", time: 10 },
-        { id: "skin-issues", label: "Skin issues or allergies", time: 10 },
-        { id: "gi-issues", label: "Digestive issues", time: 10 },
-        { id: "chronic", label: "Chronic disease management", time: 15 },
-        { id: "senior", label: "Senior pet care", time: 15 },
-        { id: "second-opinion", label: "Second opinion", time: 20 },
-        { id: "quality-of-life", label: "Quality of life consultation", time: 20 }
+      isTopicSelector: true,
+      topics: [
+        // Getting started
+        "New pet consultation",
+        "Puppy or kitten care",
+        "Introducing new pet to household",
+
+        // Behavior & emotional wellness
+        "Anxiety or fear issues",
+        "Aggression concerns",
+        "Separation anxiety",
+        "House soiling / litter box issues",
+        "Excessive barking or meowing",
+        "Leash reactivity",
+        "Food aggression",
+        "Pet-owner bonding",
+        "Sleep patterns",
+
+        // Nutrition & weight
+        "Diet & nutrition",
+        "Weight management",
+        "Picky eating",
+
+        // Preventive care
+        "Preventatives (flea, tick, heartworm)",
+        "Exercise & activity levels",
+        "Grooming & hygiene",
+
+        // Chronic condition management
+        "Diabetes management",
+        "Kidney disease management",
+        "Heart disease management",
+        "Thyroid disorder management",
+        "Seizure management",
+        "Arthritis management",
+        "Cancer supportive care",
+
+        // Follow-up & ongoing care
+        "Post-surgery follow-up",
+        "Medication questions",
+        "Prescription refill",
+        "Lab results review",
+        "Second opinion",
+
+        // Life planning
+        "Senior pet care",
+        "Multi-pet household dynamics",
+        "Travel with pets",
+        "Pet insurance questions",
+        "Quality of life consultation",
+        "Hospice care planning",
+        "End of life planning"
       ]
     },
     {
       id: "exam",
-      title: "Physical Examination",
+      title: "Comprehensive Physical Examination",
       visitType: "in-person",
       defaultType: "in-person",
       timeMode: "additive",
       requiresConsultation: true,
-      items: [
-        { id: "exam", label: "Comprehensive physical exam", time: 15 }
-      ]
+      isSingleToggle: true,
+      item: { id: "exam", label: "Comprehensive physical exam", time: 15 }
     },
     {
       id: "vaccines",

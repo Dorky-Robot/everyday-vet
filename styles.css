@@ -1091,6 +1091,62 @@ nav {
     margin-bottom: 1.5rem;
 }
 
+/* Single Toggle Category (e.g., Physical Examination) */
+.category-single-toggle {
+    margin-bottom: 0.5rem;
+    border-radius: 12px;
+    background: var(--white);
+    border: 1px solid var(--border-color);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.category-single-toggle:hover {
+    border-color: var(--primary-color);
+}
+
+.category-single-toggle:has(input:checked) {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(233, 30, 140, 0.1);
+}
+
+.single-toggle-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    cursor: pointer;
+    width: 100%;
+}
+
+.single-toggle-checkbox input {
+    display: none;
+}
+
+.single-toggle-checkbox .checkbox-custom {
+    flex-shrink: 0;
+}
+
+.single-toggle-title {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: var(--text-color);
+}
+
+.single-toggle-subtitle {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+.single-toggle-subtitle i {
+    font-size: 1rem;
+    color: var(--primary-color);
+}
+
 /* Category Accordion Styles */
 .category-accordion {
     margin-bottom: 0.5rem;
@@ -1210,8 +1266,9 @@ nav {
     overflow-y: auto;
 }
 
-/* Only the "Something Else?" accordion needs overflow visible for autocomplete dropdown */
-.category-accordion[data-category="other"].expanded .category-content {
+/* Accordions with autocomplete dropdowns need overflow visible */
+.category-accordion[data-category="other"].expanded .category-content,
+.category-accordion[data-category="advice"].expanded .category-content {
     overflow: visible;
 }
 
@@ -1251,7 +1308,61 @@ nav {
 
 .service-chiclet:hover {
     background: rgba(233, 30, 140, 0.15);
-    border-color: var(--primary-color);
+}
+
+/* Auto-added chiclet (e.g., Quick Examination for vaccines) */
+.service-chiclet.chiclet-auto {
+    cursor: help;
+    background: linear-gradient(135deg, var(--secondary-color) 0%, rgba(233, 30, 140, 0.12) 100%);
+    border-style: dashed;
+    position: relative;
+}
+
+.service-chiclet.chiclet-auto:hover {
+    background: linear-gradient(135deg, var(--secondary-color) 0%, rgba(233, 30, 140, 0.18) 100%);
+}
+
+/* Tooltip for auto chiclet */
+.service-chiclet.chiclet-auto::after {
+    content: attr(title);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text-color);
+    color: var(--white);
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    width: 220px;
+    text-align: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    z-index: 100;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.service-chiclet.chiclet-auto::before {
+    content: '';
+    position: absolute;
+    bottom: calc(100% + 2px);
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--text-color);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    z-index: 100;
+}
+
+.service-chiclet.chiclet-auto:hover::after,
+.service-chiclet.chiclet-auto:hover::before {
+    opacity: 1;
+    visibility: visible;
 }
 
 .service-chiclet .chiclet-label {
@@ -1366,12 +1477,14 @@ nav {
     transition: all 0.2s ease;
 }
 
-.service-checkbox input:checked + .checkbox-custom {
+.service-checkbox input:checked + .checkbox-custom,
+.single-toggle-checkbox input:checked + .checkbox-custom {
     background: var(--primary-color);
     border-color: var(--primary-color);
 }
 
-.service-checkbox input:checked + .checkbox-custom::after {
+.service-checkbox input:checked + .checkbox-custom::after,
+.single-toggle-checkbox input:checked + .checkbox-custom::after {
     opacity: 1;
     transform: scale(1);
 }
@@ -1379,6 +1492,11 @@ nav {
 .service-checkbox input:checked ~ .checkbox-label {
     color: var(--primary-color);
     font-weight: 500;
+}
+
+.single-toggle-checkbox input:checked ~ .single-toggle-title {
+    color: var(--primary-color);
+    font-weight: 600;
 }
 
 .checkbox-label {
@@ -1524,6 +1642,116 @@ nav {
     background: #fff8e6;
     color: #e67700;
     border-color: #ffd480;
+}
+
+/* Topic Selector (Advice & Guidance) */
+.topic-selector-wrapper {
+    margin-bottom: 1rem;
+}
+
+.topic-input-wrapper {
+    position: relative;
+    z-index: 50;
+}
+
+.topic-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 0.95rem;
+    color: var(--text-color);
+    background: var(--white);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.topic-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(233, 30, 140, 0.1);
+}
+
+/* When autocomplete is showing, square off bottom corners of input */
+.topic-input-wrapper:has(.autocomplete-list.active) .topic-input {
+    border-radius: 12px 12px 0 0;
+    border-bottom-color: var(--border-color);
+}
+
+.topic-input::placeholder {
+    color: var(--text-light);
+}
+
+.topic-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.topic-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--secondary-color);
+    color: var(--primary-color);
+    padding: 0.4rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid rgba(233, 30, 140, 0.2);
+}
+
+.topic-tag-remove {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    cursor: pointer;
+    padding: 0;
+    font-size: 1.1rem;
+    line-height: 1;
+    opacity: 0.7;
+    transition: opacity 0.15s ease;
+}
+
+.topic-tag-remove:hover {
+    opacity: 1;
+}
+
+/* Topic Context Textarea */
+.topic-context-wrapper {
+    margin-top: 1.25rem;
+}
+
+.topic-context-label {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.topic-context-textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: var(--text-color);
+    background: var(--white);
+    resize: vertical;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.topic-context-textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(233, 30, 140, 0.1);
+}
+
+.topic-context-textarea::placeholder {
+    color: var(--text-light);
 }
 
 /* Estimator Result Card */

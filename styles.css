@@ -2901,6 +2901,79 @@ footer p {
     color: var(--white);
 }
 
+/* Household step */
+.household-pets-setup {
+    max-width: 500px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.household-pets-setup .pet-tabs {
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.household-note {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    margin-bottom: 1.5rem;
+    font-style: italic;
+}
+
+#household-continue-btn {
+    min-width: 200px;
+}
+
+#household-continue-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Inline pet tabs for services step */
+.pet-tabs-inline {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.pet-tab-inline {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.85rem;
+    background: var(--white);
+    border: 2px solid var(--border-color);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.pet-tab-inline:hover {
+    border-color: var(--primary-color);
+    background: var(--secondary-color);
+}
+
+.pet-tab-inline.active {
+    border-color: var(--primary-color);
+    background: var(--primary-color);
+    color: var(--white);
+}
+
+.pet-tab-inline .pet-icon {
+    font-size: 1rem;
+}
+
+.pet-tab-inline .pet-name {
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .add-pet-btn {
     display: flex;
     align-items: center;

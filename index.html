@@ -118,13 +118,34 @@
             <div class="estimator-container">
                 <!-- Step Navigation Dots -->
                 <div class="step-nav" id="step-nav">
-                    <button class="step-dot active" data-step="0" aria-label="Step 1"></button>
-                    <button class="step-dot" data-step="1" aria-label="Step 2"></button>
+                    <button class="step-dot active" data-step="0" aria-label="Step 1: Household"></button>
+                    <button class="step-dot" data-step="1" aria-label="Step 2: Client Type"></button>
+                    <button class="step-dot" data-step="2" aria-label="Step 3: Services"></button>
                 </div>
 
                 <div class="estimator-steps-wrapper" id="estimator-steps-wrapper">
+                    <!-- Step 0: Household -->
+                    <div class="estimator-step active" id="step-household" data-step-index="0">
+                        <div class="step-content-centered">
+                            <h3>Tell us about your household</h3>
+                            <p class="step-subtitle">Add all the pets in your home - this helps us provide holistic care</p>
+
+                            <div class="household-pets-setup">
+                                <div class="pet-tabs" id="pet-tabs">
+                                    <!-- Pet tabs will be added here dynamically -->
+                                    <button class="add-pet-btn" id="add-pet-btn">
+                                        <span class="add-pet-icon"><i class="ph ph-plus"></i></span>
+                                        <span>Add Pet</span>
+                                    </button>
+                                </div>
+                                <p class="household-note">Even if only one pet needs attention today, knowing who's in the household helps us give better advice.</p>
+                                <button class="btn estimator-btn" id="household-continue-btn" disabled>Continue</button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Step 1: Customer Type -->
-                    <div class="estimator-step" id="step-customer-type" data-step-index="0">
+                    <div class="estimator-step" id="step-customer-type" data-step-index="1">
                         <div class="step-content-centered">
                             <h3>Are you a new or existing client?</h3>
                             <p class="step-subtitle">This helps us recommend the right appointment for you</p>
@@ -144,12 +165,12 @@
                         </div>
                     </div>
 
-                    <!-- Step 2: Dynamic content based on selection -->
-                    <div class="estimator-step" id="step-details" data-step-index="1">
+                    <!-- Step 2: Services (New or Existing) -->
+                    <div class="estimator-step" id="step-details" data-step-index="2">
                         <!-- New Customer Content -->
-                        <div class="step-content-centered" id="new-customer-content">
+                        <div class="step-content-centered" id="new-customer-content" style="display: none;">
                             <h3>Welcome! Let's get started</h3>
-                            <p class="step-subtitle">Your first visit is a 30-minute consultation to meet you and your pet</p>
+                            <p class="step-subtitle">Your first visit is a 30-minute consultation to meet your household</p>
 
                             <div class="onboarding-card">
                                 <div class="onboarding-header">
@@ -157,9 +178,9 @@
                                     <span class="onboarding-duration">30 minutes</span>
                                 </div>
                                 <ul class="onboarding-includes">
-                                    <li>Get to know you and your pet</li>
+                                    <li>Get to know you and your pets</li>
                                     <li>Review medical history</li>
-                                    <li>Discuss your pet's needs and concerns</li>
+                                    <li>Discuss your pets' needs and concerns</li>
                                     <li>Create a care plan together</li>
                                 </ul>
                                 <div class="onboarding-options">
@@ -187,24 +208,12 @@
                         <!-- Existing Customer Content -->
                         <div class="estimator-step-grid" id="existing-customer-content" style="display: none;">
                             <div class="estimator-services">
-                                <!-- Pet Selector -->
-                                <div class="pet-selector">
-                                    <h3>Who are we seeing today?</h3>
-                                    <p class="estimator-subtitle">Add your pets to get started</p>
-
-                                    <div class="pet-tabs" id="pet-tabs">
-                                        <!-- Pet tabs will be added here dynamically -->
-                                        <button class="add-pet-btn" id="add-pet-btn">
-                                            <span class="add-pet-icon"><i class="ph ph-plus"></i></span>
-                                            <span>Add Pet</span>
-                                        </button>
-                                    </div>
-
-                                </div>
-
-                                <!-- Service Selection (shown after pet is selected) -->
-                                <div class="pet-services-section" id="pet-services-section" style="display: none;">
+                                <!-- Service Selection -->
+                                <div class="pet-services-section" id="pet-services-section">
                                     <div class="pet-services-header">
+                                        <div class="pet-tabs-inline" id="pet-tabs-services">
+                                            <!-- Pet tabs rendered here for service selection -->
+                                        </div>
                                         <h3>Services for <span id="current-pet-name">your pet</span></h3>
                                         <p class="estimator-subtitle">Select all that apply</p>
                                     </div>
@@ -300,19 +309,19 @@
                         </button>
                         <div class="pricing-reference-content">
                             <ul class="pricing-breakdown-list">
-                                <li><strong>$75</strong> per pet for the first 30 minutes</li>
-                                <li><strong>$50</strong> per additional 30 minutes</li>
-                                <li><strong>$100</strong> travel fee (one-time, not per pet)</li>
+                                <li><strong>Advice & Guidance:</strong> $75 + $10/additional pet in household</li>
+                                <li><strong>Vaccines, Labs, Procedures:</strong> Per item (see prices above)</li>
+                                <li><strong>Travel fee:</strong> $100 (one-time for in-person visits)</li>
                             </ul>
                             <div class="pricing-examples">
                                 <p class="examples-label">Examples:</p>
                                 <div class="example-row">
-                                    <span>1 pet, 30 min virtual</span>
+                                    <span>1 pet household, advice only (virtual)</span>
                                     <span>$75</span>
                                 </div>
                                 <div class="example-row">
-                                    <span>2 pets, 30 min in-person</span>
-                                    <span>$250</span>
+                                    <span>2 pet household, advice + vaccines (in-person)</span>
+                                    <span>$85 + vaccines + $100</span>
                                 </div>
                             </div>
                         </div>

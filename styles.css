@@ -1821,20 +1821,6 @@ nav {
     color: var(--accent-color);
 }
 
-.in-person-notice {
-    background: rgba(233, 30, 140, 0.08);
-    border-left: 3px solid var(--primary-color);
-    padding: 0.5rem 0.75rem;
-    border-radius: 0 6px 6px 0;
-    margin-bottom: 0.75rem;
-}
-
-.in-person-notice p {
-    margin: 0;
-    font-size: 0.8rem;
-    color: var(--primary-dark);
-}
-
 .multiple-visits-notice {
     background: #e8f4fd;
     border-left: 3px solid #3498db;

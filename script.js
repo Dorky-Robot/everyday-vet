@@ -1016,7 +1016,6 @@ function initEstimator() {
     const resultContent = document.getElementById('result-content');
     const visitTypeValue = document.getElementById('visit-type-value');
     const visitTypeLocation = document.getElementById('visit-type-location');
-    const inPersonNotice = document.getElementById('in-person-notice');
     const multipleVisitsNotice = document.getElementById('multiple-visits-notice');
     const multipleVisitsText = document.getElementById('multiple-visits-text');
     const visitsCountLine = document.getElementById('visits-count-line');
@@ -1389,13 +1388,11 @@ function initEstimator() {
         if (requiresInPerson) {
             visitTypeValue.textContent = 'In-Person Visit';
             visitTypeLocation.textContent = 'Greater Cleveland Area';
-            inPersonNotice.style.display = 'block';
             travelFeeLine.style.display = 'flex';
             travelFeeEl.textContent = `$${TRAVEL_FEE}`;
         } else {
             visitTypeValue.textContent = 'Virtual Visit';
             visitTypeLocation.textContent = 'Anywhere in Ohio';
-            inPersonNotice.style.display = 'none';
             travelFeeLine.style.display = 'none';
         }
 
@@ -1721,12 +1718,10 @@ function initEstimator() {
         if (requiresInPerson) {
             visitTypeValue.textContent = 'In-Person Visit';
             visitTypeLocation.textContent = 'Greater Cleveland Area';
-            inPersonNotice.style.display = 'block';
             travelFeeLine.style.display = 'flex';
         } else {
             visitTypeValue.textContent = 'Virtual Visit';
             visitTypeLocation.textContent = 'Anywhere in Ohio';
-            inPersonNotice.style.display = 'none';
             travelFeeLine.style.display = 'none';
         }
 

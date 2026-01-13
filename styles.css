@@ -1096,7 +1096,6 @@ nav {
 .category-accordion {
     margin-bottom: 0.5rem;
     border-radius: 12px;
-    overflow: hidden;
     background: var(--white);
     border: 1px solid var(--border-color);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -1121,9 +1120,10 @@ nav {
     padding: 0.875rem 1rem;
     background: var(--secondary-color);
     border: none;
+    border-radius: 11px;
     cursor: pointer;
     text-align: left;
-    transition: background 0.2s ease;
+    transition: background 0.2s ease, border-radius 0.2s ease;
 }
 
 .category-header:hover {
@@ -1132,6 +1132,7 @@ nav {
 
 .category-accordion.expanded .category-header {
     background: var(--primary-color);
+    border-radius: 11px 11px 0 0;
 }
 
 .category-accordion.expanded .category-title,
@@ -1196,6 +1197,7 @@ nav {
     overflow: hidden;
     padding: 0;
     background: var(--white);
+    border-radius: 0 0 11px 11px;
     transition: max-height 0.3s ease, padding 0.3s ease;
 }
 
@@ -1379,6 +1381,7 @@ nav {
 /* Custom Concern Autocomplete */
 .custom-concern-wrapper {
     position: relative;
+    z-index: 50;
 }
 
 .custom-concern-input {
@@ -1413,7 +1416,7 @@ nav {
     border-radius: 0 0 12px 12px;
     max-height: 300px;
     overflow-y: auto;
-    z-index: 100;
+    z-index: 1000;
     display: none;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
@@ -2728,7 +2731,6 @@ footer p {
 .pet-services-section {
     animation: fadeIn 0.3s ease;
     max-width: 100%;
-    overflow-x: hidden;
 }
 
 .pet-services-header {

@@ -669,13 +669,17 @@ function updateChiclets(accordion) {
     if (!chicletsContainer) return;
 
     const selectedCheckboxes = accordion.querySelectorAll('input[type="checkbox"]:checked');
+    const isOtherCategory = accordion.dataset.category === 'other';
+    const customConcerns = isOtherCategory && window.getCustomConcerns ? window.getCustomConcerns() : [];
 
-    if (selectedCheckboxes.length === 0) {
+    if (selectedCheckboxes.length === 0 && customConcerns.length === 0) {
         chicletsContainer.innerHTML = '';
         return;
     }
 
     let html = '';
+
+    // Checkbox-based chiclets
     selectedCheckboxes.forEach(checkbox => {
         const label = checkbox.closest('.service-checkbox')?.querySelector('.checkbox-label')?.textContent || checkbox.value;
         html += `
@@ -686,10 +690,20 @@ function updateChiclets(accordion) {
         `;
     });
 
+    // Custom concern chiclets
+    customConcerns.forEach(concern => {
+        html += `
+            <span class="service-chiclet" data-concern-label="${concern.label}">
+                <span class="chiclet-label">${concern.label}</span>
+                <span class="chiclet-remove"><i class="ph ph-x"></i></span>
+            </span>
+        `;
+    });
+
     chicletsContainer.innerHTML = html;
 
-    // Add click handlers to remove chiclets
-    chicletsContainer.querySelectorAll('.service-chiclet').forEach(chiclet => {
+    // Add click handlers to remove checkbox chiclets
+    chicletsContainer.querySelectorAll('.service-chiclet[data-service-id]').forEach(chiclet => {
         chiclet.addEventListener('click', () => {
             const serviceId = chiclet.dataset.serviceId;
             const checkbox = accordion.querySelector(`input[value="${serviceId}"]`);
@@ -697,6 +711,18 @@ function updateChiclets(accordion) {
                 checkbox.checked = false;
                 // Trigger change event to update estimate
                 checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+    });
+
+    // Add click handlers to remove custom concern chiclets
+    chicletsContainer.querySelectorAll('.service-chiclet[data-concern-label]').forEach(chiclet => {
+        chiclet.addEventListener('click', () => {
+            const label = chiclet.dataset.concernLabel;
+            // Find and click the remove button on the concern tag
+            const tagRemoveBtn = accordion.querySelector(`.concern-tag-remove[data-label="${label}"]`);
+            if (tagRemoveBtn) {
+                tagRemoveBtn.click();
             }
         });
     });
@@ -1569,6 +1595,9 @@ function initCustomConcernAutocomplete(onChangeCallback) {
         input.value = '';
         list.classList.remove('active');
         saveCurrentPetSelections();
+        // Update accordion state for chiclets
+        const accordion = input.closest('.category-accordion');
+        if (accordion) updateAccordionState(accordion);
         onChangeCallback();
     }
 
@@ -1576,6 +1605,9 @@ function initCustomConcernAutocomplete(onChangeCallback) {
         selectedConcerns = selectedConcerns.filter(c => c.label !== label);
         renderTags();
         saveCurrentPetSelections();
+        // Update accordion state for chiclets
+        const accordion = input.closest('.category-accordion');
+        if (accordion) updateAccordionState(accordion);
         onChangeCallback();
     }
 

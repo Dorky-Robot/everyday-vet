@@ -5,9 +5,53 @@
 let pets = [];
 let currentPetIndex = -1;
 
+// LocalStorage key for persistence
+const STORAGE_KEY = 'everydayvet_schedule';
+
+// Save state to localStorage
+function saveToStorage() {
+    const state = {
+        pets: pets,
+        currentPetIndex: currentPetIndex
+    };
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+        console.warn('Could not save to localStorage:', e);
+    }
+}
+
+// Load state from localStorage
+function loadFromStorage() {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            const state = JSON.parse(saved);
+            if (state.pets && Array.isArray(state.pets)) {
+                pets = state.pets;
+                currentPetIndex = state.currentPetIndex ?? (pets.length > 0 ? 0 : -1);
+                return true;
+            }
+        }
+    } catch (e) {
+        console.warn('Could not load from localStorage:', e);
+    }
+    return false;
+}
+
+// Clear saved state
+function clearStorage() {
+    try {
+        localStorage.removeItem(STORAGE_KEY);
+    } catch (e) {
+        console.warn('Could not clear localStorage:', e);
+    }
+}
+
 // Expose for debugging
 window.getPets = () => pets;
 window.getCurrentPetIndex = () => currentPetIndex;
+window.clearScheduleData = clearStorage;
 
 function loadServicesConfig() {
     if (typeof SERVICES_CONFIG === 'undefined') {
@@ -90,7 +134,11 @@ function initPetManagement() {
         // Select the newly added pet
         selectPet(pets.length - 1);
         renderPetTabs();
+        saveToStorage();
     });
+
+    // Load saved state from localStorage
+    loadFromStorage();
 
     // Initial render
     renderPetTabs();
@@ -187,6 +235,7 @@ function removePet(index) {
     }
 
     renderPetTabs();
+    saveToStorage();
 
     // Recalculate estimate after pet is removed
     if (typeof window.recalculateEstimate === 'function') {
@@ -204,6 +253,9 @@ function saveCurrentPetSelections() {
     if (window.getCustomConcerns) {
         pets[currentPetIndex].customConcerns = window.getCustomConcerns();
     }
+
+    // Persist to localStorage
+    saveToStorage();
 }
 
 function restoreSelectedServices() {

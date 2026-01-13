@@ -115,15 +115,20 @@ function renderPetTabs() {
         tab.innerHTML = `
             <span class="pet-icon"><i class="ph ph${pet.type === 'dog' ? '-dog' : '-cat'}"></i></span>
             <span class="pet-name">${pet.name}</span>
-            <span class="remove-pet" data-index="${index}"><i class="ph ph-x"></i></span>
+            <span class="remove-pet"><i class="ph ph-x"></i></span>
         `;
 
-        tab.addEventListener('click', (e) => {
+        // Handle remove button separately
+        const removeBtn = tab.querySelector('.remove-pet');
+        removeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
             e.stopPropagation();
-            const removeBtn = e.target.closest('.remove-pet');
-            if (removeBtn) {
-                removePet(index);
-            } else {
+            removePet(index);
+        });
+
+        // Handle tab selection (not on remove button)
+        tab.addEventListener('click', (e) => {
+            if (!e.target.closest('.remove-pet')) {
                 selectPet(index);
             }
         });

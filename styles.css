@@ -570,29 +570,27 @@ nav {
     overflow-x: hidden;
 }
 
-/* Animated background blobs for pricing */
+/* Paw print decorations */
 #schedule::before {
-    content: '';
+    content: '🐾';
     position: absolute;
-    width: 600px;
-    height: 600px;
-    background: radial-gradient(circle, rgba(233, 30, 140, 0.06) 0%, transparent 70%);
-    border-radius: 50%;
-    top: -200px;
-    left: -200px;
-    animation: pulse 8s ease-in-out infinite;
+    font-size: 280px;
+    top: -60px;
+    left: -80px;
+    opacity: 0.06;
+    transform: rotate(-25deg);
+    pointer-events: none;
 }
 
 #schedule::after {
-    content: '';
+    content: '🐾';
     position: absolute;
-    width: 500px;
-    height: 500px;
-    background: radial-gradient(circle, rgba(255, 141, 199, 0.08) 0%, transparent 70%);
-    border-radius: 50%;
-    bottom: -150px;
-    right: -150px;
-    animation: pulse 10s ease-in-out infinite reverse;
+    font-size: 200px;
+    bottom: 40px;
+    right: -40px;
+    opacity: 0.05;
+    transform: rotate(15deg);
+    pointer-events: none;
 }
 
 #schedule h2,
@@ -2200,10 +2198,16 @@ footer p {
         padding: 4rem 1.5rem;
     }
 
-    #schedule::before,
+    #schedule::before {
+        font-size: 150px;
+        top: -30px;
+        left: -40px;
+    }
+
     #schedule::after {
-        width: 300px;
-        height: 300px;
+        font-size: 120px;
+        bottom: 20px;
+        right: -30px;
     }
 
     .pricing-intro {

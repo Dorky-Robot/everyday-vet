@@ -14,13 +14,31 @@
 
 const STORAGE_KEY = 'everydayvet_schedule';
 
+// Levee API configuration
+const LEVEE_CONFIG = {
+    apiUrl: 'https://levee.everyday.vet',
+    siteKey: 'evv_everyday_vet_dev', // Will be replaced with production key
+};
+
 const state = {
     household: {
         pets: [],           // [{ id, name, type, services }]
         isNewClient: null,  // true/false/null
     },
     currentPetId: null,
-    currentStep: 0,         // 0: Household, 1: Client Type, 2: Services
+    currentStep: 0,         // 0: Household, 1: Client Type, 2: Services, 3: Scheduling
+    scheduling: {
+        selectedDate: null,     // 'YYYY-MM-DD'
+        selectedTime: null,     // 'HH:MM'
+        selectedTimeDisplay: null, // '10:00 AM'
+        calendarMonth: new Date().getMonth(),
+        calendarYear: new Date().getFullYear(),
+    },
+    client: {
+        name: '',
+        email: '',
+        phone: '',
+    },
 };
 
 function savePetSelections() {
@@ -432,6 +450,8 @@ function goToStep(stepIndex) {
         if (!state.household.isNewClient && state.household.pets.length > 0) {
             selectPet(state.currentPetId || state.household.pets[0].id);
         }
+    } else if (stepIndex === 3) {
+        initSchedulingStep();
     }
 
     saveState();
@@ -1409,11 +1429,458 @@ function initMobileMenu() {
 function initSchedulingButton() {
     const btn = document.getElementById('continue-to-scheduling-btn');
     btn?.addEventListener('click', () => {
-        // Step 4: Will integrate with Levee scheduling system
-        console.log('Appointment data:', gatherAppointmentData());
-        console.log('Total:', calculateConsultationFee() + calculateLineItemCosts() + (requiresInPersonVisit() ? PRICING.TRAVEL_FEE : 0));
-        // TODO: Proceed to step 4 or call Levee API
+        // Save current selections before proceeding
+        savePetSelections();
+        // Go to step 3 (scheduling)
+        goToStep(3);
     });
+}
+
+// =============================================================================
+// SCHEDULING (STEP 3 & 4)
+// =============================================================================
+
+function initSchedulingStep() {
+    renderCalendar();
+    updateSchedulingSummary();
+    initClientForm();
+    initBookingButton();
+
+    // Calendar navigation
+    const prevBtn = document.getElementById('cal-prev');
+    const nextBtn = document.getElementById('cal-next');
+
+    prevBtn?.addEventListener('click', () => {
+        state.scheduling.calendarMonth--;
+        if (state.scheduling.calendarMonth < 0) {
+            state.scheduling.calendarMonth = 11;
+            state.scheduling.calendarYear--;
+        }
+        renderCalendar();
+    });
+
+    nextBtn?.addEventListener('click', () => {
+        state.scheduling.calendarMonth++;
+        if (state.scheduling.calendarMonth > 11) {
+            state.scheduling.calendarMonth = 0;
+            state.scheduling.calendarYear++;
+        }
+        renderCalendar();
+    });
+}
+
+function renderCalendar() {
+    const container = document.getElementById('cal-days');
+    const monthLabel = document.getElementById('cal-month');
+    if (!container || !monthLabel) return;
+
+    const { calendarMonth, calendarYear } = state.scheduling;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December'];
+    monthLabel.textContent = `${months[calendarMonth]} ${calendarYear}`;
+
+    // First day of the month and number of days
+    const firstDay = new Date(calendarYear, calendarMonth, 1);
+    const lastDay = new Date(calendarYear, calendarMonth + 1, 0);
+    const startDayOfWeek = firstDay.getDay();
+    const daysInMonth = lastDay.getDate();
+
+    let html = '';
+
+    // Empty cells for days before the first of the month
+    for (let i = 0; i < startDayOfWeek; i++) {
+        html += '<span class="calendar-day empty"></span>';
+    }
+
+    // Days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(calendarYear, calendarMonth, day);
+        const dateStr = formatDateISO(date);
+        const isPast = date < today;
+        const dayOfWeek = date.getDay();
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+        const isSelected = dateStr === state.scheduling.selectedDate;
+
+        let classes = 'calendar-day';
+        if (isPast) classes += ' disabled';
+        if (isWeekend) classes += ' weekend';
+        if (isSelected) classes += ' selected';
+
+        html += `<button class="${classes}" data-date="${dateStr}" ${isPast ? 'disabled' : ''}>${day}</button>`;
+    }
+
+    container.innerHTML = html;
+
+    // Add click handlers
+    container.querySelectorAll('.calendar-day:not(.disabled):not(.empty)').forEach(btn => {
+        btn.addEventListener('click', () => selectDate(btn.dataset.date));
+    });
+
+    // Disable prev button if viewing current month
+    const prevBtn = document.getElementById('cal-prev');
+    const isCurrentMonth = calendarYear === today.getFullYear() && calendarMonth === today.getMonth();
+    prevBtn?.classList.toggle('disabled', isCurrentMonth);
+    if (prevBtn) prevBtn.disabled = isCurrentMonth;
+}
+
+function formatDateISO(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function formatDateDisplay(dateStr) {
+    const date = new Date(dateStr + 'T00:00:00');
+    return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+    });
+}
+
+async function selectDate(dateStr) {
+    state.scheduling.selectedDate = dateStr;
+    state.scheduling.selectedTime = null;
+    state.scheduling.selectedTimeDisplay = null;
+
+    // Update calendar UI
+    document.querySelectorAll('.calendar-day.selected').forEach(d => d.classList.remove('selected'));
+    document.querySelector(`.calendar-day[data-date="${dateStr}"]`)?.classList.add('selected');
+
+    // Show time section
+    document.getElementById('time-section').style.display = 'block';
+    document.getElementById('selected-date-display').textContent = formatDateDisplay(dateStr);
+
+    // Fetch available slots
+    await fetchTimeSlots(dateStr);
+    updateSchedulingSummary();
+    updateBookingButtonState();
+    saveState();
+}
+
+async function fetchTimeSlots(dateStr) {
+    const slotsContainer = document.getElementById('time-slots');
+    const loadingEl = document.getElementById('time-slots-loading');
+    const emptyEl = document.getElementById('time-slots-empty');
+
+    slotsContainer.innerHTML = '';
+    loadingEl.style.display = 'flex';
+    emptyEl.style.display = 'none';
+
+    try {
+        const duration = estimateAppointmentTime().minutes;
+        const url = `${LEVEE_CONFIG.apiUrl}/api/public/slots?siteKey=${encodeURIComponent(LEVEE_CONFIG.siteKey)}&date=${dateStr}&duration=${duration}`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'X-Site-Key': LEVEE_CONFIG.siteKey,
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch slots');
+        }
+
+        const data = await response.json();
+        loadingEl.style.display = 'none';
+
+        if (!data.slots || data.slots.length === 0) {
+            emptyEl.style.display = 'block';
+            return;
+        }
+
+        renderTimeSlots(data.slots);
+
+    } catch (error) {
+        console.error('Error fetching time slots:', error);
+        loadingEl.style.display = 'none';
+        emptyEl.style.display = 'block';
+        emptyEl.querySelector('p').textContent = 'Unable to load available times. Please try again.';
+    }
+}
+
+function renderTimeSlots(slots) {
+    const container = document.getElementById('time-slots');
+
+    container.innerHTML = slots.map(slot => `
+        <button class="time-slot" data-time="${slot.time}" data-display="${slot.display}">
+            ${slot.display}
+        </button>
+    `).join('');
+
+    container.querySelectorAll('.time-slot').forEach(btn => {
+        btn.addEventListener('click', () => selectTime(btn.dataset.time, btn.dataset.display));
+    });
+
+    // Re-select previously selected time if still available
+    if (state.scheduling.selectedTime) {
+        const existing = container.querySelector(`[data-time="${state.scheduling.selectedTime}"]`);
+        if (existing) {
+            existing.classList.add('selected');
+        } else {
+            state.scheduling.selectedTime = null;
+            state.scheduling.selectedTimeDisplay = null;
+        }
+    }
+}
+
+function selectTime(time, display) {
+    state.scheduling.selectedTime = time;
+    state.scheduling.selectedTimeDisplay = display;
+
+    // Update UI
+    document.querySelectorAll('.time-slot.selected').forEach(s => s.classList.remove('selected'));
+    document.querySelector(`.time-slot[data-time="${time}"]`)?.classList.add('selected');
+
+    // Show client section
+    document.getElementById('client-section').style.display = 'block';
+
+    updateSchedulingSummary();
+    updateBookingButtonState();
+    saveState();
+}
+
+function initClientForm() {
+    const nameInput = document.getElementById('client-name');
+    const emailInput = document.getElementById('client-email');
+    const phoneInput = document.getElementById('client-phone');
+
+    // Restore saved values
+    if (nameInput) nameInput.value = state.client.name || '';
+    if (emailInput) emailInput.value = state.client.email || '';
+    if (phoneInput) phoneInput.value = state.client.phone || '';
+
+    const handleInput = () => {
+        state.client.name = nameInput?.value || '';
+        state.client.email = emailInput?.value || '';
+        state.client.phone = phoneInput?.value || '';
+        updateBookingButtonState();
+        saveState();
+    };
+
+    nameInput?.addEventListener('input', handleInput);
+    emailInput?.addEventListener('input', handleInput);
+    phoneInput?.addEventListener('input', handleInput);
+}
+
+function updateSchedulingSummary() {
+    // Visit type and duration
+    const isInPerson = requiresInPersonVisit();
+    document.getElementById('summary-visit-type').textContent = isInPerson ? 'In-Person Visit' : 'Virtual Visit';
+    document.getElementById('summary-duration').textContent = estimateAppointmentTime().formatted;
+
+    // Date and time
+    const dateRow = document.getElementById('summary-date-row');
+    const timeRow = document.getElementById('summary-time-row');
+    const dateEl = document.getElementById('summary-date');
+    const timeEl = document.getElementById('summary-time');
+
+    if (state.scheduling.selectedDate) {
+        dateRow.style.display = 'flex';
+        dateEl.textContent = formatDateDisplay(state.scheduling.selectedDate);
+    } else {
+        dateRow.style.display = 'none';
+    }
+
+    if (state.scheduling.selectedTime) {
+        timeRow.style.display = 'flex';
+        timeEl.textContent = state.scheduling.selectedTimeDisplay;
+    } else {
+        timeRow.style.display = 'none';
+    }
+
+    // Pets list
+    const petsContainer = document.getElementById('summary-pets');
+    petsContainer.innerHTML = state.household.pets.map(pet => `
+        <div class="summary-pet">
+            <i class="ph ph-${pet.type}"></i>
+            <span>${pet.name}</span>
+        </div>
+    `).join('');
+
+    // Pricing
+    const consultationFee = calculateConsultationFee();
+    const lineItemCosts = calculateLineItemCosts();
+    const travelFee = isInPerson ? PRICING.TRAVEL_FEE : 0;
+    const total = consultationFee + lineItemCosts + travelFee;
+
+    const consultationRow = document.getElementById('summary-consultation-row');
+    const servicesRow = document.getElementById('summary-services-row');
+    const travelRow = document.getElementById('summary-travel-row');
+
+    if (consultationFee > 0) {
+        consultationRow.style.display = 'flex';
+        document.getElementById('summary-consultation-fee').textContent = `$${consultationFee}`;
+    } else {
+        consultationRow.style.display = 'none';
+    }
+
+    if (lineItemCosts > 0) {
+        servicesRow.style.display = 'flex';
+        document.getElementById('summary-services-fee').textContent = `$${lineItemCosts}`;
+    } else {
+        servicesRow.style.display = 'none';
+    }
+
+    if (travelFee > 0) {
+        travelRow.style.display = 'flex';
+        document.getElementById('summary-travel-fee').textContent = `$${travelFee}`;
+    } else {
+        travelRow.style.display = 'none';
+    }
+
+    document.getElementById('summary-total').textContent = `$${total}`;
+}
+
+function updateBookingButtonState() {
+    const btn = document.getElementById('confirm-booking-btn');
+    const hasDate = !!state.scheduling.selectedDate;
+    const hasTime = !!state.scheduling.selectedTime;
+    const hasName = !!state.client.name?.trim();
+    const hasEmail = !!state.client.email?.trim() && isValidEmail(state.client.email);
+
+    btn.disabled = !(hasDate && hasTime && hasName && hasEmail);
+}
+
+function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function initBookingButton() {
+    const btn = document.getElementById('confirm-booking-btn');
+    btn?.addEventListener('click', submitBooking);
+
+    const bookAnotherBtn = document.getElementById('book-another-btn');
+    bookAnotherBtn?.addEventListener('click', () => {
+        // Reset scheduling state
+        state.scheduling.selectedDate = null;
+        state.scheduling.selectedTime = null;
+        state.scheduling.selectedTimeDisplay = null;
+        // Go back to services step
+        goToStep(2);
+    });
+}
+
+async function submitBooking() {
+    const btn = document.getElementById('confirm-booking-btn');
+    const errorEl = document.getElementById('booking-error');
+
+    btn.disabled = true;
+    btn.textContent = 'Booking...';
+    errorEl.style.display = 'none';
+
+    try {
+        const isInPerson = requiresInPersonVisit();
+        const consultationFee = calculateConsultationFee();
+        const lineItemCosts = calculateLineItemCosts();
+        const travelFee = isInPerson ? PRICING.TRAVEL_FEE : 0;
+        const total = consultationFee + lineItemCosts + travelFee;
+
+        const payload = {
+            siteKey: LEVEE_CONFIG.siteKey,
+            client: {
+                name: state.client.name,
+                email: state.client.email,
+                phone: state.client.phone || undefined,
+            },
+            household: state.household.pets.map(pet => ({
+                name: pet.name,
+                species: pet.type,
+                services: {
+                    adviceTopics: pet.services.adviceTopics || [],
+                    selectedIds: pet.services.selectedIds || [],
+                    customConcerns: pet.services.customConcerns || [],
+                }
+            })),
+            appointment: {
+                date: state.scheduling.selectedDate,
+                time: state.scheduling.selectedTime,
+                visitType: isInPerson ? 'in-person' : 'virtual',
+                durationMinutes: estimateAppointmentTime().minutes,
+                notes: gatherAppointmentNotes(),
+            },
+            pricing: {
+                consultationFee,
+                lineItems: lineItemCosts,
+                travelFee,
+                total,
+            }
+        };
+
+        const response = await fetch(`${LEVEE_CONFIG.apiUrl}/api/public/schedule`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Site-Key': LEVEE_CONFIG.siteKey,
+            },
+            body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to book appointment');
+        }
+
+        // Success - show confirmation
+        showConfirmation(data);
+
+    } catch (error) {
+        console.error('Booking error:', error);
+        errorEl.textContent = error.message || 'Unable to complete booking. Please try again.';
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Confirm Appointment';
+    }
+}
+
+function gatherAppointmentNotes() {
+    const notes = [];
+    for (const pet of state.household.pets) {
+        const petNotes = [];
+        if (pet.services.adviceContext?.trim()) {
+            petNotes.push(pet.services.adviceContext.trim());
+        }
+        if (petNotes.length > 0) {
+            notes.push(`${pet.name}: ${petNotes.join('; ')}`);
+        }
+    }
+    return notes.join('\n');
+}
+
+function showConfirmation(data) {
+    // Hide scheduling step dots after step 3
+    document.querySelectorAll('.step-dot').forEach((dot, i) => {
+        if (i === 3) dot.classList.add('completed');
+    });
+
+    // Go to confirmation step (step 4 in UI but index 4)
+    document.querySelectorAll('.estimator-step').forEach((step, i) => {
+        step.classList.toggle('active', i === 4);
+    });
+
+    // Populate confirmation details
+    document.getElementById('confirmation-code').textContent = data.confirmationCode;
+    document.getElementById('confirmation-message').textContent = data.message;
+    document.getElementById('confirmation-email').textContent = state.client.email;
+
+    // Calendar links
+    if (data.calendarLinks) {
+        document.getElementById('add-to-google').href = data.calendarLinks.googleCalendar;
+        document.getElementById('download-ics').href = data.calendarLinks.icsDownload;
+    }
+
+    // Clear the scheduling state
+    state.scheduling.selectedDate = null;
+    state.scheduling.selectedTime = null;
+    state.scheduling.selectedTimeDisplay = null;
+    saveState();
 }
 
 // =============================================================================

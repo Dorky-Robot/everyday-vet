@@ -104,6 +104,7 @@ const SERVICES_CONFIG = {
       visitType: "search",
       defaultType: "virtual",
       timeMode: "additive",
+      requiresConsultation: true,
       isCustomInput: true
     }
   ]

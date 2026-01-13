@@ -762,11 +762,11 @@ function updateChiclets(accordion) {
 
     let html = '';
 
-    // For vaccines category, add automatic "Quick Examination" chiclet first
+    // For vaccines category, add automatic "Free Quick Exam" chiclet first
     if (isVaccinesCategory && selectedCheckboxes.length > 0) {
         html += `
-            <span class="service-chiclet chiclet-auto" data-auto="quick-exam" title="A quick examination is required before administering vaccines to ensure your pet is healthy enough to receive them safely.">
-                <span class="chiclet-label">Quick Examination</span>
+            <span class="service-chiclet chiclet-free" data-auto="quick-exam" title="A quick examination is included free with vaccinations to ensure your pet is healthy enough to receive them safely.">
+                <span class="chiclet-label">Free Quick Exam</span>
             </span>
         `;
     }

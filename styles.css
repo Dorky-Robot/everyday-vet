@@ -1310,26 +1310,27 @@ nav {
     background: rgba(233, 30, 140, 0.15);
 }
 
-/* Auto-added chiclet (e.g., Quick Examination for vaccines) */
-.service-chiclet.chiclet-auto {
+/* Free included chiclet (e.g., Free Quick Exam for vaccines) */
+.service-chiclet.chiclet-free {
     cursor: help;
-    background: linear-gradient(135deg, var(--secondary-color) 0%, rgba(233, 30, 140, 0.12) 100%);
-    border-style: dashed;
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    border-color: #81c784;
+    color: #2e7d32;
     position: relative;
 }
 
-.service-chiclet.chiclet-auto:hover {
-    background: linear-gradient(135deg, var(--secondary-color) 0%, rgba(233, 30, 140, 0.18) 100%);
+.service-chiclet.chiclet-free:hover {
+    background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
 }
 
-/* Tooltip for auto chiclet */
-.service-chiclet.chiclet-auto::after {
+/* Tooltip for free chiclet */
+.service-chiclet.chiclet-free::after {
     content: attr(title);
     position: absolute;
     bottom: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%);
-    background: var(--text-color);
+    background: #2e7d32;
     color: var(--white);
     padding: 0.5rem 0.75rem;
     border-radius: 8px;
@@ -1345,22 +1346,22 @@ nav {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.service-chiclet.chiclet-auto::before {
+.service-chiclet.chiclet-free::before {
     content: '';
     position: absolute;
     bottom: calc(100% + 2px);
     left: 50%;
     transform: translateX(-50%);
     border: 6px solid transparent;
-    border-top-color: var(--text-color);
+    border-top-color: #2e7d32;
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.2s ease, visibility 0.2s ease;
     z-index: 100;
 }
 
-.service-chiclet.chiclet-auto:hover::after,
-.service-chiclet.chiclet-auto:hover::before {
+.service-chiclet.chiclet-free:hover::after,
+.service-chiclet.chiclet-free:hover::before {
     opacity: 1;
     visibility: visible;
 }

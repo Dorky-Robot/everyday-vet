@@ -1774,14 +1774,49 @@ nav {
     background: var(--white);
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    padding: 0.75rem 1rem;
+    overflow: hidden;
 }
 
-.pricing-reference h4 {
+.pricing-reference-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1rem;
+    background: var(--secondary-color);
+    border: none;
+    cursor: pointer;
     font-size: 0.8rem;
+    font-weight: 600;
     color: var(--text-color);
-    margin-bottom: 0.5rem;
-    text-align: center;
+    transition: background 0.2s ease;
+}
+
+.pricing-reference-header:hover {
+    background: #ffeef6;
+}
+
+.pricing-reference-header i {
+    color: var(--primary-color);
+    transition: transform 0.2s ease;
+}
+
+.pricing-reference.collapsed .pricing-reference-header i {
+    transform: rotate(-90deg);
+}
+
+.pricing-reference-content {
+    padding: 0.75rem 1rem;
+    max-height: 300px;
+    transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.2s ease;
+    opacity: 1;
+}
+
+.pricing-reference.collapsed .pricing-reference-content {
+    max-height: 0;
+    padding: 0 1rem;
+    opacity: 0;
+    overflow: hidden;
 }
 
 .pricing-breakdown-list {

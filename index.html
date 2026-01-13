@@ -282,22 +282,27 @@
                         </div>
                     </div>
 
-                    <div class="pricing-reference">
-                        <h4>How Pricing Works</h4>
-                        <ul class="pricing-breakdown-list">
-                            <li><strong>$75</strong> per pet for the first 30 minutes</li>
-                            <li><strong>$50</strong> per additional 30 minutes</li>
-                            <li><strong>$100</strong> travel fee (one-time, not per pet)</li>
-                        </ul>
-                        <div class="pricing-examples">
-                            <p class="examples-label">Examples:</p>
-                            <div class="example-row">
-                                <span>1 pet, 30 min virtual</span>
-                                <span>$75</span>
-                            </div>
-                            <div class="example-row">
-                                <span>2 pets, 30 min in-person</span>
-                                <span>$250</span>
+                    <div class="pricing-reference collapsed" id="pricing-reference">
+                        <button class="pricing-reference-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                            <span>How Pricing Works</span>
+                            <i class="ph ph-caret-down"></i>
+                        </button>
+                        <div class="pricing-reference-content">
+                            <ul class="pricing-breakdown-list">
+                                <li><strong>$75</strong> per pet for the first 30 minutes</li>
+                                <li><strong>$50</strong> per additional 30 minutes</li>
+                                <li><strong>$100</strong> travel fee (one-time, not per pet)</li>
+                            </ul>
+                            <div class="pricing-examples">
+                                <p class="examples-label">Examples:</p>
+                                <div class="example-row">
+                                    <span>1 pet, 30 min virtual</span>
+                                    <span>$75</span>
+                                </div>
+                                <div class="example-row">
+                                    <span>2 pets, 30 min in-person</span>
+                                    <span>$250</span>
+                                </div>
                             </div>
                         </div>
                     </div>

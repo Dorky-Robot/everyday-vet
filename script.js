@@ -979,8 +979,11 @@ function initEstimator() {
             }
         });
 
+        // Check if consultation is needed (only for advice/exam categories)
+        const requiresConsultation = checkSelectedServicesRequireConsultation();
+
         const duration = parseInt(durationSlider.value);
-        const perVisitFee = calculateConsultationFee(duration);
+        const perVisitFee = requiresConsultation ? calculateConsultationFee(duration) : 0;
         const perVisitTravel = requiresInPerson ? TRAVEL_FEE : 0;
 
         // Calculate itemized costs (vaccines, labs, procedures)
@@ -990,6 +993,14 @@ function initEstimator() {
         const totalConsultationFees = perVisitFee * numberOfVisits;
         const totalTravelFees = perVisitTravel * numberOfVisits;
         const total = totalConsultationFees + totalTravelFees + itemizedCosts;
+
+        // Show/hide consultation fee line
+        const consultationFeeLine = document.getElementById('consultation-fee-line');
+        if (requiresConsultation) {
+            if (consultationFeeLine) consultationFeeLine.style.display = 'flex';
+        } else {
+            if (consultationFeeLine) consultationFeeLine.style.display = 'none';
+        }
 
         // Show/hide itemized costs line
         if (itemizedCosts > 0) {
@@ -1029,11 +1040,14 @@ function initEstimator() {
     // Multi-pet pricing calculation
     function calculateMultiPetPrice() {
         const petBreakdown = document.getElementById('pet-breakdown');
+        const consultationFeeLine = document.getElementById('consultation-fee-line');
 
         let totalConsultationFees = 0;
         let totalItemizedCosts = 0;
         let requiresInPerson = false;
+        let anyPetRequiresConsultation = false;
         let petsWithServices = 0;
+        let petsWithConsultation = 0;
 
         const duration = parseInt(durationSlider.value);
         const perPetFee = calculateConsultationFee(duration);
@@ -1043,11 +1057,18 @@ function initEstimator() {
         pets.forEach(pet => {
             const petItemizedCost = calculatePetItemizedCosts(pet);
             const hasServices = pet.selectedServices.length > 0 || pet.customConcerns.length > 0;
+            const petRequiresConsultation = checkPetRequiresConsultation(pet);
 
             if (hasServices) {
                 petsWithServices++;
-                totalConsultationFees += perPetFee;
                 totalItemizedCosts += petItemizedCost;
+
+                // Only add consultation fee if this pet needs vet consultation
+                if (petRequiresConsultation) {
+                    petsWithConsultation++;
+                    totalConsultationFees += perPetFee;
+                    anyPetRequiresConsultation = true;
+                }
 
                 // Check if this pet requires in-person
                 const petRequiresInPerson = checkPetRequiresInPerson(pet);
@@ -1055,15 +1076,23 @@ function initEstimator() {
                     requiresInPerson = true;
                 }
 
-                breakdownHtml += `
-                    <div class="pet-breakdown-item">
-                        <span class="pet-breakdown-name">
-                            <span class="pet-icon"><i class="ph ph${pet.type === 'dog' ? '-dog' : '-cat'}"></i></span>
-                            ${pet.name}
-                        </span>
-                        <span class="pet-breakdown-fee">$${perPetFee}${petItemizedCost > 0 ? ` + $${petItemizedCost}` : ''}</span>
-                    </div>
-                `;
+                // Show breakdown with consultation fee only if needed
+                const feeDisplay = petRequiresConsultation ? `$${perPetFee}` : '';
+                const itemizedDisplay = petItemizedCost > 0 ? `$${petItemizedCost}` : '';
+                const separator = (feeDisplay && itemizedDisplay) ? ' + ' : '';
+                const totalDisplay = feeDisplay + separator + itemizedDisplay;
+
+                if (totalDisplay) {
+                    breakdownHtml += `
+                        <div class="pet-breakdown-item">
+                            <span class="pet-breakdown-name">
+                                <span class="pet-icon"><i class="ph ph${pet.type === 'dog' ? '-dog' : '-cat'}"></i></span>
+                                ${pet.name}
+                            </span>
+                            <span class="pet-breakdown-fee">${totalDisplay}</span>
+                        </div>
+                    `;
+                }
             }
         });
 
@@ -1081,14 +1110,25 @@ function initEstimator() {
             travelFeeLine.style.display = 'none';
         }
 
+        // Show/hide consultation fee line based on whether any pet needs consultation
+        if (anyPetRequiresConsultation) {
+            if (consultationFeeLine) consultationFeeLine.style.display = 'flex';
+            // Update label based on number of pets with consultation
+            if (petsWithConsultation > 1) {
+                consultationLabel.textContent = `Consultation fees (${petsWithConsultation} pets)`;
+            } else {
+                consultationLabel.textContent = 'Consultation fee';
+            }
+        } else {
+            if (consultationFeeLine) consultationFeeLine.style.display = 'none';
+        }
+
         // Show pet breakdown if multiple pets have services
-        if (petsWithServices > 1) {
+        if (petsWithServices > 1 && breakdownHtml) {
             petBreakdown.innerHTML = breakdownHtml;
             petBreakdown.style.display = 'block';
-            consultationLabel.textContent = `Consultation fees (${petsWithServices} pets)`;
         } else {
             petBreakdown.style.display = 'none';
-            consultationLabel.textContent = 'Consultation fee';
         }
 
         // Hide multiple visits notice for now (simplify for multi-pet)
@@ -1153,6 +1193,48 @@ function initEstimator() {
             if (concern.type === 'in-person') {
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    // Check if a pet's services require vet consultation (vs tech-only services)
+    function checkPetRequiresConsultation(pet) {
+        for (const serviceId of pet.selectedServices) {
+            for (const category of SERVICES_CONFIG.categories) {
+                if (category.items) {
+                    const item = category.items.find(i => i.id === serviceId);
+                    if (item && category.requiresConsultation) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // Custom concerns always require consultation (they need vet advice)
+        if (pet.customConcerns && pet.customConcerns.length > 0) {
+            return true;
+        }
+
+        return false;
+    }
+
+    // Check if DOM-selected services require consultation (for single pet mode)
+    function checkSelectedServicesRequireConsultation() {
+        const selectedServices = document.querySelectorAll('.service-checkbox input:checked');
+
+        for (const service of selectedServices) {
+            const group = service.dataset.group;
+            const category = SERVICES_CONFIG.categories.find(c => c.id === group);
+            if (category && category.requiresConsultation) {
+                return true;
+            }
+        }
+
+        // Custom concerns always require consultation
+        const customConcerns = window.getCustomConcerns ? window.getCustomConcerns() : [];
+        if (customConcerns.length > 0) {
+            return true;
         }
 
         return false;

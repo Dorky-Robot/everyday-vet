@@ -14,6 +14,7 @@ const SERVICES_CONFIG = {
       visitType: "both",
       defaultType: "virtual",
       timeMode: "smart",
+      requiresConsultation: true,
       items: [
         { id: "new-pet", label: "New pet consultation", time: 15 },
         { id: "diet", label: "Diet & nutrition", time: 10 },
@@ -33,6 +34,7 @@ const SERVICES_CONFIG = {
       visitType: "in-person",
       defaultType: "in-person",
       timeMode: "additive",
+      requiresConsultation: true,
       items: [
         { id: "exam", label: "Comprehensive physical exam", time: 15 }
       ]

@@ -1032,38 +1032,49 @@ function initEstimator() {
 
     if (!checkboxes.length) return;
 
-    // Pricing: $75 for first 30 min, $50 per additional 30 min, $100 travel fee
-    const FIRST_30_MIN = 75;
-    const ADDITIONAL_30_MIN = 50;
+    // Pricing structure:
+    // - Advice & Guidance: $75 for first pet + $10 per additional pet in household
+    // - Everything else: per line item (transactional)
+    // - Travel fee: $100 for in-person visits
+    const ADVICE_BASE_FEE = 75;
+    const ADVICE_ADDITIONAL_PET_FEE = 10;
     const TRAVEL_FEE = 100;
-    const MAX_VISIT_DURATION = 120; // 2 hours max per visit
-
-    // Service groupings - related topics that overlap
-    const serviceGroups = {
-        nutrition: ['diet', 'supplements', 'new-pet', 'picky eating', 'weight'],
-        behavior: ['behavior', 'anxiety', 'aggression', 'house soiling', 'litter box', 'separation anxiety', 'barking', 'meowing', 'leash reactivity', 'food aggression'],
-        skin: ['skin-issues', 'allergy', 'itching', 'scratching', 'hair loss', 'hot spots'],
-        gi: ['gi-issues', 'diarrhea', 'vomiting', 'constipation', 'flatulence'],
-        respiratory: ['coughing', 'sneezing', 'nasal discharge', 'reverse sneezing'],
-        chronic: ['chronic', 'senior', 'diabetes', 'kidney', 'heart disease', 'thyroid', 'arthritis', 'seizure', 'cancer'],
-        preventatives: ['preventatives'],
-        eyes_ears: ['eye discharge', 'ear odor', 'ear-treatment', 'bad breath'],
-        mobility: ['limping', 'stiffness', 'mobility'],
-        wellness: ['second-opinion', 'quality-of-life', 'hospice', 'medication questions', 'prescription', 'lab results', 'post-surgery'],
-        // In-person procedures - these don't overlap much
-        exam: ['exam'],
-        vaccines: ['vaccines'],
-        labwork: ['labwork', 'fecal'],
-        procedures: ['wound-care', 'ear-treatment', 'subq-fluids', 'injection', 'microchip', 'health-cert', 'nail trim', 'anal gland', 'skin scraping', 'abscess', 'suture', 'bandage', 'deworming', 'allergy injection', 'insulin training', 'fluid therapy'],
-        euthanasia: ['euthanasia']
-    };
 
     let numberOfVisits = 1;
 
-    function calculateConsultationFee(duration) {
-        if (duration <= 30) return FIRST_30_MIN;
-        const additionalBlocks = (duration - 30) / 30;
-        return FIRST_30_MIN + (additionalBlocks * ADDITIONAL_30_MIN);
+    // Check if any pet has advice/guidance selected
+    function hasAnyAdviceSelected() {
+        // Check current DOM state
+        const getTopics = window['getAdviceTopics_advice'];
+        const getContext = window['getAdviceContext_advice'];
+        const topics = getTopics ? getTopics() : [];
+        const context = getContext ? getContext() : '';
+
+        if (topics.length > 0 || context.trim().length > 0) {
+            return true;
+        }
+
+        // Check all pets' stored data
+        for (const pet of pets) {
+            const petTopics = pet.adviceTopics || [];
+            const petContext = pet.adviceContext || '';
+            if (petTopics.length > 0 || petContext.trim().length > 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // Calculate advice & guidance fee based on household size
+    function calculateAdviceFee() {
+        if (!hasAnyAdviceSelected()) {
+            return 0;
+        }
+
+        const numPets = Math.max(pets.length, 1);
+        // $75 for first pet + $10 per additional pet
+        return ADVICE_BASE_FEE + (Math.max(numPets - 1, 0) * ADVICE_ADDITIONAL_PET_FEE);
     }
 
     function getServiceGroup(serviceValue, serviceLabel) {
@@ -1229,15 +1240,10 @@ function initEstimator() {
     }
 
     function updatePrice() {
-        // For multi-pet visits, calculate across all pets
-        if (pets.length > 0) {
-            calculateMultiPetPrice();
-            return;
-        }
-
-        // Single pet / legacy calculation
         const selectedServices = document.querySelectorAll('.service-checkbox input:checked, .single-toggle-checkbox input:checked');
         const customConcerns = window.getCustomConcerns ? window.getCustomConcerns() : [];
+        const consultationFeeLine = document.getElementById('consultation-fee-line');
+        const numPets = Math.max(pets.length, 1);
 
         // Check if any in-person services are selected
         let requiresInPerson = false;
@@ -1246,44 +1252,59 @@ function initEstimator() {
                 requiresInPerson = true;
             }
         });
-
-        // Check custom concerns too
         customConcerns.forEach(concern => {
             if (concern.type === 'in-person') {
                 requiresInPerson = true;
             }
         });
 
-        // Check if consultation is needed (only for advice/exam categories)
-        const requiresConsultation = checkSelectedServicesRequireConsultation();
-
-        // Calculate consultation fee based only on consultation service time
-        let perVisitFee = 0;
-        if (requiresConsultation) {
-            const consultTime = calculateTotalConsultationTime();
-            // Round up to nearest 30-min block, minimum 30 min
-            const consultDuration = Math.max(30, Math.ceil(consultTime / 30) * 30);
-            perVisitFee = calculateConsultationFee(consultDuration);
+        // Also check pets for in-person services
+        if (pets.length > 0) {
+            requiresInPerson = requiresInPerson || pets.some(pet => checkPetRequiresInPerson(pet));
         }
-        const perVisitTravel = requiresInPerson ? TRAVEL_FEE : 0;
 
-        // Calculate itemized costs (vaccines, labs, procedures)
-        const itemizedCosts = calculateItemizedCosts();
+        // Calculate advice fee: $75 + $10 per additional pet (if any advice selected)
+        const adviceFee = calculateAdviceFee();
 
-        // Calculate total based on number of visits
-        const totalConsultationFees = perVisitFee * numberOfVisits;
-        const totalTravelFees = perVisitTravel * numberOfVisits;
-        const total = totalConsultationFees + totalTravelFees + itemizedCosts;
+        // Calculate itemized costs (vaccines, labs, procedures) for all pets
+        let itemizedCosts = calculateItemizedCosts();
 
-        // Show/hide consultation fee line
-        const consultationFeeLine = document.getElementById('consultation-fee-line');
-        if (requiresConsultation) {
+        // Add itemized costs from all pets' stored selections
+        if (pets.length > 0) {
+            pets.forEach(pet => {
+                pet.selectedServices.forEach(serviceId => {
+                    for (const category of SERVICES_CONFIG.categories) {
+                        if (category.items) {
+                            const item = category.items.find(i => i.id === serviceId);
+                            if (item && item.cost) {
+                                itemizedCosts += item.cost;
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        // Travel fee for in-person visits
+        const travelFee = requiresInPerson ? TRAVEL_FEE : 0;
+
+        // Calculate total
+        const total = adviceFee + itemizedCosts + travelFee;
+
+        // Update UI - Advice fee line
+        if (adviceFee > 0) {
             if (consultationFeeLine) consultationFeeLine.style.display = 'flex';
+            if (numPets > 1) {
+                consultationLabel.textContent = `Advice & Guidance (${numPets} pets)`;
+            } else {
+                consultationLabel.textContent = 'Advice & Guidance';
+            }
+            consultationFee.textContent = `$${adviceFee}`;
         } else {
             if (consultationFeeLine) consultationFeeLine.style.display = 'none';
         }
 
-        // Show/hide itemized costs line
+        // Update UI - Itemized costs
         if (itemizedCosts > 0) {
             itemizedFeeLine.style.display = 'flex';
             itemizedFeeEl.textContent = `$${itemizedCosts}`;
@@ -1291,30 +1312,12 @@ function initEstimator() {
             itemizedFeeLine.style.display = 'none';
         }
 
-        // Update UI for multiple visits
-        if (numberOfVisits > 1) {
-            multipleVisitsNotice.style.display = 'block';
-            multipleVisitsText.textContent = `Based on your selections, this will likely require ${numberOfVisits} visits.`;
-            perVisitLabel.style.display = 'inline';
-            visitsCountLine.style.display = 'flex';
-            visitsCount.textContent = numberOfVisits;
-            consultationLabel.textContent = `Consultation fees (${numberOfVisits} visits)`;
-            if (requiresInPerson) {
-                travelLabel.textContent = `Travel fees (${numberOfVisits} visits)`;
-                travelFeeEl.textContent = `$${totalTravelFees}`;
-            }
-        } else {
-            multipleVisitsNotice.style.display = 'none';
-            perVisitLabel.style.display = 'none';
-            visitsCountLine.style.display = 'none';
-            consultationLabel.textContent = 'Consultation fee';
-            travelLabel.textContent = 'Travel fee';
-            if (requiresInPerson) {
-                travelFeeEl.textContent = `$${TRAVEL_FEE}`;
-            }
+        // Update UI - Travel fee
+        if (travelFee > 0) {
+            travelFeeLine.style.display = 'flex';
+            travelFeeEl.textContent = `$${travelFee}`;
         }
 
-        consultationFee.textContent = `$${totalConsultationFees}`;
         totalPrice.textContent = `$${total}`;
     }
 

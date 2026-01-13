@@ -1612,9 +1612,18 @@ function initCustomConcernAutocomplete(onChangeCallback) {
             items.forEach((item, i) => item.classList.toggle('highlighted', i === highlightedIndex));
         } else if (e.key === 'Enter') {
             e.preventDefault();
+            const filtered = filterConcerns(input.value);
             if (highlightedIndex >= 0 && items[highlightedIndex]) {
-                const filtered = filterConcerns(input.value);
+                // Select highlighted autocomplete item
                 selectConcern(filtered[highlightedIndex]);
+            } else if (input.value.trim()) {
+                // No autocomplete match - add as freeform custom concern
+                const customConcern = {
+                    label: input.value.trim(),
+                    type: 'virtual', // Default to virtual for custom concerns
+                    time: 15 // Default time estimate
+                };
+                selectConcern(customConcern);
             }
         } else if (e.key === 'Escape') {
             list.classList.remove('active');

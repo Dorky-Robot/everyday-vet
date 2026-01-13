@@ -1202,6 +1202,7 @@ nav {
 .category-accordion.expanded .category-content {
     max-height: 500px;
     padding: 0.75rem 1rem 1rem;
+    overflow: visible;
 }
 
 /* Selected Service Chiclets */
@@ -1410,11 +1411,11 @@ nav {
     border: 1px solid var(--border-color);
     border-top: none;
     border-radius: 0 0 12px 12px;
-    max-height: 200px;
+    max-height: 300px;
     overflow-y: auto;
-    z-index: 10;
+    z-index: 100;
     display: none;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
 .autocomplete-list.active {

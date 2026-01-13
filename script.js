@@ -1406,22 +1406,14 @@ function initMobileMenu() {
     });
 }
 
-function initQuoteContactForm() {
-    const emailCheckbox = document.querySelector('input[name="contact-method"][value="email"]');
-    const phoneCheckbox = document.querySelector('input[name="contact-method"][value="phone"]');
-    const emailField = document.getElementById('email-field');
-    const phoneField = document.getElementById('phone-field');
-
-    if (!emailCheckbox || !phoneCheckbox) return;
-
-    function updateFields() {
-        emailField.style.display = emailCheckbox.checked ? 'block' : 'none';
-        phoneField.style.display = phoneCheckbox.checked ? 'block' : 'none';
-    }
-
-    emailCheckbox.addEventListener('change', updateFields);
-    phoneCheckbox.addEventListener('change', updateFields);
-    updateFields();
+function initSchedulingButton() {
+    const btn = document.getElementById('continue-to-scheduling-btn');
+    btn?.addEventListener('click', () => {
+        // Step 4: Will integrate with Levee scheduling system
+        console.log('Appointment data:', gatherAppointmentData());
+        console.log('Total:', calculateConsultationFee() + calculateLineItemCosts() + (requiresInPersonVisit() ? PRICING.TRAVEL_FEE : 0));
+        // TODO: Proceed to step 4 or call Levee API
+    });
 }
 
 // =============================================================================
@@ -1437,7 +1429,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initScrollAnimations();
     initNavbarScroll();
     initMobileMenu();
-    initQuoteContactForm();
+    initSchedulingButton();
 
     // Core functionality
     initPetManagement();

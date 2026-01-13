@@ -982,8 +982,14 @@ function initEstimator() {
         // Check if consultation is needed (only for advice/exam categories)
         const requiresConsultation = checkSelectedServicesRequireConsultation();
 
-        const duration = parseInt(durationSlider.value);
-        const perVisitFee = requiresConsultation ? calculateConsultationFee(duration) : 0;
+        // Calculate consultation fee based only on consultation service time
+        let perVisitFee = 0;
+        if (requiresConsultation) {
+            const consultTime = calculateTotalConsultationTime();
+            // Round up to nearest 30-min block, minimum 30 min
+            const consultDuration = Math.max(30, Math.ceil(consultTime / 30) * 30);
+            perVisitFee = calculateConsultationFee(consultDuration);
+        }
         const perVisitTravel = requiresInPerson ? TRAVEL_FEE : 0;
 
         // Calculate itemized costs (vaccines, labs, procedures)
@@ -1049,9 +1055,6 @@ function initEstimator() {
         let petsWithServices = 0;
         let petsWithConsultation = 0;
 
-        const duration = parseInt(durationSlider.value);
-        const perPetFee = calculateConsultationFee(duration);
-
         let breakdownHtml = '';
 
         pets.forEach(pet => {
@@ -1064,10 +1067,18 @@ function initEstimator() {
                 totalItemizedCosts += petItemizedCost;
 
                 // Only add consultation fee if this pet needs vet consultation
+                // Calculate based on consultation service time, not total time
+                let perPetFee = 0;
                 if (petRequiresConsultation) {
                     petsWithConsultation++;
-                    totalConsultationFees += perPetFee;
                     anyPetRequiresConsultation = true;
+
+                    // Calculate consultation duration based only on consultation services
+                    const petConsultTime = calculatePetConsultationTime(pet);
+                    // Round up to nearest 30-min block, minimum 30 min
+                    const consultDuration = Math.max(30, Math.ceil(petConsultTime / 30) * 30);
+                    perPetFee = calculateConsultationFee(consultDuration);
+                    totalConsultationFees += perPetFee;
                 }
 
                 // Check if this pet requires in-person
@@ -1238,6 +1249,63 @@ function initEstimator() {
         }
 
         return false;
+    }
+
+    // Calculate time ONLY from consultation services (for consultation fee)
+    function calculatePetConsultationTime(pet) {
+        let totalTime = 0;
+
+        pet.selectedServices.forEach(serviceId => {
+            for (const category of SERVICES_CONFIG.categories) {
+                if (category.items && category.requiresConsultation) {
+                    const item = category.items.find(i => i.id === serviceId);
+                    if (item) {
+                        totalTime += item.time || 10;
+                    }
+                }
+            }
+        });
+
+        // Custom concerns count as consultation time
+        if (pet.customConcerns) {
+            pet.customConcerns.forEach(concern => {
+                totalTime += concern.time || 10;
+            });
+        }
+
+        return totalTime;
+    }
+
+    // Calculate total consultation time across all pets
+    function calculateTotalConsultationTime() {
+        if (pets.length === 0) {
+            // Single pet mode - check DOM
+            const selectedServices = document.querySelectorAll('.service-checkbox input:checked');
+            let totalTime = 0;
+
+            selectedServices.forEach(service => {
+                const group = service.dataset.group;
+                const category = SERVICES_CONFIG.categories.find(c => c.id === group);
+                if (category && category.requiresConsultation) {
+                    totalTime += parseInt(service.dataset.time) || 10;
+                }
+            });
+
+            // Add custom concerns time
+            const customConcerns = window.getCustomConcerns ? window.getCustomConcerns() : [];
+            customConcerns.forEach(concern => {
+                totalTime += concern.time || 10;
+            });
+
+            return Math.max(0, totalTime);
+        }
+
+        let totalTime = 0;
+        pets.forEach(pet => {
+            totalTime += calculatePetConsultationTime(pet);
+        });
+
+        return totalTime;
     }
 
     function calculateEstimate() {

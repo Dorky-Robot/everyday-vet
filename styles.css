@@ -2268,6 +2268,7 @@ footer p {
     .estimator-step-grid {
         grid-template-columns: 1fr;
         gap: 1.5rem;
+        padding-bottom: 320px; /* Space for fixed estimate card */
     }
 
     .customer-type-options {
@@ -2382,13 +2383,20 @@ footer p {
     }
 
     .estimator-result {
-        position: static;
-        max-height: none;
-        overflow-y: visible;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        max-height: 60vh;
+        overflow-y: auto;
+        z-index: 99;
+        padding: 0 1rem 1rem;
+        background: linear-gradient(to top, var(--white) 90%, transparent);
     }
 
     .result-card {
         padding: 1.25rem;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
     }
 
     .visit-type-value {

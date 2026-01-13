@@ -1478,6 +1478,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initLayeredParallax();
     initNavbarScroll();
     initMobileMenu();
+    // Load saved state BEFORE initializing steps so we can restore position
+    loadFromStorage();
     initEstimatorSteps();
     // Load services config (this will call initAccordions and initEstimator after rendering)
     loadServicesConfig();

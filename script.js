@@ -270,6 +270,11 @@ function restoreSelectedServices() {
         cb.checked = pet.selectedServices.includes(cb.value);
     });
 
+    // Restore custom concerns
+    if (window.setCustomConcerns && pet.customConcerns) {
+        window.setCustomConcerns(pet.customConcerns);
+    }
+
     // Update accordion states
     document.querySelectorAll('.category-accordion').forEach(accordion => {
         updateAccordionState(accordion);
@@ -313,8 +318,8 @@ function renderServiceCategories(petType) {
         if (category.isCustomInput) {
             // Render custom input section
             html += `
-                <div class="category-accordion">
-                    <button class="category-header" data-category="${category.id}">
+                <div class="category-accordion" data-category="${category.id}">
+                    <button class="category-header">
                         <span class="category-title">${category.title}</span>
                         <span class="category-subtitle">${subtitle}</span>
                         <span class="category-toggle"><i class="ph ph-plus"></i></span>
@@ -322,8 +327,10 @@ function renderServiceCategories(petType) {
                     <div class="selected-chiclets" data-category="${category.id}"></div>
                     <div class="category-content" id="${category.id}-content">
                         <div class="custom-concern-wrapper">
-                            <input type="text" id="custom-concern" class="custom-concern-input" placeholder="Type your concern..." autocomplete="off">
-                            <div id="autocomplete-list" class="autocomplete-list"></div>
+                            <div class="custom-concern-input-wrapper">
+                                <input type="text" id="custom-concern" class="custom-concern-input" placeholder="Type your concern..." autocomplete="off">
+                                <div id="autocomplete-list" class="autocomplete-list"></div>
+                            </div>
                             <div id="custom-concerns-tags" class="custom-concerns-tags"></div>
                         </div>
                     </div>
@@ -339,8 +346,8 @@ function renderServiceCategories(petType) {
             // Only render category if it has items
             if (filteredItems.length > 0) {
                 html += `
-                    <div class="category-accordion">
-                        <button class="category-header" data-category="${category.id}">
+                    <div class="category-accordion" data-category="${category.id}">
+                        <button class="category-header">
                             <span class="category-title">${category.title}</span>
                             <span class="category-subtitle">${subtitle}</span>
                             <span class="category-toggle"><i class="ph ph-plus"></i></span>
@@ -645,7 +652,9 @@ function initAccordions() {
 
 function updateAccordionState(accordion) {
     const checkboxes = accordion.querySelectorAll('input[type="checkbox"]:checked');
-    if (checkboxes.length > 0) {
+    const customConcernTags = accordion.querySelectorAll('.concern-tag');
+
+    if (checkboxes.length > 0 || customConcernTags.length > 0) {
         accordion.classList.add('has-selection');
     } else {
         accordion.classList.remove('has-selection');
@@ -1592,6 +1601,12 @@ function initCustomConcernAutocomplete(onChangeCallback) {
     // Get custom concerns for estimate calculation
     window.getCustomConcerns = function() {
         return selectedConcerns;
+    };
+
+    // Set custom concerns (for restoring from saved state)
+    window.setCustomConcerns = function(concerns) {
+        selectedConcerns = concerns || [];
+        renderTags();
     };
 
     input.addEventListener('input', () => {

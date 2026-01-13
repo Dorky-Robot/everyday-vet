@@ -1390,6 +1390,10 @@ nav {
 
 /* Custom Concern Autocomplete */
 .custom-concern-wrapper {
+
+}
+
+.custom-concern-input-wrapper {
     position: relative;
     z-index: 50;
 }
@@ -1409,6 +1413,12 @@ nav {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(233, 30, 140, 0.1);
+}
+
+/* When autocomplete is showing, square off bottom corners of input */
+.custom-concern-input-wrapper:has(.autocomplete-list.active) .custom-concern-input {
+    border-radius: 12px 12px 0 0;
+    border-bottom-color: var(--border-color);
 }
 
 .custom-concern-input::placeholder {

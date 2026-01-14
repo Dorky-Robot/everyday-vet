@@ -589,8 +589,10 @@ function removePet(petId) {
 }
 
 function selectPet(petId) {
-    // Save current pet's selections before switching
-    savePetSelections();
+    // Save current pet's selections before switching (only if switching to different pet)
+    if (state.currentPetId && state.currentPetId !== petId) {
+        savePetSelections();
+    }
 
     state.currentPetId = petId;
 

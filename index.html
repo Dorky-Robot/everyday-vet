@@ -121,7 +121,6 @@
                     <button class="step-dot active" data-step="0" aria-label="Step 1: Household"></button>
                     <button class="step-dot" data-step="1" aria-label="Step 2: Client Type"></button>
                     <button class="step-dot" data-step="2" aria-label="Step 3: Services"></button>
-                    <button class="step-dot" data-step="3" aria-label="Step 4: Schedule"></button>
                 </div>
 
                 <div class="estimator-steps-wrapper" id="estimator-steps-wrapper">
@@ -202,7 +201,7 @@
                                         </label>
                                     </div>
                                 </div>
-                                <a href="#contact" class="btn estimator-btn">Book Your First Visit</a>
+                                <button class="btn estimator-btn" id="book-first-visit-btn">Book Your First Visit</button>
                             </div>
                         </div>
 
@@ -275,7 +274,7 @@
                                 </div>
                             </div>
 
-                            <button type="button" class="btn estimator-btn" id="continue-to-scheduling-btn">Continue to Scheduling</button>
+                            <button class="btn estimator-btn" id="continue-to-scheduling-btn">Continue to Scheduling</button>
                         </div>
                     </div>
 
@@ -302,140 +301,8 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
                         </div><!-- end existing-customer-content -->
                     </div><!-- end step-details -->
-
-                    <!-- Step 3: Scheduling (Date, Time, Client Info) -->
-                    <div class="estimator-step" id="step-scheduling" data-step-index="3">
-                        <div class="scheduling-step-grid">
-                            <div class="scheduling-left">
-                                <!-- Date Selection -->
-                                <div class="scheduling-section" id="date-section">
-                                    <h3>Select a Date</h3>
-                                    <div class="calendar-container">
-                                        <div class="calendar-header">
-                                            <button class="calendar-nav" id="cal-prev"><i class="ph ph-caret-left"></i></button>
-                                            <span class="calendar-month" id="cal-month">January 2025</span>
-                                            <button class="calendar-nav" id="cal-next"><i class="ph ph-caret-right"></i></button>
-                                        </div>
-                                        <div class="calendar-weekdays">
-                                            <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
-                                        </div>
-                                        <div class="calendar-days" id="cal-days">
-                                            <!-- Days rendered dynamically -->
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Time Selection -->
-                                <div class="scheduling-section" id="time-section" style="display: none;">
-                                    <h3>Select a Time</h3>
-                                    <p class="selected-date-display" id="selected-date-display"></p>
-                                    <div class="time-slots" id="time-slots">
-                                        <!-- Time slots rendered dynamically -->
-                                    </div>
-                                    <div class="time-slots-loading" id="time-slots-loading" style="display: none;">
-                                        <span class="loading-spinner"></span> Loading available times...
-                                    </div>
-                                    <div class="time-slots-empty" id="time-slots-empty" style="display: none;">
-                                        <p>No available times on this date. Please select another day.</p>
-                                    </div>
-                                </div>
-
-                                <!-- Client Info -->
-                                <div class="scheduling-section" id="client-section" style="display: none;">
-                                    <h3>Your Information</h3>
-                                    <div class="client-form">
-                                        <div class="form-group">
-                                            <label for="client-name">Name</label>
-                                            <input type="text" id="client-name" placeholder="Your full name" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="client-email">Email</label>
-                                            <input type="email" id="client-email" placeholder="your@email.com" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="client-phone">Phone (optional)</label>
-                                            <input type="tel" id="client-phone" placeholder="(216) 555-1234">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="scheduling-right">
-                                <div class="appointment-summary">
-                                    <h4>Appointment Summary</h4>
-                                    <div class="summary-section">
-                                        <div class="summary-row">
-                                            <span class="summary-label">Visit Type</span>
-                                            <span class="summary-value" id="summary-visit-type">Virtual Visit</span>
-                                        </div>
-                                        <div class="summary-row">
-                                            <span class="summary-label">Duration</span>
-                                            <span class="summary-value" id="summary-duration">30 minutes</span>
-                                        </div>
-                                        <div class="summary-row" id="summary-date-row" style="display: none;">
-                                            <span class="summary-label">Date</span>
-                                            <span class="summary-value" id="summary-date"></span>
-                                        </div>
-                                        <div class="summary-row" id="summary-time-row" style="display: none;">
-                                            <span class="summary-label">Time</span>
-                                            <span class="summary-value" id="summary-time"></span>
-                                        </div>
-                                    </div>
-
-                                    <div class="summary-pets" id="summary-pets">
-                                        <!-- Pet list rendered dynamically -->
-                                    </div>
-
-                                    <div class="summary-pricing">
-                                        <div class="summary-row" id="summary-consultation-row" style="display: none;">
-                                            <span>Advice & Guidance</span>
-                                            <span id="summary-consultation-fee">$75</span>
-                                        </div>
-                                        <div class="summary-row" id="summary-services-row" style="display: none;">
-                                            <span>Services & Supplies</span>
-                                            <span id="summary-services-fee">$0</span>
-                                        </div>
-                                        <div class="summary-row" id="summary-travel-row" style="display: none;">
-                                            <span>Travel Fee</span>
-                                            <span id="summary-travel-fee">$100</span>
-                                        </div>
-                                        <div class="summary-total">
-                                            <span>Total</span>
-                                            <span id="summary-total">$75</span>
-                                        </div>
-                                    </div>
-
-                                    <button class="btn estimator-btn" id="confirm-booking-btn" disabled>Confirm Appointment</button>
-                                    <p class="booking-error" id="booking-error" style="display: none;"></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Step 4: Confirmation (Success) -->
-                    <div class="estimator-step" id="step-confirmation" data-step-index="4">
-                        <div class="step-content-centered confirmation-content">
-                            <div class="confirmation-icon"><i class="ph ph-check-circle"></i></div>
-                            <h3>Appointment Confirmed!</h3>
-                            <p class="confirmation-code">Confirmation Code: <strong id="confirmation-code">--</strong></p>
-                            <div class="confirmation-details">
-                                <p id="confirmation-message"></p>
-                            </div>
-                            <div class="calendar-buttons">
-                                <a href="#" id="add-to-google" class="calendar-btn" target="_blank">
-                                    <i class="ph ph-google-logo"></i> Add to Google Calendar
-                                </a>
-                                <a href="#" id="download-ics" class="calendar-btn" download="appointment.ics">
-                                    <i class="ph ph-calendar-plus"></i> Download .ics
-                                </a>
-                            </div>
-                            <p class="confirmation-email-note">We'll send a confirmation to <strong id="confirmation-email">your email</strong>.</p>
-                            <button class="btn estimator-btn-secondary" id="book-another-btn">Book Another Appointment</button>
-                        </div>
-                    </div>
                 </div><!-- end estimator-steps-wrapper -->
             </div>
 

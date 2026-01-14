@@ -16,8 +16,12 @@ const STORAGE_KEY = 'everydayvet_schedule';
 
 // Levee API configuration
 const LEVEE_CONFIG = {
-    apiUrl: 'https://levee.everyday.vet',
+    // Use localhost for development, production URL for deployed site
+    apiUrl: window.location.hostname === 'localhost' || window.location.protocol === 'file:'
+        ? 'http://localhost:3000'
+        : 'https://levee.everyday.vet',
     siteKey: 'evv_everyday_vet_dev', // Will be replaced with production key
+    apiKey: 'evv_sk_dev_everyday_vet_2024', // This should match what's hashed in the DB
 };
 
 const state = {
@@ -90,6 +94,7 @@ function clearState() {
     state.household.isNewClient = null;
     state.currentPetId = null;
     state.currentStep = 0;
+    state.client = { name: '', email: '', phone: '' };
     localStorage.removeItem(STORAGE_KEY);
 }
 
@@ -411,6 +416,9 @@ function initWizard() {
         goToStep(2);
     });
 
+    // Initialize scheduling button (Continue to Scheduling)
+    initSchedulingButton();
+
     // Initial state
     if (loadState() && state.household.pets.length > 0) {
         renderPetCards();
@@ -429,6 +437,11 @@ function canProceedFromStep(step) {
 }
 
 function goToStep(stepIndex) {
+    // Save selections before leaving step 2
+    if (state.currentStep === 2 && stepIndex !== 2) {
+        savePetSelections();
+    }
+
     state.currentStep = stepIndex;
 
     // Update step visibility
@@ -450,8 +463,6 @@ function goToStep(stepIndex) {
         if (!state.household.isNewClient && state.household.pets.length > 0) {
             selectPet(state.currentPetId || state.household.pets[0].id);
         }
-    } else if (stepIndex === 3) {
-        initSchedulingStep();
     }
 
     saveState();
@@ -1428,21 +1439,112 @@ function initMobileMenu() {
 
 function initSchedulingButton() {
     const btn = document.getElementById('continue-to-scheduling-btn');
-    btn?.addEventListener('click', () => {
+    btn?.addEventListener('click', async () => {
         // Save current selections before proceeding
         savePetSelections();
-        // Go to step 3 (scheduling)
-        goToStep(3);
+        // Redirect directly to Levee
+        await redirectToLeveeBooking(btn, false);
     });
+
+    // Also handle the "Book Your First Visit" button for new clients
+    const newClientBtn = document.getElementById('book-first-visit-btn');
+    if (newClientBtn) {
+        newClientBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await redirectToLeveeBooking(newClientBtn, true);
+        });
+    }
+}
+
+/**
+ * Redirect to Levee booking page with appointment details
+ */
+async function redirectToLeveeBooking(btn, isNewClient = null) {
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span> Redirecting...';
+
+    try {
+        // Determine if new client from param or state
+        const newClient = isNewClient !== null ? isNewClient : state.household.isNewClient;
+
+        const isInPerson = newClient
+            ? document.getElementById('onboarding-inperson')?.checked
+            : requiresInPersonVisit();
+
+        let consultationFee, lineItemCosts, travelFee, total;
+
+        if (newClient) {
+            const numPets = state.household.pets.length;
+            consultationFee = PRICING.ADVICE_BASE + ((numPets - 1) * PRICING.ADVICE_PER_ADDITIONAL_PET);
+            lineItemCosts = 0;
+            travelFee = isInPerson ? PRICING.TRAVEL_FEE : 0;
+            total = consultationFee + travelFee;
+        } else {
+            consultationFee = calculateConsultationFee();
+            lineItemCosts = calculateLineItemCosts();
+            travelFee = isInPerson ? PRICING.TRAVEL_FEE : 0;
+            total = consultationFee + lineItemCosts + travelFee;
+        }
+
+        // Build return URL - back to everyday_vet with success param
+        const returnUrl = `${window.location.origin}${window.location.pathname}?booking=success#services`;
+
+        // Build appointment data to pass to Levee
+        const appointmentData = {
+            siteKey: LEVEE_CONFIG.siteKey,
+            household: state.household.pets.map(pet => ({
+                name: pet.name,
+                species: pet.type,
+                services: {
+                    adviceTopics: pet.services?.adviceTopics || [],
+                    selectedIds: pet.services?.selectedIds || [],
+                    customConcerns: pet.services?.customConcerns || [],
+                    adviceContext: pet.services?.adviceContext || '',
+                }
+            })),
+            visitType: isInPerson ? 'in-person' : 'virtual',
+            durationMinutes: estimateAppointmentTime().minutes,
+            isNewClient: newClient,
+            pricing: {
+                consultationFee,
+                lineItems: lineItemCosts,
+                travelFee,
+                total,
+            },
+            returnUrl,
+        };
+
+        // Encode data for URL
+        const encodedData = encodeURIComponent(JSON.stringify(appointmentData));
+
+        // Don't clear state - it will be cleared when user dismisses success screen
+        // This allows pressing back to return to the form
+        window.location.href = `${LEVEE_CONFIG.apiUrl}/book-external.html?data=${encodedData}`;
+
+    } catch (error) {
+        console.error('Error redirecting to booking:', error);
+        btn.disabled = false;
+        btn.textContent = originalText;
+        alert('Unable to proceed to scheduling. Please try again.');
+    }
 }
 
 // =============================================================================
 // SCHEDULING (STEP 3 & 4)
 // =============================================================================
 
+let schedulingInitialized = false;
+
 function initSchedulingStep() {
+    // Render calendar and summary every time
     renderCalendar();
     updateSchedulingSummary();
+
+    // Only add event listeners once
+    if (schedulingInitialized) return;
+    schedulingInitialized = true;
+
     initClientForm();
     initBookingButton();
 
@@ -1472,7 +1574,17 @@ function initSchedulingStep() {
 function renderCalendar() {
     const container = document.getElementById('cal-days');
     const monthLabel = document.getElementById('cal-month');
-    if (!container || !monthLabel) return;
+    if (!container || !monthLabel) {
+        console.error('Calendar elements not found:', { container, monthLabel });
+        return;
+    }
+    console.log('Rendering calendar for:', state.scheduling.calendarMonth, state.scheduling.calendarYear);
+
+    // Debug: check if step-scheduling is visible
+    const schedulingStep = document.getElementById('step-scheduling');
+    console.log('step-scheduling element:', schedulingStep);
+    console.log('step-scheduling classes:', schedulingStep?.classList.toString());
+    console.log('step-scheduling display:', schedulingStep ? getComputedStyle(schedulingStep).display : 'N/A');
 
     const { calendarMonth, calendarYear } = state.scheduling;
     const today = new Date();
@@ -1646,6 +1758,8 @@ function selectTime(time, display) {
     saveState();
 }
 
+let clientFormInitialized = false;
+
 function initClientForm() {
     const nameInput = document.getElementById('client-name');
     const emailInput = document.getElementById('client-email');
@@ -1656,17 +1770,209 @@ function initClientForm() {
     if (emailInput) emailInput.value = state.client.email || '';
     if (phoneInput) phoneInput.value = state.client.phone || '';
 
+    // Only add listeners once
+    if (clientFormInitialized) {
+        updateProceedButtonState();
+        return;
+    }
+    clientFormInitialized = true;
+
     const handleInput = () => {
         state.client.name = nameInput?.value || '';
         state.client.email = emailInput?.value || '';
         state.client.phone = phoneInput?.value || '';
-        updateBookingButtonState();
+        updateProceedButtonState();
         saveState();
     };
 
     nameInput?.addEventListener('input', handleInput);
     emailInput?.addEventListener('input', handleInput);
     phoneInput?.addEventListener('input', handleInput);
+
+    // Initialize proceed button
+    const proceedBtn = document.getElementById('proceed-to-schedule-btn');
+    proceedBtn?.addEventListener('click', proceedToLeveeScheduling);
+    updateProceedButtonState();
+}
+
+/**
+ * Update the appointment summary on Step 3 (client info)
+ */
+function updateFinalSummary() {
+    // Determine visit type
+    const isInPerson = state.household.isNewClient
+        ? document.getElementById('onboarding-inperson')?.checked
+        : requiresInPersonVisit();
+
+    // Visit type
+    const visitTypeEl = document.getElementById('final-visit-type-value');
+    if (visitTypeEl) {
+        visitTypeEl.textContent = isInPerson ? 'In-Person Visit' : 'Virtual Visit';
+    }
+
+    // Duration
+    const durationEl = document.getElementById('final-duration');
+    if (durationEl) {
+        durationEl.textContent = estimateAppointmentTime().formatted;
+    }
+
+    // Pet summary
+    const petSummaryEl = document.getElementById('final-pet-summary');
+    if (petSummaryEl) {
+        petSummaryEl.innerHTML = state.household.pets.map(pet => `
+            <div class="summary-pet">
+                <i class="ph ph-${pet.type}"></i>
+                <span>${pet.name}</span>
+            </div>
+        `).join('');
+    }
+
+    // Calculate pricing
+    let consultationFee, lineItemCosts, travelFee, total;
+
+    if (state.household.isNewClient) {
+        const numPets = state.household.pets.length;
+        consultationFee = PRICING.ADVICE_BASE + ((numPets - 1) * PRICING.ADVICE_PER_ADDITIONAL_PET);
+        lineItemCosts = 0;
+        travelFee = isInPerson ? PRICING.TRAVEL_FEE : 0;
+        total = consultationFee + travelFee;
+    } else {
+        consultationFee = calculateConsultationFee();
+        lineItemCosts = calculateLineItemCosts();
+        travelFee = isInPerson ? PRICING.TRAVEL_FEE : 0;
+        total = consultationFee + lineItemCosts + travelFee;
+    }
+
+    // Update pricing display
+    const consultationLine = document.getElementById('final-consultation-line');
+    const servicesLine = document.getElementById('final-services-line');
+    const travelLine = document.getElementById('final-travel-line');
+
+    if (consultationLine) {
+        consultationLine.style.display = consultationFee > 0 ? 'flex' : 'none';
+        const feeEl = document.getElementById('final-consultation-fee');
+        if (feeEl) feeEl.textContent = `$${consultationFee}`;
+    }
+
+    if (servicesLine) {
+        servicesLine.style.display = lineItemCosts > 0 ? 'flex' : 'none';
+        const feeEl = document.getElementById('final-services-fee');
+        if (feeEl) feeEl.textContent = `$${lineItemCosts}`;
+    }
+
+    if (travelLine) {
+        travelLine.style.display = travelFee > 0 ? 'flex' : 'none';
+        const feeEl = document.getElementById('final-travel-fee');
+        if (feeEl) feeEl.textContent = `$${travelFee}`;
+    }
+
+    const totalEl = document.getElementById('final-total');
+    if (totalEl) totalEl.textContent = `$${total}`;
+}
+
+/**
+ * Enable/disable the proceed button based on form validation
+ */
+function updateProceedButtonState() {
+    const btn = document.getElementById('proceed-to-schedule-btn');
+    if (!btn) return;
+
+    const hasName = !!state.client.name?.trim();
+    const hasEmail = !!state.client.email?.trim() && isValidEmail(state.client.email);
+
+    btn.disabled = !(hasName && hasEmail);
+}
+
+/**
+ * Submit client info to Levee and redirect to booking page
+ */
+async function proceedToLeveeScheduling() {
+    const btn = document.getElementById('proceed-to-schedule-btn');
+    const btnText = document.getElementById('proceed-btn-text');
+    const btnLoading = document.getElementById('proceed-btn-loading');
+    const errorEl = document.getElementById('booking-error');
+
+    btn.disabled = true;
+    if (btnText) btnText.style.display = 'none';
+    if (btnLoading) btnLoading.style.display = 'inline';
+    if (errorEl) errorEl.style.display = 'none';
+
+    try {
+        const isInPerson = state.household.isNewClient
+            ? document.getElementById('onboarding-inperson')?.checked
+            : requiresInPersonVisit();
+
+        let consultationFee, lineItemCosts, travelFee, total;
+
+        if (state.household.isNewClient) {
+            const numPets = state.household.pets.length;
+            consultationFee = PRICING.ADVICE_BASE + ((numPets - 1) * PRICING.ADVICE_PER_ADDITIONAL_PET);
+            lineItemCosts = 0;
+            travelFee = isInPerson ? PRICING.TRAVEL_FEE : 0;
+            total = consultationFee + travelFee;
+        } else {
+            consultationFee = calculateConsultationFee();
+            lineItemCosts = calculateLineItemCosts();
+            travelFee = isInPerson ? PRICING.TRAVEL_FEE : 0;
+            total = consultationFee + lineItemCosts + travelFee;
+        }
+
+        const payload = {
+            siteKey: LEVEE_CONFIG.siteKey,
+            client: {
+                name: state.client.name,
+                email: state.client.email,
+                phone: state.client.phone || undefined,
+            },
+            household: state.household.pets.map(pet => ({
+                name: pet.name,
+                species: pet.type,
+                services: {
+                    adviceTopics: pet.services.adviceTopics || [],
+                    selectedIds: pet.services.selectedIds || [],
+                    customConcerns: pet.services.customConcerns || [],
+                }
+            })),
+            visitType: isInPerson ? 'in-person' : 'virtual',
+            durationMinutes: estimateAppointmentTime().minutes,
+            isNewClient: state.household.isNewClient,
+            pricing: {
+                consultationFee,
+                lineItems: lineItemCosts,
+                travelFee,
+                total,
+            }
+        };
+
+        const response = await fetch(`${LEVEE_CONFIG.apiUrl}/api/public/booking-link`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Site-Key': LEVEE_CONFIG.apiKey,
+            },
+            body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to create booking link');
+        }
+
+        // Clear state and redirect to Levee booking page
+        clearState();
+        window.location.href = data.bookingUrl;
+
+    } catch (error) {
+        console.error('Error creating booking link:', error);
+        if (errorEl) {
+            errorEl.textContent = error.message || 'Unable to proceed. Please try again.';
+            errorEl.style.display = 'block';
+        }
+        btn.disabled = false;
+        if (btnText) btnText.style.display = 'inline';
+        if (btnLoading) btnLoading.style.display = 'none';
+    }
 }
 
 function updateSchedulingSummary() {
@@ -1888,6 +2194,15 @@ function showConfirmation(data) {
 // =============================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Check for booking success redirect
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('booking') === 'success') {
+        showBookingSuccess();
+        // Clean up URL without reloading
+        window.history.replaceState({}, '', window.location.pathname + '#services');
+        return; // Don't initialize wizard - show success instead
+    }
+
     // Load saved state
     loadState();
 
@@ -1896,7 +2211,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initScrollAnimations();
     initNavbarScroll();
     initMobileMenu();
-    initSchedulingButton();
 
     // Core functionality
     initPetManagement();
@@ -1907,3 +2221,67 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPetCards();
     }
 });
+
+/**
+ * Show booking success confirmation
+ */
+function showBookingSuccess() {
+    // Load state to get pet names for the message
+    loadState();
+
+    const petNames = state.household.pets.map(p => p.name).join(' & ') || 'your pet';
+
+    const servicesSection = document.getElementById('services');
+    if (!servicesSection) return;
+
+    // Hide the normal wizard content
+    const wizardContainer = servicesSection.querySelector('.container');
+    if (wizardContainer) {
+        wizardContainer.innerHTML = `
+            <div class="booking-success-screen">
+                <div class="success-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M8 12l2.5 2.5L16 9"/>
+                    </svg>
+                </div>
+                <h2>You're All Set!</h2>
+                <p class="success-message">
+                    Your appointment for <strong>${escapeHtml(petNames)}</strong> has been scheduled.
+                </p>
+                <p class="success-details">
+                    You'll receive a confirmation email shortly with all the details.
+                </p>
+                <div class="success-actions">
+                    <button class="btn-primary" onclick="dismissBookingSuccess()">
+                        Done
+                    </button>
+                    <a href="/" class="btn-secondary">
+                        Return to Home
+                    </a>
+                </div>
+            </div>
+        `;
+    }
+
+    // Scroll to the section
+    servicesSection.scrollIntoView({ behavior: 'smooth' });
+}
+
+/**
+ * Helper to escape HTML
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+/**
+ * Dismiss booking success and reset wizard
+ */
+function dismissBookingSuccess() {
+    clearState();
+    window.location.href = window.location.pathname + '#services';
+    window.location.reload();
+}

@@ -802,6 +802,7 @@ nav {
 /* Step Container - show/hide approach */
 .estimator-steps-wrapper {
     position: relative;
+    min-height: 400px;
 }
 
 .estimator-step {
@@ -3465,6 +3466,68 @@ footer p {
     color: #aaa;
 }
 
+/* Client Info Section (Step 3) */
+.client-info-section {
+    padding: 1.5rem;
+}
+
+.client-info-section h3 {
+    color: var(--brown);
+    margin-bottom: 0.5rem;
+}
+
+.client-info-section .step-subtitle {
+    color: var(--brown);
+    opacity: 0.7;
+    margin-bottom: 1.5rem;
+}
+
+.next-steps-info {
+    margin-top: 2rem;
+    padding: 1.25rem;
+    background: rgba(100, 174, 89, 0.1);
+    border-left: 4px solid var(--green);
+    border-radius: 0 12px 12px 0;
+}
+
+.next-steps-info h4 {
+    color: var(--green);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.next-steps-info p {
+    margin: 0;
+    color: var(--brown);
+    opacity: 0.8;
+    font-size: 0.95rem;
+}
+
+/* Summary pet display */
+.summary-pet,
+.pet-summary .summary-pet {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    color: var(--brown);
+}
+
+.pet-summary {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(139, 90, 43, 0.1);
+}
+
+/* Booking error message */
+.booking-error {
+    color: #dc3545;
+    font-size: 0.9rem;
+    margin-top: 0.75rem;
+    text-align: center;
+}
+
 /* Appointment Summary Sidebar */
 .scheduling-right {
     position: sticky;
@@ -3707,4 +3770,109 @@ footer p {
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
     }
+}
+
+/* ============================================
+   Booking Success Screen
+   ============================================ */
+.booking-success-screen {
+    max-width: 500px;
+    margin: 4rem auto;
+    text-align: center;
+    padding: 3rem 2rem;
+    background: var(--white);
+    border-radius: 20px;
+    box-shadow: var(--shadow-hover);
+}
+
+.booking-success-screen .success-icon {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 1.5rem;
+    background: linear-gradient(135deg, #4CAF50, #81C784);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: successPop 0.5s ease-out;
+}
+
+.booking-success-screen .success-icon svg {
+    width: 50px;
+    height: 50px;
+    color: white;
+}
+
+@keyframes successPop {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.booking-success-screen h2 {
+    font-size: 2rem;
+    color: #4CAF50;
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.booking-success-screen .success-message {
+    font-size: 1.125rem;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+.booking-success-screen .success-details {
+    font-size: 0.95rem;
+    color: var(--text-light);
+    margin-bottom: 2rem;
+}
+
+.booking-success-screen .success-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.booking-success-screen .btn-primary {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 1rem 3rem;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 200px;
+}
+
+.booking-success-screen .btn-primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.booking-success-screen .btn-secondary {
+    background: transparent;
+    color: var(--text-light);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.booking-success-screen .btn-secondary:hover {
+    color: var(--primary-color);
 }

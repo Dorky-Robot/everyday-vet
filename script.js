@@ -1454,6 +1454,21 @@ function initSchedulingButton() {
             await redirectToLeveeBooking(newClientBtn, true);
         });
     }
+
+    // Reset button state when user navigates back (bfcache)
+    window.addEventListener('pageshow', (event) => {
+        if (event.persisted) {
+            // User navigated back - reset button states
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = 'Continue to Scheduling';
+            }
+            if (newClientBtn) {
+                newClientBtn.disabled = false;
+                newClientBtn.innerHTML = 'Book Your First Visit';
+            }
+        }
+    });
 }
 
 /**

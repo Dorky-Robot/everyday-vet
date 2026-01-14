@@ -1455,18 +1455,16 @@ function initSchedulingButton() {
         });
     }
 
-    // Reset button state when user navigates back (bfcache)
-    window.addEventListener('pageshow', (event) => {
-        if (event.persisted) {
-            // User navigated back - reset button states
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = 'Continue to Scheduling';
-            }
-            if (newClientBtn) {
-                newClientBtn.disabled = false;
-                newClientBtn.innerHTML = 'Book Your First Visit';
-            }
+    // Reset button state when page shows (handles back button navigation)
+    window.addEventListener('pageshow', () => {
+        // Always reset buttons - they should only show "Redirecting..." during active redirect
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = 'Continue to Scheduling';
+        }
+        if (newClientBtn) {
+            newClientBtn.disabled = false;
+            newClientBtn.innerHTML = 'Book Your First Visit';
         }
     });
 }

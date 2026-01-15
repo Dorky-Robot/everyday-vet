@@ -11,10 +11,8 @@ const { test, expect } = require('@playwright/test');
  */
 test.describe('Schedule Form', () => {
   test.beforeEach(async ({ page }) => {
-    // Clear localStorage before each test
+    // Navigate to clean URL (no state params) before each test
     await page.goto('/');
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
   });
 
   test.describe('Initial State (Household Step)', () => {
@@ -26,7 +24,7 @@ test.describe('Schedule Form', () => {
 
       // Step 0 is household step
       await expect(page.locator('#step-household')).toHaveClass(/active/);
-      await expect(page.getByText('Who are we seeing today?')).toBeVisible();
+      await expect(page.getByText('Tell us about your household')).toBeVisible();
       await expect(page.locator('#add-pet-btn')).toBeVisible();
     });
 
@@ -96,9 +94,8 @@ test.describe('Schedule Form', () => {
 
       await expect(page.locator('.pet-tab').filter({ hasText: 'Buddy' })).toBeVisible();
 
-      // Refresh the page
+      // Refresh the page (URL state params are preserved)
       await page.reload();
-      await page.goto('/#schedule');
 
       // Pet should still be there
       await expect(page.locator('.pet-tab').filter({ hasText: 'Buddy' })).toBeVisible();
@@ -143,7 +140,6 @@ test.describe('Schedule Form', () => {
 
       // Refresh the page
       await page.reload();
-      await page.goto('/#schedule');
 
       // Should still show new client consultation
       await expect(page.locator('#new-customer-content')).toBeVisible();
@@ -216,8 +212,8 @@ test.describe('Schedule Form', () => {
     });
 
     test('should show estimate after selecting a service', async ({ page }) => {
-      // Expand first accordion
-      const accordion = page.locator('.category-accordion').first();
+      // Expand Vaccinations accordion (has checkboxes)
+      const accordion = page.locator('.category-accordion').filter({ hasText: 'Vaccinations' });
       await accordion.locator('.category-header').click();
 
       // Wait for accordion to expand and content to be visible
@@ -242,16 +238,19 @@ test.describe('Schedule Form', () => {
       const firstService = accordion.locator('.service-checkbox').first();
       await firstService.click();
 
-      // Verify it's selected (via chiclet)
-      await expect(accordion.locator('.selected-chiclets .service-chiclet')).toBeVisible();
+      // Collapse accordion to see chiclet (chiclets hidden when expanded)
+      await accordion.locator('.category-header').click();
+      await expect(accordion).not.toHaveClass(/expanded/);
+
+      // Verify it's selected (via chiclet) - use first() since vaccines also add a "Free Quick Exam" chiclet
+      await expect(accordion.locator('.selected-chiclets .service-chiclet').first()).toBeVisible();
 
       // Refresh
       await page.reload();
-      await page.goto('/#schedule');
 
-      // Service should still be selected
+      // Service should still be selected (chiclets visible when collapsed)
       const refreshedAccordion = page.locator('.category-accordion').filter({ hasText: 'Vaccinations' });
-      await expect(refreshedAccordion.locator('.selected-chiclets .service-chiclet')).toBeVisible();
+      await expect(refreshedAccordion.locator('.selected-chiclets .service-chiclet').first()).toBeVisible();
     });
   });
 
@@ -336,10 +335,10 @@ test.describe('Schedule Form', () => {
       await page.locator('#pet-tabs-services .pet-tab-inline').filter({ hasText: 'Whiskers' }).click();
       await expect(page.getByText('Services for Whiskers')).toBeVisible();
 
-      // Select Rabies for cat
+      // Select Rabies for cat (use "Rabies 1 year" to be specific since there are multiple Rabies options)
       const catVaccinesAccordion = page.locator('.category-accordion').filter({ hasText: 'Vaccinations' });
       await catVaccinesAccordion.locator('.category-header').click();
-      const rabiesCheckbox = catVaccinesAccordion.locator('.service-checkbox').filter({ hasText: 'Rabies' });
+      const rabiesCheckbox = catVaccinesAccordion.locator('.service-checkbox').filter({ hasText: 'Rabies 1 year' });
       await rabiesCheckbox.click();
 
       // Switch back to dog
@@ -386,10 +385,9 @@ test.describe('Schedule Form', () => {
 
       // Refresh the page
       await page.reload();
-      await page.goto('/#schedule');
 
-      // Pet should still be there
-      await expect(page.locator('.pet-tab').filter({ hasText: 'RefreshTest' })).toBeVisible();
+      // Pet should still be there (check services step pet tabs since we're on step 2)
+      await expect(page.locator('#pet-tabs-services .pet-tab-inline').filter({ hasText: 'RefreshTest' })).toBeVisible();
       await expect(page.getByText('Services for RefreshTest')).toBeVisible();
 
       // Services should still be selected (check via chiclets)
@@ -432,7 +430,6 @@ test.describe('Schedule Form', () => {
 
       // Refresh
       await page.reload();
-      await page.goto('/#schedule');
 
       // Both pets should exist (check in services step pet tabs)
       await expect(page.locator('#pet-tabs-services .pet-tab-inline').filter({ hasText: 'Pet1' })).toBeVisible();
@@ -497,7 +494,6 @@ test.describe('Schedule Form', () => {
 
       // Refresh and verify button still has correct text
       await page.reload();
-      await page.goto('/#schedule');
 
       await expect(page.locator('#continue-to-scheduling-btn')).toContainText('Continue to Scheduling');
       await expect(page.locator('#continue-to-scheduling-btn')).not.toContainText('Redirecting');

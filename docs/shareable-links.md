@@ -134,18 +134,26 @@ https://everyday.vet/?pet=Whiskers&type=cat&new=false#schedule
 3. **Pet + `new=true`** → Skip to new client consultation
 4. **Pet + `new=false`** → Skip to services selection
 
-## State Persistence
+## Encoded State URLs
 
-URLs automatically update as users fill out the form. The `?s=` parameter contains the full encoded state:
+As you fill out the scheduling form, the browser's address bar automatically updates with the full encoded state. This creates a shareable snapshot of exactly where you are in the form.
 
-```
-?s=eyJzdGVwIjoyLCJpc05ld0NsaWVudCI6ZmFsc2UsInBldHMiOlt7...
-```
+### How to Get an Encoded URL
 
-This encoded URL can be:
-- Bookmarked to resume later
-- Shared to show exact form state
-- Used for debugging
+1. Go to the scheduling page
+2. Fill out the form (add pets, select services, etc.)
+3. **Copy the URL from your browser's address bar** - it will look like:
+   ```
+   https://everyday.vet/schedule.html?s=eyJzdGVwIjoyLCJpc05ld0NsaWVudCI6ZmFsc2UsInBldHMiOlt7...
+   ```
+4. Share that URL - anyone who opens it will see the exact same form state
+
+### Use Cases
+
+- **Resume later**: Bookmark the URL to come back to a partially filled form
+- **Share exact state**: Send a link showing specific services already selected
+- **Client handoff**: Fill out the form for a client, then send them the link to review and submit
+- **Debugging**: Share the exact form state when reporting issues
 
 ## Testing Links
 

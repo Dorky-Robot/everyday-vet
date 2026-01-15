@@ -143,10 +143,12 @@ const Scheduler = (function() {
     let isStandalone = false;
 
     // Levee API configuration
+    const isLocalDev = window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.protocol === 'file:';
+
     const LEVEE_CONFIG = {
-        apiUrl: window.location.hostname === 'localhost' || window.location.protocol === 'file:'
-            ? 'http://localhost:3000'
-            : 'https://levee.everyday.vet',
+        apiUrl: isLocalDev ? 'http://localhost:3000' : 'https://levee.everyday.vet',
         siteKey: 'evv_everyday_vet_dev',
         apiKey: 'evv_sk_dev_everyday_vet_2024',
     };

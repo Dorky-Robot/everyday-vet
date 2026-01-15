@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link Generator | Everyday Vet</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: #fdf8f3;
+            color: #333;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            color: #e91e8c;
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 1.5rem;
+        }
+
+        .card h2 {
+            font-size: 1.1rem;
+            color: #e91e8c;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #fdf8f3;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            font-size: 0.9rem;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 0.6rem 0.8rem;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #e91e8c;
+        }
+
+        .pet-row {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 0.75rem;
+            align-items: end;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .pet-row:last-of-type {
+            border-bottom: none;
+        }
+
+        .pet-row select {
+            width: 100px;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #eee;
+        }
+
+        .btn-remove {
+            background: #fee;
+            color: #c00;
+            padding: 0.5rem 0.75rem;
+        }
+
+        .btn-remove:hover {
+            background: #fdd;
+        }
+
+        .btn-primary {
+            background: #e91e8c;
+            color: white;
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1rem;
+        }
+
+        .btn-primary:hover {
+            background: #d01a7d;
+        }
+
+        .add-pet-btn {
+            margin-top: 0.5rem;
+        }
+
+        .client-type-options {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .client-type-options label {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .client-type-options input[type="radio"] {
+            accent-color: #e91e8c;
+        }
+
+        .client-type-options label:has(input:checked) {
+            border-color: #e91e8c;
+            background: #fef5fa;
+        }
+
+        .services-grid {
+            display: grid;
+            gap: 0.4rem;
+        }
+
+        .services-grid label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 400;
+            transition: background 0.2s;
+        }
+
+        .services-grid label:hover {
+            background: #fef5fa;
+        }
+
+        .services-grid input[type="checkbox"] {
+            accent-color: #e91e8c;
+        }
+
+        .service-category {
+            margin-bottom: 1rem;
+        }
+
+        .service-category h3 {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .result-card {
+            background: #fef5fa;
+            border: 2px solid #e91e8c;
+        }
+
+        .result-card h2 {
+            border-bottom-color: #fce4ef;
+        }
+
+        .generated-url {
+            background: white;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            padding: 0.75rem;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .result-actions .btn {
+            flex: 1;
+        }
+
+        .btn-copy {
+            background: #e91e8c;
+            color: white;
+        }
+
+        .btn-copy:hover {
+            background: #d01a7d;
+        }
+
+        .btn-copy.copied {
+            background: #22c55e;
+        }
+
+        .btn-test {
+            background: white;
+            border: 2px solid #e91e8c;
+            color: #e91e8c;
+        }
+
+        .btn-test:hover {
+            background: #fef5fa;
+        }
+
+        .empty-state {
+            color: #999;
+            text-align: center;
+            padding: 1rem;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 2rem;
+            color: #999;
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: #e91e8c;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🐾 Scheduling Link Generator</h1>
+            <p class="subtitle">Create pre-filled scheduling links to share with clients</p>
+        </header>
+
+        <div class="card">
+            <h2>Pets</h2>
+            <div id="pets-container">
+                <div class="pet-row" data-pet-index="0">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Pet Name</label>
+                        <input type="text" class="pet-name" placeholder="e.g., Luna">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Type</label>
+                        <select class="pet-type">
+                            <option value="">Select</option>
+                            <option value="dog">Dog</option>
+                            <option value="cat">Cat</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-remove remove-pet" style="visibility: hidden;">×</button>
+                </div>
+            </div>
+            <button type="button" class="btn btn-secondary add-pet-btn" id="add-pet">+ Add Another Pet</button>
+        </div>
+
+        <div class="card">
+            <h2>Client Type</h2>
+            <div class="client-type-options">
+                <label>
+                    <input type="radio" name="client-type" value="new">
+                    New Client
+                </label>
+                <label>
+                    <input type="radio" name="client-type" value="existing" checked>
+                    Existing Client
+                </label>
+                <label>
+                    <input type="radio" name="client-type" value="choose">
+                    Let them choose
+                </label>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Pre-select Services (Optional)</h2>
+
+            <div class="service-category">
+                <h3>Vaccines</h3>
+                <div class="services-grid">
+                    <label><input type="checkbox" value="vaccine-rabies"> Rabies</label>
+                    <label><input type="checkbox" value="vaccine-rabies-3yr"> Rabies (3 year)</label>
+                    <label><input type="checkbox" value="vaccine-dhpp"> DHPP / DAPP / DHLPP</label>
+                    <label><input type="checkbox" value="vaccine-bordetella"> Bordetella</label>
+                    <label><input type="checkbox" value="vaccine-lepto"> Leptospirosis</label>
+                    <label><input type="checkbox" value="vaccine-lyme"> Lyme</label>
+                    <label><input type="checkbox" value="vaccine-flu"> Flu</label>
+                    <label><input type="checkbox" value="vaccine-fvrcp"> FVRCP (cats)</label>
+                    <label><input type="checkbox" value="vaccine-felv"> FeLV (cats)</label>
+                </div>
+            </div>
+
+            <div class="service-category">
+                <h3>Lab Work</h3>
+                <div class="services-grid">
+                    <label><input type="checkbox" value="lab-heartworm"> Heartworm test</label>
+                    <label><input type="checkbox" value="lab-fecal"> Fecal exam</label>
+                    <label><input type="checkbox" value="lab-4dx"> 4Dx (heartworm + tick diseases)</label>
+                </div>
+            </div>
+
+            <div class="service-category">
+                <h3>Procedures</h3>
+                <div class="services-grid">
+                    <label><input type="checkbox" value="proc-nail-trim"> Nail trim</label>
+                    <label><input type="checkbox" value="proc-anal-glands"> Anal gland expression</label>
+                    <label><input type="checkbox" value="proc-ear-clean"> Ear cleaning</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="card result-card">
+            <h2>Generated Link</h2>
+            <div class="generated-url" id="generated-url">
+                <span class="empty-state">Fill in at least one pet to generate a link</span>
+            </div>
+            <div class="result-actions">
+                <button type="button" class="btn btn-copy" id="copy-btn" disabled>Copy Link</button>
+                <button type="button" class="btn btn-test" id="test-btn" disabled>Test Link</button>
+            </div>
+        </div>
+
+        <footer>
+            <p><a href="/docs/shareable-links.md">Documentation</a> · <a href="/schedule.html">Scheduler</a></p>
+        </footer>
+    </div>
+
+    <script src="link-generator.js"></script>
+    <script>
+        const petsContainer = document.getElementById('pets-container');
+        const addPetBtn = document.getElementById('add-pet');
+        const generatedUrlEl = document.getElementById('generated-url');
+        const copyBtn = document.getElementById('copy-btn');
+        const testBtn = document.getElementById('test-btn');
+
+        let petCount = 1;
+
+        // Add pet row
+        addPetBtn.addEventListener('click', () => {
+            petCount++;
+            const row = document.createElement('div');
+            row.className = 'pet-row';
+            row.dataset.petIndex = petCount - 1;
+            row.innerHTML = `
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Pet Name</label>
+                    <input type="text" class="pet-name" placeholder="e.g., Max">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Type</label>
+                    <select class="pet-type">
+                        <option value="">Select</option>
+                        <option value="dog">Dog</option>
+                        <option value="cat">Cat</option>
+                    </select>
+                </div>
+                <button type="button" class="btn btn-remove remove-pet">×</button>
+            `;
+            petsContainer.appendChild(row);
+            updateRemoveButtons();
+            generateLink();
+        });
+
+        // Remove pet row
+        petsContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-pet')) {
+                e.target.closest('.pet-row').remove();
+                petCount--;
+                updateRemoveButtons();
+                generateLink();
+            }
+        });
+
+        function updateRemoveButtons() {
+            const rows = petsContainer.querySelectorAll('.pet-row');
+            rows.forEach((row, index) => {
+                const removeBtn = row.querySelector('.remove-pet');
+                removeBtn.style.visibility = rows.length > 1 ? 'visible' : 'hidden';
+            });
+        }
+
+        // Generate link on any input change
+        document.addEventListener('input', generateLink);
+        document.addEventListener('change', generateLink);
+
+        function generateLink() {
+            const pets = [];
+            const petRows = petsContainer.querySelectorAll('.pet-row');
+
+            petRows.forEach(row => {
+                const name = row.querySelector('.pet-name').value.trim();
+                const type = row.querySelector('.pet-type').value;
+                if (name && type) {
+                    pets.push({ name, type });
+                }
+            });
+
+            if (pets.length === 0) {
+                generatedUrlEl.innerHTML = '<span class="empty-state">Fill in at least one pet to generate a link</span>';
+                copyBtn.disabled = true;
+                testBtn.disabled = true;
+                return;
+            }
+
+            // Get client type
+            const clientTypeEl = document.querySelector('input[name="client-type"]:checked');
+            let isNewClient;
+            if (clientTypeEl.value === 'new') {
+                isNewClient = true;
+            } else if (clientTypeEl.value === 'existing') {
+                isNewClient = false;
+            } else {
+                isNewClient = undefined;
+            }
+
+            // Get selected services
+            const services = [];
+            document.querySelectorAll('.services-grid input:checked').forEach(cb => {
+                services.push(cb.value);
+            });
+
+            // Add services to first pet
+            if (services.length > 0 && pets.length > 0) {
+                pets[0].services = services;
+            }
+
+            // Generate URL
+            const options = { pets };
+            if (isNewClient !== undefined) {
+                options.isNewClient = isNewClient;
+            }
+
+            // Use local URL for testing
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (isLocal) {
+                options.baseUrl = window.location.origin + '/schedule.html';
+            }
+
+            const url = EverydayVetLinks.generate(options);
+            generatedUrlEl.textContent = url;
+            copyBtn.disabled = false;
+            testBtn.disabled = false;
+        }
+
+        // Copy to clipboard
+        copyBtn.addEventListener('click', async () => {
+            const url = generatedUrlEl.textContent;
+            try {
+                await navigator.clipboard.writeText(url);
+                copyBtn.textContent = 'Copied!';
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy Link';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            } catch (err) {
+                // Fallback
+                const textarea = document.createElement('textarea');
+                textarea.value = url;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                copyBtn.textContent = 'Copied!';
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy Link';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            }
+        });
+
+        // Test link
+        testBtn.addEventListener('click', () => {
+            const url = generatedUrlEl.textContent;
+            window.open(url, '_blank');
+        });
+
+        // Initial state
+        updateRemoveButtons();
+    </script>
+</body>
+</html>

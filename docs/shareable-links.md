@@ -155,6 +155,157 @@ As you fill out the scheduling form, the browser's address bar automatically upd
 - **Client handoff**: Fill out the form for a client, then send them the link to review and submit
 - **Debugging**: Share the exact form state when reporting issues
 
+## Programmatic URL Generation
+
+External systems (CRMs, reminder services, integrations) can generate encoded URLs programmatically.
+
+### State Schema
+
+```json
+{
+  "step": 2,
+  "isNewClient": false,
+  "pets": [
+    {
+      "id": 1234567890,
+      "name": "Luna",
+      "type": "cat",
+      "services": {
+        "selectedIds": ["vaccine-rabies", "vaccine-fvrcp"],
+        "adviceTopics": [],
+        "adviceContext": "",
+        "customConcerns": []
+      }
+    }
+  ],
+  "currentPetId": 1234567890,
+  "client": {
+    "name": "",
+    "email": "",
+    "phone": ""
+  }
+}
+```
+
+### Field Reference
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `step` | number | `0` = household, `1` = client type, `2` = services |
+| `isNewClient` | boolean/null | `true` = new client, `false` = existing, `null` = not selected |
+| `pets` | array | List of pet objects |
+| `pets[].id` | number | Unique ID (use timestamp like `Date.now()`) |
+| `pets[].name` | string | Pet's name |
+| `pets[].type` | string | `"dog"` or `"cat"` |
+| `pets[].services.selectedIds` | array | Service IDs (see list above) |
+| `pets[].services.adviceTopics` | array | Advice topics selected |
+| `pets[].services.adviceContext` | string | Additional context text |
+| `pets[].services.customConcerns` | array | Custom concern objects |
+| `currentPetId` | number | ID of the currently active pet |
+| `client` | object | Client contact info (optional) |
+
+### Encoding Algorithm
+
+```
+1. Create state object (JSON)
+2. JSON.stringify(state)
+3. encodeURIComponent(jsonString)
+4. Replace percent-encoded bytes with characters
+5. Base64 encode (btoa)
+```
+
+### JavaScript Example
+
+```javascript
+function encodeSchedulerState(state) {
+  const json = JSON.stringify(state);
+  const encoded = btoa(
+    encodeURIComponent(json).replace(/%([0-9A-F]{2})/g, (_, p1) =>
+      String.fromCharCode('0x' + p1)
+    )
+  );
+  return encoded;
+}
+
+// Example: Create link for existing client with cat needing vaccines
+const state = {
+  step: 2,
+  isNewClient: false,
+  pets: [{
+    id: Date.now(),
+    name: "Luna",
+    type: "cat",
+    services: {
+      selectedIds: ["vaccine-rabies", "vaccine-fvrcp"],
+      adviceTopics: [],
+      adviceContext: "",
+      customConcerns: []
+    }
+  }],
+  currentPetId: Date.now(),
+  client: { name: "", email: "", phone: "" }
+};
+
+const url = `https://everyday.vet/schedule.html?s=${encodeSchedulerState(state)}`;
+```
+
+### Python Example
+
+```python
+import json
+import base64
+from urllib.parse import quote
+
+def encode_scheduler_state(state):
+    json_str = json.dumps(state)
+    encoded = quote(json_str, safe='')
+    # Convert percent-encoded to bytes
+    bytes_str = bytes([
+        int(encoded[i+1:i+3], 16) if encoded[i] == '%' else ord(encoded[i])
+        for i in range(0, len(encoded), 3 if encoded[i:i+1] == '%' else 1)
+    ])
+    return base64.b64encode(bytes_str).decode('utf-8')
+
+# Simpler alternative using just UTF-8:
+def encode_scheduler_state_simple(state):
+    json_str = json.dumps(state)
+    return base64.b64encode(json_str.encode('utf-8')).decode('utf-8')
+
+# Example
+state = {
+    "step": 2,
+    "isNewClient": False,
+    "pets": [{
+        "id": 1234567890,
+        "name": "Luna",
+        "type": "cat",
+        "services": {
+            "selectedIds": ["vaccine-rabies"],
+            "adviceTopics": [],
+            "adviceContext": "",
+            "customConcerns": []
+        }
+    }],
+    "currentPetId": 1234567890,
+    "client": {"name": "", "email": "", "phone": ""}
+}
+
+url = f"https://everyday.vet/schedule.html?s={encode_scheduler_state_simple(state)}"
+```
+
+### Decoding (for verification)
+
+```javascript
+function decodeSchedulerState(encoded) {
+  const json = decodeURIComponent(
+    atob(encoded).split('').map(c =>
+      '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+    ).join('')
+  );
+  return JSON.parse(json);
+}
+```
+
 ## Testing Links
 
 Before sending to clients, test links by:

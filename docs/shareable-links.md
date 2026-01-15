@@ -2,6 +2,49 @@
 
 Create pre-filled scheduling links to send to clients via text, email, or any messaging platform. Links work on both the main site and the standalone scheduling page.
 
+## Quick Start: Link Generator Utility
+
+For external integrations, use the `link-generator.js` utility:
+
+```html
+<script src="https://everyday.vet/link-generator.js"></script>
+<script>
+  // Simple usage
+  const url = EverydayVetLinks.generate({
+    pet: 'Luna',
+    type: 'cat',
+    isNewClient: false
+  });
+
+  // With pre-selected services
+  const url2 = EverydayVetLinks.generate({
+    pet: 'Max',
+    type: 'dog',
+    isNewClient: false,
+    services: ['vaccine-rabies', 'vaccine-dhpp']
+  });
+
+  // Multiple pets
+  const url3 = EverydayVetLinks.generate({
+    pets: [
+      { name: 'Luna', type: 'cat' },
+      { name: 'Max', type: 'dog' }
+    ],
+    isNewClient: false
+  });
+</script>
+```
+
+**Node.js:**
+```javascript
+const { generate } = require('./link-generator.js');
+const url = generate({ pet: 'Luna', type: 'cat', isNewClient: false });
+```
+
+See [Programmatic URL Generation](#programmatic-url-generation) for full API documentation.
+
+---
+
 ## Base URLs
 
 | URL | Use Case |

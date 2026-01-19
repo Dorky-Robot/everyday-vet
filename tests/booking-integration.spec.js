@@ -223,7 +223,13 @@ test.describe('Booking Integration Flow', () => {
 
   test.describe('Full E2E Flow', () => {
     test('complete booking flow from start to confirmation', async ({ page }) => {
-      // Step 1: everyday_vet - Add pet and services
+      // Use a unique phone number with timestamp to avoid conflicts
+      const timestamp = Date.now();
+      const testPhone = `555-${String(timestamp).slice(-7)}`;
+
+      // ========================================
+      // STEP 1: everyday_vet - Add pet and services
+      // ========================================
       await page.goto('/#schedule');
 
       await page.click('#add-pet-btn');
@@ -239,44 +245,106 @@ test.describe('Booking Integration Flow', () => {
       await vaccinesAccordion.locator('.category-header').click();
       await vaccinesAccordion.locator('.service-checkbox').filter({ hasText: 'Bordetella' }).click();
 
-      // Step 2: Navigate to Levee (same tab)
+      // ========================================
+      // STEP 2: Click "Continue to Scheduling" -> Levee book-external
+      // ========================================
       await page.click('#continue-to-scheduling-btn');
       await page.waitForURL(/localhost:3000\/book-external/, { timeout: 15000 });
-      const bookingPage = page;
-      await expect(bookingPage.locator('#booking-form')).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('#booking-form')).toBeVisible({ timeout: 10000 });
 
-      // Step 3: Fill client information
-      await bookingPage.fill('#client-name', 'E2E Test Client');
-      await bookingPage.fill('#client-phone', '555-000-1234');
-      await bookingPage.fill('#client-email', 'e2e-test@example.com');
+      // ========================================
+      // STEP 3: Fill client information on Levee
+      // ========================================
+      await page.fill('#client-name', 'E2E Test Client');
+      await page.fill('#client-phone', testPhone);
+      await page.fill('#client-email', 'e2e-test@example.com');
 
-      // Step 4: Submit and proceed to time selection
-      // Note: This step depends on a valid API key being configured
-      const apiPromise = bookingPage.waitForResponse(
+      // ========================================
+      // STEP 4: Submit -> Redirect to book.html with token
+      // ========================================
+      const bookingLinkPromise = page.waitForResponse(
         (response) => response.url().includes('/api/public/booking-link'),
         { timeout: 10000 }
       );
 
-      await bookingPage.click('#submit-btn');
+      await page.click('#submit-btn');
 
-      const apiResponse = await apiPromise;
+      const bookingLinkResponse = await bookingLinkPromise;
+      expect(bookingLinkResponse.ok()).toBe(true);
 
-      // Log the response for debugging
-      const responseBody = await apiResponse.json().catch(() => ({}));
-      console.log('Booking API response:', apiResponse.status(), responseBody);
+      // Wait for redirect to book.html with token (could be localhost or ngrok)
+      await page.waitForURL(/book\.html\?token=/, { timeout: 15000 });
 
-      // If API returns success, we should see time selection
-      if (apiResponse.ok()) {
-        // Time selection UI should appear
-        await expect(
-          bookingPage.locator('.time-slots, .calendar, [data-testid="time-selection"]')
-        ).toBeVisible({ timeout: 10000 });
-      } else {
-        // Log error for debugging
-        console.log('API Error:', responseBody.error);
-        // Test should still pass - we verified the flow up to API call
-        expect(apiResponse.status()).toBeLessThan(500);
+      // ========================================
+      // STEP 5: Select a date from calendar
+      // ========================================
+      // Wait for calendar to load
+      await expect(page.locator('#bookingContainer')).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('#calendar')).toBeVisible();
+
+      // Click on an available date (a clickable day in the calendar)
+      // Must be: not other-month, not disabled (past), not closed
+      const availableDay = page.locator('#calendar .calendar-day:not(.other-month):not(.disabled):not(.closed)').first();
+      await expect(availableDay).toBeVisible({ timeout: 10000 });
+      await availableDay.click();
+
+      // Wait a moment for the date selection to register and fetch time slots
+      await page.waitForTimeout(500);
+
+      // ========================================
+      // STEP 6: Select a time slot
+      // ========================================
+      // Wait for time slots to load
+      await expect(page.locator('#timeSection')).toBeVisible({ timeout: 10000 });
+
+      // Wait for time slots to actually populate (not just loading state)
+      const timeSlot = page.locator('#timeGrid .time-slot').first();
+      await expect(timeSlot).toBeVisible({ timeout: 10000 });
+
+      // Click first available time slot
+      await timeSlot.click();
+
+      // ========================================
+      // STEP 6b: Select appointment type (if shown)
+      // ========================================
+      // The type section may or may not be visible depending on whether
+      // the booking data pre-selected a type
+      const typeSection = page.locator('#typeSection');
+      if (await typeSection.isVisible()) {
+        // Click first appointment type
+        await page.locator('#typeGrid .type-btn').first().click();
       }
+
+      // ========================================
+      // STEP 7: Confirm the appointment
+      // ========================================
+      // Wait for confirm section to appear
+      await expect(page.locator('#confirmSection')).toBeVisible({ timeout: 10000 });
+
+      // Listen for the confirm API call
+      const confirmPromise = page.waitForResponse(
+        (response) => response.url().includes('/api/book/confirm'),
+        { timeout: 15000 }
+      );
+
+      // Click confirm button
+      await page.click('#confirmBtn');
+
+      // Wait for API response
+      const confirmResponse = await confirmPromise;
+      console.log('Confirm API response:', confirmResponse.status());
+
+      // ========================================
+      // STEP 8: Verify success screen
+      // ========================================
+      await expect(page.locator('#successScreen')).toBeVisible({ timeout: 15000 });
+      await expect(page.locator('#successScreen h2')).toContainText('Appointment Confirmed');
+
+      // Verify calendar links are present
+      await expect(page.locator('#googleCalendarLink')).toBeVisible();
+      await expect(page.locator('#icsDownloadLink')).toBeVisible();
+
+      console.log('✅ Full E2E booking flow completed successfully!');
     });
   });
 });

@@ -282,24 +282,38 @@ test.describe('Booking Integration Flow', () => {
       await expect(page.locator('#bookingContainer')).toBeVisible({ timeout: 10000 });
       await expect(page.locator('#calendar')).toBeVisible();
 
-      // Click on an available date (a clickable day in the calendar)
-      // Must be: not other-month, not disabled (past), not closed
-      const availableDay = page.locator('#calendar .calendar-day:not(.other-month):not(.disabled):not(.closed)').first();
-      await expect(availableDay).toBeVisible({ timeout: 10000 });
-      await availableDay.click();
+      // Try to find a date with available time slots
+      // Some days might be fully booked or closed, so we try multiple days
+      const availableDays = page.locator('#calendar .calendar-day:not(.other-month):not(.disabled):not(.closed)');
+      const dayCount = await availableDays.count();
 
-      // Wait a moment for the date selection to register and fetch time slots
-      await page.waitForTimeout(500);
+      let foundSlots = false;
+      for (let i = 0; i < Math.min(dayCount, 7); i++) {
+        const day = availableDays.nth(i);
+        await day.click();
+
+        // Wait for time slots to load
+        await page.waitForTimeout(1000);
+
+        // Check if there are available time slots
+        const slots = page.locator('#timeGrid .time-slot');
+        const slotCount = await slots.count();
+
+        if (slotCount > 0) {
+          foundSlots = true;
+          console.log(`Found ${slotCount} time slots on day ${i + 1}`);
+          break;
+        }
+        console.log(`Day ${i + 1}: no slots available, trying next day...`);
+      }
+
+      expect(foundSlots).toBe(true);
 
       // ========================================
       // STEP 6: Select a time slot
       // ========================================
-      // Wait for time slots to load
-      await expect(page.locator('#timeSection')).toBeVisible({ timeout: 10000 });
-
-      // Wait for time slots to actually populate (not just loading state)
       const timeSlot = page.locator('#timeGrid .time-slot').first();
-      await expect(timeSlot).toBeVisible({ timeout: 10000 });
+      await expect(timeSlot).toBeVisible({ timeout: 5000 });
 
       // Click first available time slot
       await timeSlot.click();
@@ -335,7 +349,7 @@ test.describe('Booking Integration Flow', () => {
       console.log('Confirm API response:', confirmResponse.status());
 
       // ========================================
-      // STEP 8: Verify success screen
+      // STEP 8: Verify Levee success screen
       // ========================================
       await expect(page.locator('#successScreen')).toBeVisible({ timeout: 15000 });
       await expect(page.locator('#successScreen h2')).toContainText('Appointment Confirmed');
@@ -344,7 +358,36 @@ test.describe('Booking Integration Flow', () => {
       await expect(page.locator('#googleCalendarLink')).toBeVisible();
       await expect(page.locator('#icsDownloadLink')).toBeVisible();
 
-      console.log('✅ Full E2E booking flow completed successfully!');
+      console.log('✅ Levee booking confirmed, calendar links shown');
+
+      // ========================================
+      // STEP 9: Return to everyday.vet
+      // ========================================
+      // The "Return to Website" button appears when returnUrl is set
+      // Click it to return immediately (instead of waiting 5s for auto-redirect)
+      const returnButton = page.locator('.return-link');
+      await expect(returnButton).toBeVisible({ timeout: 5000 });
+      await returnButton.click();
+
+      // ========================================
+      // STEP 10: Verify everyday.vet success screen
+      // ========================================
+      // Should redirect back to everyday.vet with ?booking=success
+      // (127.0.0.1 or localhost depending on playwright config)
+      // Note: After loading, scheduler.js replaces URL with #services for cleaner look
+      await page.waitForURL(/(:3333|everyday).*booking=success/, { timeout: 10000 });
+
+      // Verify the success screen is shown on everyday.vet
+      await expect(page.locator('.booking-success-screen')).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('.booking-success-screen h2')).toContainText("You're All Set!");
+      await expect(page.locator('.booking-success-screen')).toContainText('has been scheduled');
+
+      // Verify action buttons are present
+      await expect(page.locator('.booking-success-screen .btn-primary')).toBeVisible();
+      await expect(page.locator('.booking-success-screen .btn-secondary')).toBeVisible();
+
+      console.log('✅ Full round-trip E2E booking flow completed successfully!');
+      console.log('   everyday.vet → Levee book-external → Levee book.html → everyday.vet success');
     });
   });
 });

@@ -141,6 +141,7 @@ const Scheduler = (function() {
     // Configuration
     const stateAdapter = UrlStateAdapter;
     let isStandalone = false;
+    let isPhoneFirstFlow = true; // Enable phone-first flow by default
 
     // Levee API configuration
     const isLocalDev = window.location.hostname === 'localhost' ||
@@ -151,6 +152,8 @@ const Scheduler = (function() {
         apiUrl: isLocalDev ? 'http://localhost:3000' : 'https://levee.everyday.vet',
         siteKey: 'evv_everyday_vet_dev',
         apiKey: 'evv_sk_dev_everyday_vet_2024',
+        // reCAPTCHA v3 site key (test key for development)
+        recaptchaSiteKey: '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI',
     };
 
     // State
@@ -453,6 +456,275 @@ const Scheduler = (function() {
         const mins = minutes % 60;
         if (mins === 0) return `${hrs} hour${hrs > 1 ? 's' : ''}`;
         return `${hrs} hr ${mins} min`;
+    }
+
+    // =============================================================================
+    // PHONE-FIRST FLOW
+    // =============================================================================
+
+    let resendCooldownTimer = null;
+    let submittedPhone = '';
+
+    /**
+     * Format phone number as user types - US format (XXX) XXX-XXXX
+     */
+    function formatPhoneNumber(value) {
+        // Remove all non-digits, limit to 10
+        const digits = value.replace(/\D/g, '').slice(0, 10);
+
+        // Format progressively as user types
+        if (digits.length === 0) return '';
+        if (digits.length < 4) return `(${digits}`;
+        if (digits.length < 7) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+        return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+    }
+
+    /**
+     * Get cursor position in terms of digit count
+     */
+    function getDigitPosition(value, cursorPos) {
+        return value.slice(0, cursorPos).replace(/\D/g, '').length;
+    }
+
+    /**
+     * Get cursor position from digit position in formatted string
+     */
+    function getCursorFromDigitPos(formatted, digitPos) {
+        let digits = 0;
+        for (let i = 0; i < formatted.length; i++) {
+            if (/\d/.test(formatted[i])) {
+                digits++;
+                if (digits === digitPos) return i + 1;
+            }
+        }
+        return formatted.length;
+    }
+
+    /**
+     * Validate phone number (US format)
+     */
+    function isValidPhone(value) {
+        const digits = value.replace(/\D/g, '');
+        return digits.length === 10;
+    }
+
+    /**
+     * Normalize phone to E.164 format for API
+     */
+    function normalizePhone(value) {
+        const digits = value.replace(/\D/g, '');
+        return `+1${digits}`;
+    }
+
+    /**
+     * Initialize phone-first flow UI
+     */
+    function initPhoneFirstFlow() {
+        const phoneInput = document.getElementById('phone-input');
+        const sendBtn = document.getElementById('send-link-btn');
+        const errorEl = document.getElementById('phone-error');
+
+        if (!phoneInput || !sendBtn) return;
+
+        // Format phone as user types
+        phoneInput.addEventListener('input', (e) => {
+            const input = e.target;
+            const oldValue = input.value;
+            const cursorPos = input.selectionStart;
+
+            // Track digit position before formatting
+            const digitPos = getDigitPosition(oldValue, cursorPos);
+
+            // Format the number
+            const formatted = formatPhoneNumber(oldValue);
+            input.value = formatted;
+
+            // Restore cursor position based on digit position
+            const newCursorPos = getCursorFromDigitPos(formatted, digitPos);
+            input.setSelectionRange(newCursorPos, newCursorPos);
+
+            // Clear error when typing
+            errorEl.style.display = 'none';
+        });
+
+        // Handle keydown to prevent non-digit input
+        phoneInput.addEventListener('keydown', (e) => {
+            // Allow: backspace, delete, tab, escape, enter, arrows
+            if ([8, 9, 27, 13, 46, 37, 38, 39, 40].includes(e.keyCode)) return;
+            // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+            if ((e.ctrlKey || e.metaKey) && [65, 67, 86, 88].includes(e.keyCode)) return;
+            // Block non-digit keys
+            if (!/^\d$/.test(e.key)) {
+                e.preventDefault();
+            }
+        });
+
+        // Handle send button click
+        sendBtn.addEventListener('click', async () => {
+            const phone = phoneInput.value;
+
+            if (!isValidPhone(phone)) {
+                errorEl.textContent = 'Please enter a valid 10-digit phone number';
+                errorEl.style.display = 'block';
+                phoneInput.focus();
+                return;
+            }
+
+            await submitPhone(phone, sendBtn, errorEl);
+        });
+
+        // Handle enter key
+        phoneInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendBtn.click();
+            }
+        });
+
+        // Initialize resend button
+        const resendBtn = document.getElementById('resend-link-btn');
+        resendBtn?.addEventListener('click', async () => {
+            if (submittedPhone) {
+                await submitPhone(submittedPhone, resendBtn, errorEl, true);
+            }
+        });
+
+        // Initialize "different phone" button
+        const differentPhoneBtn = document.getElementById('different-phone-btn');
+        differentPhoneBtn?.addEventListener('click', () => {
+            showStep('phone');
+            phoneInput.value = '';
+            phoneInput.focus();
+        });
+    }
+
+    /**
+     * Submit phone number to Levee API
+     */
+    async function submitPhone(phone, btn, errorEl, isResend = false) {
+        const btnText = btn.querySelector('.btn-text');
+        const btnLoading = btn.querySelector('.btn-loading');
+
+        // Show loading state
+        btn.disabled = true;
+        if (btnText) btnText.style.display = 'none';
+        if (btnLoading) btnLoading.style.display = 'flex';
+
+        try {
+            // Get reCAPTCHA token
+            let recaptchaToken = '';
+            if (typeof grecaptcha !== 'undefined') {
+                recaptchaToken = await grecaptcha.execute(
+                    LEVEE_CONFIG.recaptchaSiteKey,
+                    { action: 'schedule' }
+                );
+            }
+
+            // Submit to Levee API
+            const response = await fetch(`${LEVEE_CONFIG.apiUrl}/api/public/schedule`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phone: normalizePhone(phone),
+                    siteKey: LEVEE_CONFIG.siteKey,
+                    recaptchaToken,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to send booking link');
+            }
+
+            // Success! Show confirmation step
+            submittedPhone = phone;
+            showConfirmationStep(phone);
+
+            // Start resend cooldown
+            if (isResend) {
+                startResendCooldown();
+            }
+
+        } catch (error) {
+            console.error('Error submitting phone:', error);
+            errorEl.textContent = error.message || 'Something went wrong. Please try again.';
+            errorEl.style.display = 'block';
+        } finally {
+            // Reset button state
+            btn.disabled = false;
+            if (btnText) btnText.style.display = 'inline';
+            if (btnLoading) btnLoading.style.display = 'none';
+        }
+    }
+
+    /**
+     * Show the confirmation step after phone submission
+     */
+    function showConfirmationStep(phone) {
+        // Update the phone display
+        const phoneDisplay = document.getElementById('confirmation-phone');
+        if (phoneDisplay) {
+            phoneDisplay.textContent = phone;
+        }
+
+        // Show confirmation step
+        showStep('confirmation');
+
+        // Start resend cooldown
+        startResendCooldown();
+    }
+
+    /**
+     * Show a specific step by ID or index
+     */
+    function showStep(stepId) {
+        const steps = document.querySelectorAll('.estimator-step');
+        steps.forEach(step => {
+            const isTarget = step.id === `step-${stepId}` ||
+                step.dataset.stepIndex === stepId ||
+                step.dataset.stepIndex === String(stepId);
+            step.classList.toggle('active', isTarget);
+        });
+    }
+
+    /**
+     * Start the resend cooldown timer
+     */
+    function startResendCooldown() {
+        const resendBtn = document.getElementById('resend-link-btn');
+        const cooldownEl = document.getElementById('resend-cooldown');
+        const timerEl = document.getElementById('cooldown-timer');
+
+        if (!resendBtn || !cooldownEl || !timerEl) return;
+
+        // Clear any existing timer
+        if (resendCooldownTimer) {
+            clearInterval(resendCooldownTimer);
+        }
+
+        // Hide resend button, show cooldown
+        resendBtn.style.display = 'none';
+        cooldownEl.style.display = 'inline';
+
+        let seconds = 60;
+        timerEl.textContent = seconds;
+
+        resendCooldownTimer = setInterval(() => {
+            seconds--;
+            timerEl.textContent = seconds;
+
+            if (seconds <= 0) {
+                clearInterval(resendCooldownTimer);
+                resendCooldownTimer = null;
+
+                // Show resend button, hide cooldown
+                resendBtn.style.display = 'inline';
+                cooldownEl.style.display = 'none';
+            }
+        }, 1000);
     }
 
     // =============================================================================
@@ -1537,7 +1809,20 @@ const Scheduler = (function() {
                 return;
             }
 
-            // Initialize
+            // Check if coming from a booking token link (skip phone-first)
+            const hasToken = urlParams.has('token');
+            const hasData = urlParams.has('data');
+            const hasState = urlParams.has('s');
+
+            // Disable phone-first flow if user is coming from a booking link
+            if (hasToken || hasData || hasState) {
+                isPhoneFirstFlow = false;
+            }
+
+            // Always initialize phone input (for formatting), even if not in phone-first mode
+            initPhoneFirstFlow();
+
+            // Initialize standard flow
             initPetManagement();
             initWizard();
 

@@ -4003,3 +4003,210 @@ footer p {
 .schedule-standalone footer .emergency-notice {
     font-size: 0.75rem;
 }
+
+/* ==================== */
+/* PHONE-FIRST FLOW */
+/* ==================== */
+
+/* Hide reCAPTCHA badge and use inline branding instead */
+.grecaptcha-badge {
+    visibility: hidden !important;
+}
+
+/* Phone Entry Form */
+.phone-entry-form {
+    max-width: 320px;
+    margin: 0 auto 1.5rem;
+}
+
+.phone-input-wrapper {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.phone-input-wrapper input {
+    width: 100%;
+    padding: 1rem 1rem 1rem 3rem;
+    font-size: 1.25rem;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    font-family: inherit;
+    text-align: center;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+.phone-input-wrapper input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(233, 30, 140, 0.1);
+}
+
+.phone-input-wrapper input::placeholder {
+    color: #aaa;
+}
+
+.phone-input-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-light);
+    font-size: 1.25rem;
+}
+
+.phone-error {
+    color: #e53935;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.phone-privacy-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--text-light);
+    font-size: 0.875rem;
+    margin-top: 1.5rem;
+}
+
+.phone-privacy-note i {
+    color: var(--primary-color);
+}
+
+/* reCAPTCHA branding (required when badge is hidden) */
+.recaptcha-branding {
+    font-size: 0.75rem;
+    color: #999;
+    text-align: center;
+    margin-top: 1rem;
+    line-height: 1.4;
+}
+
+.recaptcha-branding a {
+    color: #999;
+    text-decoration: underline;
+}
+
+.recaptcha-branding a:hover {
+    color: var(--primary-color);
+}
+
+/* Confirmation Step */
+#step-confirmation .confirmation-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+#step-confirmation .confirmation-icon i {
+    font-size: 2.5rem;
+    color: var(--white);
+}
+
+#step-confirmation .confirmation-note {
+    color: var(--text-light);
+    margin-bottom: 2rem;
+}
+
+.confirmation-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.btn-link {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0.5rem;
+    font-family: inherit;
+    transition: color 0.2s ease;
+}
+
+.btn-link:hover {
+    color: var(--primary-dark);
+}
+
+.btn-link .resend-text {
+    text-decoration: underline;
+}
+
+.resend-cooldown {
+    color: var(--text-light);
+    font-size: 0.85rem;
+}
+
+.different-phone-btn {
+    color: var(--text-light);
+    font-size: 0.85rem;
+}
+
+.different-phone-btn:hover {
+    color: var(--primary-color);
+}
+
+/* Loading state */
+#send-link-btn .btn-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+#send-link-btn .btn-loading i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Phone step specific padding */
+#step-phone .step-content-centered {
+    padding: 2rem 0;
+}
+
+#step-confirmation .step-content-centered {
+    padding: 2rem 0;
+}
+
+/* Confirmation phone number highlight */
+#confirmation-phone {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+/* Mobile adjustments for phone-first flow */
+@media (max-width: 768px) {
+    .phone-entry-form {
+        max-width: 280px;
+    }
+
+    .phone-input-wrapper input {
+        font-size: 1.125rem;
+        padding: 0.875rem 0.875rem 0.875rem 2.75rem;
+    }
+
+    #step-confirmation .confirmation-icon {
+        width: 70px;
+        height: 70px;
+    }
+
+    #step-confirmation .confirmation-icon i {
+        font-size: 2rem;
+    }
+}

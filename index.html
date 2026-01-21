@@ -11,6 +11,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&family=Pacifico&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="styles.css">
+    <!-- reCAPTCHA v3 -->
+    <script src="https://www.google.com/recaptcha/api.js?render=6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></script>
 </head>
 <body>
     <header>
@@ -116,16 +118,66 @@
             <p class="pricing-intro">Book your appointment in just a few steps. Select the services you need and we'll help you find the right time.</p>
 
             <div class="estimator-container">
-                <!-- Step Navigation Dots -->
-                <div class="step-nav" id="step-nav">
-                    <button class="step-dot active" data-step="0" aria-label="Step 1: Household"></button>
+                <!-- Step Navigation Dots (hidden for phone-first flow) -->
+                <div class="step-nav" id="step-nav" style="display: none;">
+                    <button class="step-dot" data-step="0" aria-label="Step 1: Household"></button>
                     <button class="step-dot" data-step="1" aria-label="Step 2: Client Type"></button>
                     <button class="step-dot" data-step="2" aria-label="Step 3: Services"></button>
                 </div>
 
                 <div class="estimator-steps-wrapper" id="estimator-steps-wrapper">
-                    <!-- Step 0: Household -->
-                    <div class="estimator-step active" id="step-household" data-step-index="0">
+                    <!-- Step: Phone Entry (Phone-First Flow) -->
+                    <div class="estimator-step active" id="step-phone" data-step-index="phone">
+                        <div class="step-content-centered">
+                            <h3>Let's get started</h3>
+                            <p class="step-subtitle">Enter your phone number and we'll text you a personalized booking link</p>
+
+                            <div class="phone-entry-form">
+                                <div class="phone-input-wrapper">
+                                    <input type="tel" id="phone-input" placeholder="(555) 555-5555" autocomplete="tel">
+                                    <span class="phone-input-icon"><i class="ph ph-phone"></i></span>
+                                </div>
+                                <p class="phone-error" id="phone-error" style="display: none;"></p>
+                                <button class="btn estimator-btn" id="send-link-btn">
+                                    <span class="btn-text">Send me a link</span>
+                                    <span class="btn-loading" style="display: none;"><i class="ph ph-spinner ph-spin"></i> Sending...</span>
+                                </button>
+                            </div>
+
+                            <p class="phone-privacy-note">
+                                <i class="ph ph-lock-simple"></i>
+                                We'll send a one-time link to this number. Your info stays private.
+                            </p>
+
+                            <p class="recaptcha-branding">
+                                This site is protected by reCAPTCHA and the Google
+                                <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Privacy Policy</a> and
+                                <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Terms of Service</a> apply.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Step: Check Your Phone (Confirmation) -->
+                    <div class="estimator-step" id="step-confirmation" data-step-index="confirmation">
+                        <div class="step-content-centered">
+                            <div class="confirmation-icon">
+                                <i class="ph ph-chat-circle-text"></i>
+                            </div>
+                            <h3>Check your phone!</h3>
+                            <p class="step-subtitle">We've sent a booking link to <span id="confirmation-phone"></span></p>
+                            <p class="confirmation-note">Click the link in your text message to continue scheduling your appointment.</p>
+
+                            <div class="confirmation-actions">
+                                <button class="btn-link" id="resend-link-btn">Didn't get it? <span class="resend-text">Resend</span></button>
+                                <span class="resend-cooldown" id="resend-cooldown" style="display: none;">Resend available in <span id="cooldown-timer">60</span>s</span>
+                            </div>
+
+                            <button class="btn-link different-phone-btn" id="different-phone-btn">Use a different phone number</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 0: Household (hidden in phone-first flow, shown via SMS link) -->
+                    <div class="estimator-step" id="step-household" data-step-index="0">
                         <div class="step-content-centered">
                             <h3>Tell us about your household</h3>
                             <p class="step-subtitle">Add all the pets in your home - this helps us provide holistic care</p>

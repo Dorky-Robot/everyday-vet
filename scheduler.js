@@ -469,13 +469,13 @@ const Scheduler = (function() {
      * Format phone number as user types - US format (XXX) XXX-XXXX
      */
     function formatPhoneNumber(value) {
-        // Remove all non-digits
+        // Remove all non-digits, limit to 10
         const digits = value.replace(/\D/g, '').slice(0, 10);
 
-        // Format progressively as (XXX) XXX-XXXX
+        // Format progressively as user types
         if (digits.length === 0) return '';
-        if (digits.length <= 3) return `(${digits})`;
-        if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+        if (digits.length < 4) return `(${digits}`;
+        if (digits.length < 7) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
         return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
     }
 

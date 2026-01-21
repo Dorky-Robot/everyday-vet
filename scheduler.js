@@ -1819,10 +1819,8 @@ const Scheduler = (function() {
                 isPhoneFirstFlow = false;
             }
 
-            // Initialize phone-first flow
-            if (isPhoneFirstFlow) {
-                initPhoneFirstFlow();
-            }
+            // Always initialize phone input (for formatting), even if not in phone-first mode
+            initPhoneFirstFlow();
 
             // Initialize standard flow
             initPetManagement();

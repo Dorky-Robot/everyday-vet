@@ -163,26 +163,26 @@ test.describe('Booking Integration Flow', () => {
       // Initially button should be disabled
       await expect(bookingPage.locator('#submit-btn')).toBeDisabled();
 
-      // Fill required fields - name and email (email is required for submit button to enable)
+      // Fill required fields - name and phone (phone validates ownership via SMS)
       await bookingPage.fill('#client-name', 'Test User');
-      await bookingPage.fill('#client-email', 'test@example.com');
+      await bookingPage.fill('#client-phone', '555-123-4567');
 
       // Button should be enabled
       await expect(bookingPage.locator('#submit-btn')).toBeEnabled();
     });
 
-    test('should keep submit disabled for invalid email', async ({ page }) => {
+    test('should keep submit disabled without phone', async ({ page }) => {
       const bookingPage = await setupBookingPage(page);
 
-      // Fill name but with invalid email format
+      // Fill name but no phone
       await bookingPage.fill('#client-name', 'Test User');
-      await bookingPage.fill('#client-email', 'invalid-email'); // Invalid format
+      await bookingPage.fill('#client-email', 'test@example.com');
 
-      // Button should remain disabled since email is invalid
+      // Button should remain disabled since phone is required
       await expect(bookingPage.locator('#submit-btn')).toBeDisabled();
 
-      // Fix the email
-      await bookingPage.fill('#client-email', 'valid@example.com');
+      // Add phone number
+      await bookingPage.fill('#client-phone', '555-123-4567');
 
       // Now button should be enabled
       await expect(bookingPage.locator('#submit-btn')).toBeEnabled();
@@ -208,16 +208,6 @@ test.describe('Booking Integration Flow', () => {
       // Verify API was called
       const apiResponse = await apiPromise;
       expect(apiResponse.status()).toBeLessThan(500); // Not a server error
-    });
-  });
-
-  test.describe('Step 3: Time Selection', () => {
-    test.skip('should show available time slots after form submission', async ({ page }) => {
-      // This test requires a successful API response which needs:
-      // 1. Valid API key in database
-      // 2. Levee server running with proper configuration
-      //
-      // Skip for now - can be enabled once API key issue is resolved
     });
   });
 
@@ -389,78 +379,5 @@ test.describe('Booking Integration Flow', () => {
       console.log('✅ Full round-trip E2E booking flow completed successfully!');
       console.log('   everyday.vet → Levee book-external → Levee book.html → everyday.vet success');
     });
-  });
-});
-
-test.describe('Error Handling', () => {
-  // Skip: Network errors are handled but the error message display timing
-  // makes this test flaky. Core booking flow is tested above.
-  test.skip('should handle network errors gracefully', async ({ page }) => {
-    await page.goto('/#schedule');
-
-    // Add pet and services
-    await page.click('#add-pet-btn');
-    await page.fill('#pet-name-input', 'ErrorTestPet');
-    await page.click('.pet-type-btn[data-type="dog"]');
-    await page.click('#pet-modal-add');
-
-    await page.click('#household-continue-btn');
-    await page.click('#btn-existing-customer');
-
-    const vaccinesAccordion = page.locator('.category-accordion').filter({ hasText: 'Vaccinations' });
-    await vaccinesAccordion.locator('.category-header').click();
-    await vaccinesAccordion.locator('.service-checkbox').first().click();
-
-    // Navigate to Levee (same tab)
-    await page.click('#continue-to-scheduling-btn');
-    await page.waitForURL(/localhost:3000\/book-external/, { timeout: 15000 });
-    const bookingPage = page;
-    await expect(bookingPage.locator('#booking-form')).toBeVisible({ timeout: 10000 });
-
-    // Block the API request to simulate network error
-    await bookingPage.route('**/api/public/booking-link', (route) => {
-      route.abort('failed');
-    });
-
-    // Fill and submit form (need email to enable submit button)
-    await bookingPage.fill('#client-name', 'Network Error Test');
-    await bookingPage.fill('#client-email', 'network-test@example.com');
-    await bookingPage.click('#submit-btn');
-
-    // Should show error message
-    await expect(bookingPage.locator('#error-message')).toBeVisible({ timeout: 5000 });
-  });
-
-  // Skip: Direct navigation to booking page with invalid data may not work
-  // as expected because the page expects data from the wizard flow.
-  test.skip('should show error for invalid API key', async ({ page }) => {
-    // Navigate directly to Levee booking page with invalid data
-    await page.goto(`${LEVEE_BASE_URL}/book-external.html?data=${encodeURIComponent(JSON.stringify({
-      siteKey: 'invalid_key',
-      household: [{ name: 'TestPet', species: 'dog' }],
-    }))}`);
-
-    // Fill form (need email to enable submit button)
-    await expect(page.locator('#client-name')).toBeVisible({ timeout: 10000 });
-    await page.fill('#client-name', 'Invalid Key Test');
-    await page.fill('#client-email', 'invalid-key-test@example.com');
-
-    // Listen for the API response
-    const responsePromise = page.waitForResponse(
-      (response) => response.url().includes('/api/public/booking-link'),
-      { timeout: 10000 }
-    );
-
-    // Submit
-    await page.click('#submit-btn');
-
-    // Wait for API response to complete
-    const response = await responsePromise;
-
-    // Should return an error status
-    expect(response.ok()).toBe(false);
-
-    // Should show error message
-    await expect(page.locator('#error-message')).toBeVisible({ timeout: 10000 });
   });
 });

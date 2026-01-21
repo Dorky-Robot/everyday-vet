@@ -466,17 +466,38 @@ const Scheduler = (function() {
     let submittedPhone = '';
 
     /**
-     * Format phone number as user types
+     * Format phone number as user types - US format (XXX) XXX-XXXX
      */
     function formatPhoneNumber(value) {
         // Remove all non-digits
-        const digits = value.replace(/\D/g, '');
+        const digits = value.replace(/\D/g, '').slice(0, 10);
 
-        // Format as (XXX) XXX-XXXX
+        // Format progressively as (XXX) XXX-XXXX
         if (digits.length === 0) return '';
-        if (digits.length <= 3) return `(${digits}`;
+        if (digits.length <= 3) return `(${digits})`;
         if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-        return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+        return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+    }
+
+    /**
+     * Get cursor position in terms of digit count
+     */
+    function getDigitPosition(value, cursorPos) {
+        return value.slice(0, cursorPos).replace(/\D/g, '').length;
+    }
+
+    /**
+     * Get cursor position from digit position in formatted string
+     */
+    function getCursorFromDigitPos(formatted, digitPos) {
+        let digits = 0;
+        for (let i = 0; i < formatted.length; i++) {
+            if (/\d/.test(formatted[i])) {
+                digits++;
+                if (digits === digitPos) return i + 1;
+            }
+        }
+        return formatted.length;
     }
 
     /**
@@ -507,18 +528,35 @@ const Scheduler = (function() {
 
         // Format phone as user types
         phoneInput.addEventListener('input', (e) => {
-            const cursorPos = e.target.selectionStart;
-            const oldLength = e.target.value.length;
-            const formatted = formatPhoneNumber(e.target.value);
-            e.target.value = formatted;
+            const input = e.target;
+            const oldValue = input.value;
+            const cursorPos = input.selectionStart;
 
-            // Adjust cursor position after formatting
-            const newLength = formatted.length;
-            const diff = newLength - oldLength;
-            e.target.setSelectionRange(cursorPos + diff, cursorPos + diff);
+            // Track digit position before formatting
+            const digitPos = getDigitPosition(oldValue, cursorPos);
+
+            // Format the number
+            const formatted = formatPhoneNumber(oldValue);
+            input.value = formatted;
+
+            // Restore cursor position based on digit position
+            const newCursorPos = getCursorFromDigitPos(formatted, digitPos);
+            input.setSelectionRange(newCursorPos, newCursorPos);
 
             // Clear error when typing
             errorEl.style.display = 'none';
+        });
+
+        // Handle keydown to prevent non-digit input
+        phoneInput.addEventListener('keydown', (e) => {
+            // Allow: backspace, delete, tab, escape, enter, arrows
+            if ([8, 9, 27, 13, 46, 37, 38, 39, 40].includes(e.keyCode)) return;
+            // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+            if ((e.ctrlKey || e.metaKey) && [65, 67, 86, 88].includes(e.keyCode)) return;
+            // Block non-digit keys
+            if (!/^\d$/.test(e.key)) {
+                e.preventDefault();
+            }
         });
 
         // Handle send button click

@@ -2,7 +2,7 @@
  * Everyday Vet - Unified Scheduling System
  *
  * Shared module for both embedded (index.html) and standalone (schedule.html) schedulers.
- * Uses URL-based state persistence for shareable links.
+ * Uses phone-first flow: users enter phone → receive SMS with booking link from Levee.
  */
 
 // =============================================================================
@@ -195,13 +195,8 @@ const Scheduler = (function() {
     // =============================================================================
 
     function saveState() {
-        const stateToSave = {
-            household: state.household,
-            currentPetId: state.currentPetId,
-            currentStep: state.currentStep,
-            client: state.client,
-        };
-        stateAdapter.save(stateToSave);
+        // No longer encoding state in URL - phone-first flow sends users a text
+        // with a booking link instead of persisting state client-side
     }
 
     function loadState() {
@@ -1822,10 +1817,14 @@ const Scheduler = (function() {
             // Check if coming from a booking token link (skip phone-first)
             const hasToken = urlParams.has('token');
             const hasData = urlParams.has('data');
-            const hasState = urlParams.has('s');
 
-            // Disable phone-first flow if user is coming from a booking link
-            if (hasToken || hasData || hasState) {
+            // Clear legacy ?s= state parameter from URL (no longer used with phone-first flow)
+            if (urlParams.has('s')) {
+                history.replaceState({}, '', window.location.pathname);
+            }
+
+            // Disable phone-first flow if user is coming from a Levee booking link
+            if (hasToken || hasData) {
                 isPhoneFirstFlow = false;
             }
 

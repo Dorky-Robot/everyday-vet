@@ -463,6 +463,7 @@ const Scheduler = (function() {
     // =============================================================================
 
     let resendCooldownTimer = null;
+    let submittedName = '';
     let submittedPhone = '';
 
     /**
@@ -520,11 +521,17 @@ const Scheduler = (function() {
      * Initialize phone-first flow UI
      */
     function initPhoneFirstFlow() {
+        const nameInput = document.getElementById('name-input');
         const phoneInput = document.getElementById('phone-input');
         const sendBtn = document.getElementById('send-link-btn');
         const errorEl = document.getElementById('phone-error');
 
         if (!phoneInput || !sendBtn) return;
+
+        // Clear error when typing in name
+        nameInput?.addEventListener('input', () => {
+            errorEl.style.display = 'none';
+        });
 
         // Format phone as user types
         phoneInput.addEventListener('input', (e) => {
@@ -561,7 +568,15 @@ const Scheduler = (function() {
 
         // Handle send button click
         sendBtn.addEventListener('click', async () => {
+            const name = nameInput?.value?.trim() || '';
             const phone = phoneInput.value;
+
+            if (!name) {
+                errorEl.textContent = 'Please enter your name';
+                errorEl.style.display = 'block';
+                nameInput?.focus();
+                return;
+            }
 
             if (!isValidPhone(phone)) {
                 errorEl.textContent = 'Please enter a valid 10-digit phone number';
@@ -570,7 +585,7 @@ const Scheduler = (function() {
                 return;
             }
 
-            await submitPhone(phone, sendBtn, errorEl);
+            await submitPhone(name, phone, sendBtn, errorEl);
         });
 
         // Handle enter key
@@ -584,8 +599,8 @@ const Scheduler = (function() {
         // Initialize resend button
         const resendBtn = document.getElementById('resend-link-btn');
         resendBtn?.addEventListener('click', async () => {
-            if (submittedPhone) {
-                await submitPhone(submittedPhone, resendBtn, errorEl, true);
+            if (submittedPhone && submittedName) {
+                await submitPhone(submittedName, submittedPhone, resendBtn, errorEl, true);
             }
         });
 
@@ -599,9 +614,9 @@ const Scheduler = (function() {
     }
 
     /**
-     * Submit phone number to Levee API
+     * Submit name and phone to Levee API
      */
-    async function submitPhone(phone, btn, errorEl, isResend = false) {
+    async function submitPhone(name, phone, btn, errorEl, isResend = false) {
         const btnText = btn.querySelector('.btn-text');
         const btnLoading = btn.querySelector('.btn-loading');
 
@@ -632,6 +647,7 @@ const Scheduler = (function() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
+                    name: name.trim(),
                     phone: normalizePhone(phone),
                     siteKey: LEVEE_CONFIG.siteKey,
                     recaptchaToken,
@@ -644,7 +660,14 @@ const Scheduler = (function() {
                 throw new Error(data.error || 'Failed to send booking link');
             }
 
+            // In dev mode, log the booking URL to console for easy testing
+            if (data.devBookingUrl) {
+                console.log('%c📱 BOOKING URL (dev mode):', 'color: #e91e8c; font-weight: bold; font-size: 14px;');
+                console.log('%c' + data.devBookingUrl, 'color: #0066cc; font-size: 12px;');
+            }
+
             // Success! Show confirmation step
+            submittedName = name;
             submittedPhone = phone;
             showConfirmationStep(phone);
 

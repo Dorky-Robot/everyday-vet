@@ -4019,11 +4019,13 @@ footer p {
     margin: 0 auto 1.5rem;
 }
 
+.name-input-wrapper,
 .phone-input-wrapper {
     position: relative;
     margin-bottom: 1rem;
 }
 
+.name-input-wrapper input,
 .phone-input-wrapper input {
     width: 100%;
     padding: 1rem 1rem 1rem 3rem;
@@ -4036,16 +4038,19 @@ footer p {
     transition: all 0.3s ease;
 }
 
+.name-input-wrapper input:focus,
 .phone-input-wrapper input:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 4px rgba(233, 30, 140, 0.1);
 }
 
+.name-input-wrapper input::placeholder,
 .phone-input-wrapper input::placeholder {
     color: #aaa;
 }
 
+.input-icon,
 .phone-input-icon {
     position: absolute;
     left: 1rem;

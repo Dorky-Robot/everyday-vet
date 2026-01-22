@@ -42,12 +42,16 @@
                     <div class="estimator-step active" id="step-phone" data-step-index="phone">
                         <div class="step-content-centered">
                             <h3>Let's get started</h3>
-                            <p class="step-subtitle">Enter your phone number and we'll text you a personalized booking link</p>
+                            <p class="step-subtitle">Enter your name and phone number and we'll text you a booking link</p>
 
                             <div class="phone-entry-form">
+                                <div class="name-input-wrapper">
+                                    <input type="text" id="name-input" placeholder="Your name" autocomplete="name">
+                                    <span class="input-icon"><i class="ph ph-user"></i></span>
+                                </div>
                                 <div class="phone-input-wrapper">
                                     <input type="tel" id="phone-input" placeholder="(555) 555-5555" autocomplete="tel">
-                                    <span class="phone-input-icon"><i class="ph ph-phone"></i></span>
+                                    <span class="input-icon"><i class="ph ph-phone"></i></span>
                                 </div>
                                 <p class="phone-error" id="phone-error" style="display: none;"></p>
                                 <button class="btn estimator-btn" id="send-link-btn">

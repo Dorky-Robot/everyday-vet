@@ -158,7 +158,7 @@ const Scheduler = (function() {
         // reCAPTCHA v3 site key (test key for dev, real key for prod)
         recaptchaSiteKey: isLocalDev
             ? '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'  // Google test key
-            : '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI', // TODO: Replace with production key
+            : '6LfXdFIsAAAAAP-h2N5dXnIQSbztWPQa3VRr8iBV', // Production key
     };
 
     // State

@@ -616,13 +616,18 @@ const Scheduler = (function() {
         if (btnLoading) btnLoading.style.display = 'flex';
 
         try {
-            // Get reCAPTCHA token
+            // Get reCAPTCHA token (bypass errors for testing)
             let recaptchaToken = '';
             if (typeof grecaptcha !== 'undefined') {
-                recaptchaToken = await grecaptcha.execute(
-                    LEVEE_CONFIG.recaptchaSiteKey,
-                    { action: 'schedule' }
-                );
+                try {
+                    recaptchaToken = await grecaptcha.execute(
+                        LEVEE_CONFIG.recaptchaSiteKey,
+                        { action: 'schedule' }
+                    );
+                } catch (e) {
+                    console.warn('reCAPTCHA failed, continuing without token:', e);
+                    // Continue without token - backend will accept if configured to bypass
+                }
             }
 
             // Submit to Levee API

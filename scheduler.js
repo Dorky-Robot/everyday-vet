@@ -148,12 +148,17 @@ const Scheduler = (function() {
         window.location.hostname === '127.0.0.1' ||
         window.location.protocol === 'file:';
 
+    // Levee API configuration
+    // - Local: localhost:3333 (via docker-compose + local server)
+    // - Production: https://levee.everyday.vet (Render)
     const LEVEE_CONFIG = {
-        apiUrl: isLocalDev ? 'http://localhost:3000' : 'https://levee.everyday.vet',
-        siteKey: 'evv_everyday_vet_dev',
-        apiKey: 'evv_sk_dev_everyday_vet_2024',
-        // reCAPTCHA v3 site key (test key for development)
-        recaptchaSiteKey: '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI',
+        apiUrl: isLocalDev ? 'http://localhost:3333' : 'https://levee.everyday.vet',
+        siteKey: isLocalDev ? 'evv_everyday_vet_dev' : 'evv_everyday_vet',
+        apiKey: isLocalDev ? 'evv_sk_dev_everyday_vet_2024' : '', // Not used client-side in prod
+        // reCAPTCHA v3 site key (test key for dev, real key for prod)
+        recaptchaSiteKey: isLocalDev
+            ? '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'  // Google test key
+            : '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI', // TODO: Replace with production key
     };
 
     // State

@@ -83,6 +83,13 @@
                             <p class="step-subtitle">We've sent a booking link to <span id="confirmation-phone"></span></p>
                             <p class="confirmation-note">Click the link in your text message to continue scheduling your appointment.</p>
 
+                            <!-- Dev Mode: Direct booking link (only shown in local development) -->
+                            <div id="dev-booking-panel" class="dev-booking-panel" style="display: none;">
+                                <div class="dev-badge">DEV MODE</div>
+                                <p>Skip the SMS - click to open booking page directly:</p>
+                                <a href="#" id="dev-booking-link" class="btn dev-booking-btn" target="_blank">Open Booking Page →</a>
+                            </div>
+
                             <div class="confirmation-actions">
                                 <button class="btn-link" id="resend-link-btn">Didn't get it? <span class="resend-text">Resend</span></button>
                                 <span class="resend-cooldown" id="resend-cooldown" style="display: none;">Resend available in <span id="cooldown-timer">60</span>s</span>

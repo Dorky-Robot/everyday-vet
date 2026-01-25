@@ -4215,3 +4215,52 @@ footer p {
         font-size: 2rem;
     }
 }
+
+/* =============================================================================
+   Dev Mode Booking Panel (only shown in local development)
+   ============================================================================= */
+
+.dev-booking-panel {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 2px solid #f59e0b;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin: 1.5rem 0;
+    text-align: center;
+}
+
+.dev-booking-panel .dev-badge {
+    display: inline-block;
+    background: #f59e0b;
+    color: #78350f;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    margin-bottom: 0.75rem;
+    letter-spacing: 0.05em;
+}
+
+.dev-booking-panel p {
+    color: #92400e;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+}
+
+.dev-booking-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--primary-color);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.dev-booking-btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}

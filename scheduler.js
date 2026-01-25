@@ -669,7 +669,7 @@ const Scheduler = (function() {
             // Success! Show confirmation step
             submittedName = name;
             submittedPhone = phone;
-            showConfirmationStep(phone);
+            showConfirmationStep(phone, data.devBookingUrl);
 
             // Start resend cooldown
             if (isResend) {
@@ -691,11 +691,24 @@ const Scheduler = (function() {
     /**
      * Show the confirmation step after phone submission
      */
-    function showConfirmationStep(phone) {
+    function showConfirmationStep(phone, devBookingUrl = null) {
         // Update the phone display
         const phoneDisplay = document.getElementById('confirmation-phone');
         if (phoneDisplay) {
             phoneDisplay.textContent = phone;
+        }
+
+        // Show dev mode booking link panel (for local testing)
+        const devPanel = document.getElementById('dev-booking-panel');
+        if (devBookingUrl && devPanel) {
+            const link = devPanel.querySelector('#dev-booking-link');
+            if (link) {
+                link.href = devBookingUrl;
+                link.textContent = 'Open Booking Page →';
+            }
+            devPanel.style.display = 'block';
+        } else if (devPanel) {
+            devPanel.style.display = 'none';
         }
 
         // Show confirmation step

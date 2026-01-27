@@ -510,6 +510,27 @@ const Scheduler = (function() {
     }
 
     /**
+     * Validate full name (must have first and last name)
+     * - At least 2 words separated by space
+     * - Each word at least 2 characters
+     * - Only letters, hyphens, and apostrophes allowed
+     */
+    function isValidFullName(value) {
+        if (!value || typeof value !== 'string') return false;
+
+        const trimmed = value.trim();
+        // Split on whitespace and filter empty parts
+        const parts = trimmed.split(/\s+/).filter(p => p.length > 0);
+
+        // Must have at least 2 parts (first and last name)
+        if (parts.length < 2) return false;
+
+        // Each part must be at least 2 characters and contain only valid characters
+        const validNamePart = /^[a-zA-Z][a-zA-Z'-]*[a-zA-Z]$|^[a-zA-Z]{2}$/;
+        return parts.every(part => part.length >= 2 && validNamePart.test(part));
+    }
+
+    /**
      * Normalize phone to E.164 format for API
      */
     function normalizePhone(value) {
@@ -571,17 +592,27 @@ const Scheduler = (function() {
             const name = nameInput?.value?.trim() || '';
             const phone = phoneInput.value;
 
+            // Collect all validation errors
+            const errors = [];
+
             if (!name) {
-                errorEl.textContent = 'Please enter your name';
-                errorEl.style.display = 'block';
-                nameInput?.focus();
-                return;
+                errors.push('Please enter your name');
+            } else if (!isValidFullName(name)) {
+                errors.push('Please enter your first and last name');
             }
 
             if (!isValidPhone(phone)) {
-                errorEl.textContent = 'Please enter a valid 10-digit phone number';
+                errors.push('Please enter a valid 10-digit phone number');
+            }
+
+            if (errors.length > 0) {
+                errorEl.innerHTML = errors.join('<br>');
                 errorEl.style.display = 'block';
-                phoneInput.focus();
+                if (!name || !isValidFullName(name)) {
+                    nameInput?.focus();
+                } else {
+                    phoneInput.focus();
+                }
                 return;
             }
 

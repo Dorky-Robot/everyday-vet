@@ -194,12 +194,25 @@ const Scheduler = (function() {
     // STATE MANAGEMENT
     // =============================================================================
 
+    const SESSION_STORAGE_KEY = 'everydayvet_scheduler_state';
+
     function saveState() {
-        // No longer encoding state in URL - phone-first flow sends users a text
-        // with a booking link instead of persisting state client-side
+        // Save state to sessionStorage to preserve progress on page refresh
+        try {
+            const stateToSave = {
+                household: state.household,
+                currentPetId: state.currentPetId,
+                currentStep: state.currentStep,
+                client: state.client,
+            };
+            sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(stateToSave));
+        } catch (e) {
+            console.warn('Could not save state to sessionStorage:', e);
+        }
     }
 
     function loadState() {
+        // First try URL params (for booking links)
         const saved = stateAdapter.load();
         if (saved) {
             // Handle both state formats for backward compatibility:
@@ -219,6 +232,26 @@ const Scheduler = (function() {
 
             return state.household.pets.length > 0;
         }
+
+        // Fall back to sessionStorage (preserves state on refresh)
+        try {
+            const sessionData = sessionStorage.getItem(SESSION_STORAGE_KEY);
+            if (sessionData) {
+                const parsed = JSON.parse(sessionData);
+                if (parsed.household?.pets) {
+                    state.household.pets = parsed.household.pets;
+                    state.household.isNewClient = parsed.household.isNewClient ?? null;
+                }
+                state.currentPetId = parsed.currentPetId || (state.household.pets[0]?.id ?? null);
+                state.currentStep = parsed.currentStep ?? 0;
+                if (parsed.client) state.client = { ...state.client, ...parsed.client };
+
+                return state.household.pets.length > 0 || state.currentStep > 0;
+            }
+        } catch (e) {
+            console.warn('Could not load state from sessionStorage:', e);
+        }
+
         return false;
     }
 
@@ -229,6 +262,11 @@ const Scheduler = (function() {
         state.currentStep = 0;
         state.client = { name: '', email: '', phone: '' };
         stateAdapter.clear();
+        try {
+            sessionStorage.removeItem(SESSION_STORAGE_KEY);
+        } catch (e) {
+            // Ignore errors
+        }
     }
 
     function savePetSelections() {

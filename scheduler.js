@@ -1,135 +1,60 @@
 /**
- * Everyday Vet - Unified Scheduling System
+ * Levee Scheduler Plugin
  *
- * Shared module for both embedded (index.html) and standalone (schedule.html) schedulers.
- * Uses phone-first flow: users enter phone → receive SMS with booking link from Levee.
+ * Ported from everyday.vet scheduler for use with booking tokens.
+ * When user completes the flow, saves data to booking token and redirects to book.html.
  */
 
 // =============================================================================
-// URL STATE ADAPTER
+// TOKEN STATE ADAPTER
 // =============================================================================
 
-const UrlStateAdapter = {
-    encode(stateObj) {
-        try {
-            const json = JSON.stringify(stateObj);
-            return btoa(encodeURIComponent(json).replace(/%([0-9A-F]{2})/g, (_, p1) =>
-                String.fromCharCode('0x' + p1)
-            ));
-        } catch (e) {
-            console.warn('Could not encode state:', e);
-            return null;
-        }
-    },
+const TokenStateAdapter = {
+    token: null,
+    tokenData: null,
 
-    decode(encoded) {
-        try {
-            const json = decodeURIComponent(atob(encoded).split('').map(c =>
-                '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
-            ).join(''));
-            return JSON.parse(json);
-        } catch (e) {
-            console.warn('Could not decode state:', e);
-            return null;
-        }
-    },
-
-    save(state) {
-        const stateToEncode = {
-            step: state.currentStep,
-            isNewClient: state.household.isNewClient,
-            pets: state.household.pets,
-            currentPetId: state.currentPetId,
-            client: state.client,
-        };
-        const encoded = this.encode(stateToEncode);
-        if (encoded) {
-            const newUrl = `${window.location.pathname}?s=${encoded}`;
-            history.replaceState(null, '', newUrl);
-        }
-    },
-
-    load() {
+    async init() {
         const params = new URLSearchParams(window.location.search);
+        this.token = params.get('token');
 
-        // Check for full encoded state first
-        const encodedState = params.get('s');
-        if (encodedState) {
-            const decoded = this.decode(encodedState);
-            if (decoded) return decoded;
-        }
-
-        // Fall back to simple params
-        return this.parseSimpleParams(params);
-    },
-
-    parseSimpleParams(params) {
-        const state = {
-            step: 0,
-            isNewClient: null,
-            pets: [],
-            currentPetId: null,
-            client: { name: '', email: '', phone: '' },
-        };
-
-        // Parse new client flag
-        const newParam = params.get('new');
-        if (newParam !== null) {
-            state.isNewClient = newParam === 'true' || newParam === '1';
-        }
-
-        // Parse multiple pets format: pets=Luna:cat,Max:dog
-        const petsParam = params.get('pets');
-        if (petsParam) {
-            petsParam.split(',').forEach((entry, index) => {
-                const [name, type] = entry.split(':');
-                if (name && type && (type === 'dog' || type === 'cat')) {
-                    state.pets.push({
-                        id: Date.now() + index,
-                        name: name.trim(),
-                        type: type.trim(),
-                        services: { selectedIds: [], adviceTopics: [], adviceContext: '', customConcerns: [] }
-                    });
+        if (this.token) {
+            try {
+                const response = await fetch(`/api/public/validate-token?token=${encodeURIComponent(this.token)}`);
+                if (response.ok) {
+                    this.tokenData = await response.json();
+                    return this.tokenData;
                 }
-            });
-        }
-
-        // Parse single pet format: pet=Luna&type=cat
-        const petName = params.get('pet');
-        const petType = params.get('type');
-        if (petName && petType && (petType === 'dog' || petType === 'cat')) {
-            if (!state.pets.find(p => p.name.toLowerCase() === petName.toLowerCase())) {
-                state.pets.push({
-                    id: Date.now(),
-                    name: petName.trim(),
-                    type: petType.trim(),
-                    services: { selectedIds: [], adviceTopics: [], adviceContext: '', customConcerns: [] }
-                });
+            } catch (error) {
+                console.error('Failed to validate token:', error);
             }
         }
-
-        // Parse services: svc=vaccine-rabies,vaccine-fvrcp
-        const svcParam = params.get('svc');
-        if (svcParam && state.pets.length > 0) {
-            state.pets[0].services.selectedIds = svcParam.split(',').map(s => s.trim());
-        }
-
-        // Parse client info
-        if (params.get('name')) state.client.name = params.get('name');
-        if (params.get('email')) state.client.email = params.get('email');
-        if (params.get('phone')) state.client.phone = params.get('phone');
-
-        // Set current pet and step
-        if (state.pets.length > 0) {
-            state.currentPetId = state.pets[0].id;
-            state.step = state.isNewClient !== null ? 2 : 1;
-        }
-
-        return state;
+        return null;
     },
 
-    clear() {
-        history.replaceState(null, '', window.location.pathname);
+    async saveToToken(schedulerData) {
+        if (!this.token) {
+            console.error('No token available');
+            return false;
+        }
+
+        try {
+            const response = await fetch('/api/public/update-scheduler-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    token: this.token,
+                    schedulerData,
+                }),
+            });
+            return response.ok;
+        } catch (error) {
+            console.error('Failed to save scheduler data:', error);
+            return false;
+        }
+    },
+
+    getBookingUrl() {
+        return `/book.html?token=${encodeURIComponent(this.token)}`;
     }
 };
 
@@ -138,28 +63,7 @@ const UrlStateAdapter = {
 // =============================================================================
 
 const Scheduler = (function() {
-    // Configuration
-    const stateAdapter = UrlStateAdapter;
-    let isStandalone = false;
-    let isPhoneFirstFlow = true; // Enable phone-first flow by default
-
-    // Levee API configuration
-    const isLocalDev = window.location.hostname === 'localhost' ||
-        window.location.hostname === '127.0.0.1' ||
-        window.location.protocol === 'file:';
-
-    // Levee API configuration
-    // - Local: localhost:3333 (via docker-compose + local server)
-    // - Production: https://levee.everyday.vet (Render)
-    const LEVEE_CONFIG = {
-        apiUrl: isLocalDev ? 'http://localhost:3333' : 'https://levee.everyday.vet',
-        siteKey: isLocalDev ? 'evv_everyday_vet_dev' : 'evv_everyday_vet',
-        apiKey: isLocalDev ? 'evv_sk_dev_everyday_vet_2024' : '', // Not used client-side in prod
-        // reCAPTCHA v3 site key (test key for dev, real key for prod)
-        recaptchaSiteKey: isLocalDev
-            ? '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'  // Google test key
-            : '6LfXdFIsAAAAAP-h2N5dXnIQSbztWPQa3VRr8iBV', // Production key
-    };
+    const stateAdapter = TokenStateAdapter;
 
     // State
     const state = {
@@ -168,11 +72,12 @@ const Scheduler = (function() {
             isNewClient: null,
         },
         currentPetId: null,
-        currentStep: 0,
+        currentStep: 'address', // 'address', 'pets', 'book', 'services'
         client: {
             name: '',
             email: '',
             phone: '',
+            address: '',
         },
     };
 
@@ -183,20 +88,13 @@ const Scheduler = (function() {
         TRAVEL_FEE: 100,
     };
 
-    // Debounce for URL updates
-    let saveTimeout = null;
-    function debouncedSave() {
-        if (saveTimeout) clearTimeout(saveTimeout);
-        saveTimeout = setTimeout(() => saveState(), 300);
-    }
-
     // =============================================================================
     // STATE MANAGEMENT
     // =============================================================================
 
-    const SESSION_STORAGE_KEY = 'everydayvet_scheduler_state';
+    const SESSION_STORAGE_KEY = 'levee_scheduler_state';
 
-    function saveState() {
+    function saveStateToSession() {
         // Save state to sessionStorage to preserve progress on page refresh
         try {
             const stateToSave = {
@@ -211,29 +109,7 @@ const Scheduler = (function() {
         }
     }
 
-    function loadState() {
-        // First try URL params (for booking links)
-        const saved = stateAdapter.load();
-        if (saved) {
-            // Handle both state formats for backward compatibility:
-            // - Nested format: { household: { pets, isNewClient }, currentPetId, currentStep }
-            // - Flat format (from URL): { pets, isNewClient, currentPetId, step }
-            if (saved.household?.pets) {
-                state.household.pets = saved.household.pets;
-                state.household.isNewClient = saved.household.isNewClient ?? null;
-            } else if (saved.pets) {
-                state.household.pets = saved.pets;
-                state.household.isNewClient = saved.isNewClient ?? null;
-            }
-
-            state.currentPetId = saved.currentPetId || (state.household.pets[0]?.id ?? null);
-            state.currentStep = saved.currentStep ?? saved.step ?? 0;
-            if (saved.client) state.client = { ...state.client, ...saved.client };
-
-            return state.household.pets.length > 0;
-        }
-
-        // Fall back to sessionStorage (preserves state on refresh)
+    function loadStateFromSession() {
         try {
             const sessionData = sessionStorage.getItem(SESSION_STORAGE_KEY);
             if (sessionData) {
@@ -243,30 +119,53 @@ const Scheduler = (function() {
                     state.household.isNewClient = parsed.household.isNewClient ?? null;
                 }
                 state.currentPetId = parsed.currentPetId || (state.household.pets[0]?.id ?? null);
-                state.currentStep = parsed.currentStep ?? 0;
-                if (parsed.client) state.client = { ...state.client, ...parsed.client };
-
-                return state.household.pets.length > 0 || state.currentStep > 0;
+                state.currentStep = parsed.currentStep ?? 'address';
+                if (parsed.client) {
+                    state.client = { ...state.client, ...parsed.client };
+                }
+                return true;
             }
         } catch (e) {
             console.warn('Could not load state from sessionStorage:', e);
         }
-
         return false;
     }
 
-    function clearState() {
-        state.household.pets = [];
-        state.household.isNewClient = null;
-        state.currentPetId = null;
-        state.currentStep = 0;
-        state.client = { name: '', email: '', phone: '' };
-        stateAdapter.clear();
+    function clearSessionState() {
         try {
             sessionStorage.removeItem(SESSION_STORAGE_KEY);
         } catch (e) {
             // Ignore errors
         }
+    }
+
+    function loadStateFromToken(tokenData) {
+        if (!tokenData) return false;
+
+        // If token has existing patient data, pre-populate
+        if (tokenData.patients && tokenData.patients.length > 0) {
+            state.household.pets = tokenData.patients.map((p, i) => ({
+                id: Date.now() + i,
+                name: p.name,
+                type: p.species || 'dog',
+                ownerName: p.ownerName || null,
+                services: { selectedIds: [], adviceTopics: [], adviceContext: '', customConcerns: [] }
+            }));
+            state.currentPetId = state.household.pets[0]?.id || null;
+        }
+
+        // Set client info if available
+        if (tokenData.client) {
+            state.client.name = tokenData.client.name || '';
+            state.client.phone = tokenData.client.phone || '';
+            state.client.address = tokenData.client.address || '';
+        }
+
+        // New clients (never had an appointment) start fresh, returning clients go to services
+        // Having pets but no completed appointments = still a "new client"
+        state.household.isNewClient = !tokenData.hasCompletedAppointments;
+
+        return state.household.pets.length > 0;
     }
 
     function savePetSelections() {
@@ -284,7 +183,7 @@ const Scheduler = (function() {
         pet.services.adviceContext = getContext ? getContext() : '';
         pet.services.customConcerns = window.getCustomConcerns ? window.getCustomConcerns() : [];
 
-        saveState(); // Save immediately to persist service selections
+        saveStateToSession();
     }
 
     // =============================================================================
@@ -367,7 +266,7 @@ const Scheduler = (function() {
 
     function estimateAppointmentTime() {
         const data = gatherAppointmentData();
-        let minutes = 5; // Base setup
+        let minutes = 5;
         let reasoning = [];
 
         const totalTopics = data.adviceTopics.length + data.customConcerns.length;
@@ -420,7 +319,7 @@ const Scheduler = (function() {
         return {
             minutes,
             formatted: formatDuration(minutes),
-            reasoning: reasoning.join(' • ')
+            reasoning: reasoning.join(' | ')
         };
     }
 
@@ -497,334 +396,6 @@ const Scheduler = (function() {
     }
 
     // =============================================================================
-    // PHONE-FIRST FLOW
-    // =============================================================================
-
-    let resendCooldownTimer = null;
-    let submittedName = '';
-    let submittedPhone = '';
-
-    /**
-     * Format phone number as user types - US format (XXX) XXX-XXXX
-     */
-    function formatPhoneNumber(value) {
-        // Remove all non-digits, limit to 10
-        const digits = value.replace(/\D/g, '').slice(0, 10);
-
-        // Format progressively as user types
-        if (digits.length === 0) return '';
-        if (digits.length < 4) return `(${digits}`;
-        if (digits.length < 7) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-        return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-    }
-
-    /**
-     * Get cursor position in terms of digit count
-     */
-    function getDigitPosition(value, cursorPos) {
-        return value.slice(0, cursorPos).replace(/\D/g, '').length;
-    }
-
-    /**
-     * Get cursor position from digit position in formatted string
-     */
-    function getCursorFromDigitPos(formatted, digitPos) {
-        let digits = 0;
-        for (let i = 0; i < formatted.length; i++) {
-            if (/\d/.test(formatted[i])) {
-                digits++;
-                if (digits === digitPos) return i + 1;
-            }
-        }
-        return formatted.length;
-    }
-
-    /**
-     * Validate phone number (US format)
-     */
-    function isValidPhone(value) {
-        const digits = value.replace(/\D/g, '');
-        return digits.length === 10;
-    }
-
-    /**
-     * Validate full name (must have first and last name)
-     * - At least 2 words separated by space
-     * - Each word at least 2 characters
-     * - Only letters, hyphens, and apostrophes allowed
-     */
-    function isValidFullName(value) {
-        if (!value || typeof value !== 'string') return false;
-
-        const trimmed = value.trim();
-        // Split on whitespace and filter empty parts
-        const parts = trimmed.split(/\s+/).filter(p => p.length > 0);
-
-        // Must have at least 2 parts (first and last name)
-        if (parts.length < 2) return false;
-
-        // Each part must be at least 2 characters and contain only valid characters
-        const validNamePart = /^[a-zA-Z][a-zA-Z'-]*[a-zA-Z]$|^[a-zA-Z]{2}$/;
-        return parts.every(part => part.length >= 2 && validNamePart.test(part));
-    }
-
-    /**
-     * Normalize phone to E.164 format for API
-     */
-    function normalizePhone(value) {
-        const digits = value.replace(/\D/g, '');
-        return `+1${digits}`;
-    }
-
-    /**
-     * Initialize phone-first flow UI
-     */
-    function initPhoneFirstFlow() {
-        const nameInput = document.getElementById('name-input');
-        const phoneInput = document.getElementById('phone-input');
-        const sendBtn = document.getElementById('send-link-btn');
-        const errorEl = document.getElementById('phone-error');
-
-        if (!phoneInput || !sendBtn) return;
-
-        // Clear error when typing in name
-        nameInput?.addEventListener('input', () => {
-            errorEl.style.display = 'none';
-        });
-
-        // Format phone as user types
-        phoneInput.addEventListener('input', (e) => {
-            const input = e.target;
-            const oldValue = input.value;
-            const cursorPos = input.selectionStart;
-
-            // Track digit position before formatting
-            const digitPos = getDigitPosition(oldValue, cursorPos);
-
-            // Format the number
-            const formatted = formatPhoneNumber(oldValue);
-            input.value = formatted;
-
-            // Restore cursor position based on digit position
-            const newCursorPos = getCursorFromDigitPos(formatted, digitPos);
-            input.setSelectionRange(newCursorPos, newCursorPos);
-
-            // Clear error when typing
-            errorEl.style.display = 'none';
-        });
-
-        // Handle keydown to prevent non-digit input
-        phoneInput.addEventListener('keydown', (e) => {
-            // Allow: backspace, delete, tab, escape, enter, arrows
-            if ([8, 9, 27, 13, 46, 37, 38, 39, 40].includes(e.keyCode)) return;
-            // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
-            if ((e.ctrlKey || e.metaKey) && [65, 67, 86, 88].includes(e.keyCode)) return;
-            // Block non-digit keys
-            if (!/^\d$/.test(e.key)) {
-                e.preventDefault();
-            }
-        });
-
-        // Handle send button click
-        sendBtn.addEventListener('click', async () => {
-            const name = nameInput?.value?.trim() || '';
-            const phone = phoneInput.value;
-
-            // Collect all validation errors
-            const errors = [];
-
-            if (!name) {
-                errors.push('Please enter your name');
-            } else if (!isValidFullName(name)) {
-                errors.push('Please enter your first and last name');
-            }
-
-            if (!isValidPhone(phone)) {
-                errors.push('Please enter a valid 10-digit phone number');
-            }
-
-            if (errors.length > 0) {
-                errorEl.innerHTML = errors.join('<br>');
-                errorEl.style.display = 'block';
-                if (!name || !isValidFullName(name)) {
-                    nameInput?.focus();
-                } else {
-                    phoneInput.focus();
-                }
-                return;
-            }
-
-            await submitPhone(name, phone, sendBtn, errorEl);
-        });
-
-        // Handle enter key
-        phoneInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                sendBtn.click();
-            }
-        });
-
-        // Initialize resend button
-        const resendBtn = document.getElementById('resend-link-btn');
-        resendBtn?.addEventListener('click', async () => {
-            if (submittedPhone && submittedName) {
-                await submitPhone(submittedName, submittedPhone, resendBtn, errorEl, true);
-            }
-        });
-
-        // Initialize "different phone" button
-        const differentPhoneBtn = document.getElementById('different-phone-btn');
-        differentPhoneBtn?.addEventListener('click', () => {
-            showStep('phone');
-            phoneInput.value = '';
-            phoneInput.focus();
-        });
-    }
-
-    /**
-     * Submit name and phone to Levee API
-     */
-    async function submitPhone(name, phone, btn, errorEl, isResend = false) {
-        const btnText = btn.querySelector('.btn-text');
-        const btnLoading = btn.querySelector('.btn-loading');
-
-        // Show loading state
-        btn.disabled = true;
-        if (btnText) btnText.style.display = 'none';
-        if (btnLoading) btnLoading.style.display = 'flex';
-
-        try {
-            // Get reCAPTCHA token (bypass errors for testing)
-            let recaptchaToken = '';
-            if (typeof grecaptcha !== 'undefined') {
-                try {
-                    recaptchaToken = await grecaptcha.execute(
-                        LEVEE_CONFIG.recaptchaSiteKey,
-                        { action: 'schedule' }
-                    );
-                } catch (e) {
-                    console.warn('reCAPTCHA failed, continuing without token:', e);
-                    // Continue without token - backend will accept if configured to bypass
-                }
-            }
-
-            // Submit to Levee API
-            const response = await fetch(`${LEVEE_CONFIG.apiUrl}/api/public/schedule`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    name: name.trim(),
-                    phone: normalizePhone(phone),
-                    siteKey: LEVEE_CONFIG.siteKey,
-                    recaptchaToken,
-                }),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || 'Failed to send booking link');
-            }
-
-            // In dev mode, log the booking URL to console for easy testing
-            if (data.devBookingUrl) {
-                console.log('%c📱 BOOKING URL (dev mode):', 'color: #e91e8c; font-weight: bold; font-size: 14px;');
-                console.log('%c' + data.devBookingUrl, 'color: #0066cc; font-size: 12px;');
-            }
-
-            // Success! Show confirmation step
-            submittedName = name;
-            submittedPhone = phone;
-            showConfirmationStep(phone);
-
-            // Start resend cooldown
-            if (isResend) {
-                startResendCooldown();
-            }
-
-        } catch (error) {
-            console.error('Error submitting phone:', error);
-            errorEl.textContent = error.message || 'Something went wrong. Please try again.';
-            errorEl.style.display = 'block';
-        } finally {
-            // Reset button state
-            btn.disabled = false;
-            if (btnText) btnText.style.display = 'inline';
-            if (btnLoading) btnLoading.style.display = 'none';
-        }
-    }
-
-    /**
-     * Show the confirmation step after phone submission
-     */
-    function showConfirmationStep(phone) {
-        // Update the phone display
-        const phoneDisplay = document.getElementById('confirmation-phone');
-        if (phoneDisplay) {
-            phoneDisplay.textContent = phone;
-        }
-
-        // Show confirmation step
-        showStep('confirmation');
-
-        // Start resend cooldown
-        startResendCooldown();
-    }
-
-    /**
-     * Show a specific step by ID or index
-     */
-    function showStep(stepId) {
-        const steps = document.querySelectorAll('.estimator-step');
-        steps.forEach(step => {
-            const isTarget = step.id === `step-${stepId}` ||
-                step.dataset.stepIndex === stepId ||
-                step.dataset.stepIndex === String(stepId);
-            step.classList.toggle('active', isTarget);
-        });
-    }
-
-    /**
-     * Start the resend cooldown timer
-     */
-    function startResendCooldown() {
-        const resendBtn = document.getElementById('resend-link-btn');
-        const cooldownEl = document.getElementById('resend-cooldown');
-        const timerEl = document.getElementById('cooldown-timer');
-
-        if (!resendBtn || !cooldownEl || !timerEl) return;
-
-        // Clear any existing timer
-        if (resendCooldownTimer) {
-            clearInterval(resendCooldownTimer);
-        }
-
-        // Hide resend button, show cooldown
-        resendBtn.style.display = 'none';
-        cooldownEl.style.display = 'inline';
-
-        let seconds = 60;
-        timerEl.textContent = seconds;
-
-        resendCooldownTimer = setInterval(() => {
-            seconds--;
-            timerEl.textContent = seconds;
-
-            if (seconds <= 0) {
-                clearInterval(resendCooldownTimer);
-                resendCooldownTimer = null;
-
-                // Show resend button, hide cooldown
-                resendBtn.style.display = 'inline';
-                cooldownEl.style.display = 'none';
-            }
-        }, 1000);
-    }
-
-    // =============================================================================
     // WIZARD NAVIGATION
     // =============================================================================
 
@@ -832,87 +403,276 @@ const Scheduler = (function() {
         const dots = document.querySelectorAll('.step-dot');
         const steps = document.querySelectorAll('.estimator-step');
 
-        if (!dots.length || !steps.length) return;
+        if (!steps.length) return;
 
-        dots.forEach((dot, index) => {
-            dot.addEventListener('click', () => {
-                if (index < state.currentStep) {
-                    goToStep(index);
-                } else if (index === state.currentStep + 1 && canProceedFromStep(state.currentStep)) {
-                    goToStep(index);
+        // Use event delegation for step dots (they get re-rendered dynamically)
+        const stepProgress = document.getElementById('step-progress');
+        if (stepProgress) {
+            stepProgress.addEventListener('click', (e) => {
+                const dot = e.target.closest('.step-dot');
+                if (!dot) return;
+
+                const targetStep = dot.dataset.step;
+                const stepOrder = getStepOrder();
+                const currentIndex = stepOrder.indexOf(state.currentStep);
+                const targetIndex = stepOrder.indexOf(targetStep);
+                // Only allow going back to previous steps
+                if (targetIndex < currentIndex) {
+                    goToStep(targetStep);
                 }
             });
+        }
+
+        // Address step: Continue to pets
+        document.getElementById('address-continue-btn')?.addEventListener('click', () => {
+            const streetInput = document.getElementById('client-street-address');
+            const unitInput = document.getElementById('client-unit-number');
+            const street = streetInput?.value?.trim() || '';
+            const unit = unitInput?.value?.trim() || '';
+            state.client.address = unit ? `${street}, ${unit}` : street;
+            goToStep('pets');
         });
 
+        // Address input validation
+        const streetInput = document.getElementById('client-street-address');
+        const addressContinueBtn = document.getElementById('address-continue-btn');
+        streetInput?.addEventListener('input', () => {
+            const hasAddress = streetInput.value.trim().length >= 5;
+            if (addressContinueBtn) addressContinueBtn.disabled = !hasAddress;
+        });
+        streetInput?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !addressContinueBtn?.disabled) {
+                addressContinueBtn?.click();
+            }
+        });
+
+        // New client: After adding pets, go directly to simplified booking
         document.getElementById('household-continue-btn')?.addEventListener('click', () => {
-            if (state.household.pets.length > 0) goToStep(1);
+            if (state.household.pets.length > 0) {
+                // New clients go to simplified new client content (virtual consultation only)
+                state.household.isNewClient = true;
+                goToStep('book'); // Show new client booking step
+            }
         });
 
+        // These buttons are no longer needed in the simplified flow
+        // but keep handlers in case the UI still has them
         document.getElementById('btn-new-customer')?.addEventListener('click', () => {
             state.household.isNewClient = true;
             showClientTypeContent();
-            goToStep(2);
+            goToStep('services');
         });
 
         document.getElementById('btn-existing-customer')?.addEventListener('click', () => {
             state.household.isNewClient = false;
             showClientTypeContent();
-            goToStep(2);
+            goToStep('services');
         });
 
         initSchedulingButton();
 
-        if (loadState() && state.household.pets.length > 0) {
+        // SIMPLIFIED FLOW based on phone-first approach:
+        // - Existing clients (hasPets): Go directly to services
+        // - New clients (no pets): Start at address step
+        if (state.household.isNewClient === false && state.household.pets.length > 0) {
+            // EXISTING CLIENT: Skip to services with pets pre-filled
+            updateStepProgressForExistingClient();
             renderPetCards();
             updateHouseholdStepUI();
-            goToStep(state.currentStep);
+            state.currentPetId = state.currentPetId || state.household.pets[0]?.id || null;
+            // Respect restored step, default to services
+            const targetStep = state.currentStep || 'services';
+            goToStep(targetStep);
         } else {
-            goToStep(0);
+            // NEW CLIENT: Start at address step or restore previous step
+            state.household.isNewClient = true;
+            updateStepProgressForNewClient();
+            // Pre-fill address if we have it
+            if (state.client.address) {
+                const streetInput = document.getElementById('client-street-address');
+                if (streetInput) {
+                    streetInput.value = state.client.address;
+                    const addressContinueBtn = document.getElementById('address-continue-btn');
+                    if (addressContinueBtn) addressContinueBtn.disabled = false;
+                }
+            }
+            // Respect restored step for new clients, default to address
+            const targetStep = state.currentStep || 'address';
+            // Only 'book' step requires pets - 'pets' step is fine without pets (user is adding them)
+            if (targetStep === 'book' && state.household.pets.length === 0) {
+                goToStep('pets');
+            } else {
+                goToStep(targetStep);
+            }
         }
+    }
+
+    function getStepOrder() {
+        if (state.household.isNewClient) {
+            return ['address', 'pets', 'book'];
+        } else {
+            return ['services', 'book'];
+        }
+    }
+
+    function updateStepProgressForNewClient() {
+        const stepProgress = document.getElementById('step-progress');
+        if (!stepProgress) return;
+
+        stepProgress.innerHTML = `
+            <div class="step-dot active" data-step="address">
+                <span class="step-number">1</span>
+                <span class="step-label">Address</span>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step-dot" data-step="pets">
+                <span class="step-number">2</span>
+                <span class="step-label">Your Pets</span>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step-dot" data-step="book">
+                <span class="step-number">3</span>
+                <span class="step-label">Book</span>
+            </div>
+        `;
+    }
+
+    function updateStepProgressForExistingClient() {
+        const stepProgress = document.getElementById('step-progress');
+        if (!stepProgress) return;
+
+        // For existing clients, show only 2 steps: Services → Book
+        stepProgress.innerHTML = `
+            <div class="step-dot active" data-step="services">
+                <span class="step-number">1</span>
+                <span class="step-label">Services</span>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step-dot" data-step="book">
+                <span class="step-number">2</span>
+                <span class="step-label">Book</span>
+            </div>
+        `;
     }
 
     function canProceedFromStep(step) {
-        return step !== 0 || state.household.pets.length > 0;
+        if (step === 'address') return true;
+        if (step === 'pets') return state.household.pets.length > 0;
+        return true;
     }
 
-    function goToStep(stepIndex) {
-        if (state.currentStep === 2 && stepIndex !== 2) {
+    function goToStep(stepName) {
+        if (state.currentStep === 'services' && stepName !== 'services') {
             savePetSelections();
         }
 
-        state.currentStep = stepIndex;
+        state.currentStep = stepName;
 
-        document.querySelectorAll('.estimator-step').forEach((step, i) => {
-            step.classList.toggle('active', i === stepIndex);
+        // Update step content visibility based on step name
+        document.querySelectorAll('.estimator-step').forEach((step) => {
+            const dataStep = step.dataset.step;
+            step.classList.toggle('active', dataStep === stepName);
         });
 
-        document.querySelectorAll('.step-dot').forEach((dot, i) => {
-            dot.classList.toggle('active', i === stepIndex);
-            dot.classList.toggle('completed', i < stepIndex);
-        });
+        // Update step dots based on client type
+        updateStepDots(stepName);
 
-        if (stepIndex === 1) {
+        if (stepName === 'address') {
+            // Address step: Focus input
+            const streetInput = document.getElementById('client-street-address');
+            streetInput?.focus();
+        } else if (stepName === 'pets') {
+            // Pets step: Update household UI
+            updateHouseholdStepUI();
+        } else if (stepName === 'book') {
+            // Book step: New client simplified booking (virtual consultation only)
             updateNewClientPricing();
-        } else if (stepIndex === 2) {
-            showClientTypeContent();
-            if (!state.household.isNewClient && state.household.pets.length > 0) {
+            showNewClientBooking();
+            // Save pet data to server when reaching book step (capture leads)
+            saveSchedulerDataToServer();
+        } else if (stepName === 'services') {
+            // Services step (existing clients)
+            showServicesContent();
+            if (state.household.pets.length > 0) {
                 selectPet(state.currentPetId || state.household.pets[0].id);
             }
+            // Save pet data to server when reaching services step (capture leads)
+            saveSchedulerDataToServer();
         }
 
-        saveState(); // Save immediately for step changes
+        // Save state to sessionStorage for refresh persistence
+        saveStateToSession();
     }
 
-    function showClientTypeContent() {
+    // Save scheduler data to server to capture leads at each step
+    async function saveSchedulerDataToServer() {
+        if (state.household.pets.length === 0) return;
+
+        const isInPerson = state.household.isNewClient
+            ? document.getElementById('onboarding-inperson')?.checked
+            : requiresInPersonVisit();
+
+        const schedulerData = {
+            household: state.household.pets.map(pet => ({
+                name: pet.name,
+                species: pet.type,
+                sex: pet.sex || null,
+                services: {
+                    adviceTopics: pet.services?.adviceTopics || [],
+                    selectedIds: pet.services?.selectedIds || [],
+                    customConcerns: pet.services?.customConcerns || [],
+                    adviceContext: pet.services?.adviceContext || '',
+                }
+            })),
+            visitType: isInPerson ? 'in-person' : 'virtual',
+            durationMinutes: 30, // Default estimate
+            isNewClient: state.household.isNewClient ?? true,
+            pricing: { consultationFee: 0, lineItems: 0, travelFee: 0, total: 0 }, // Preliminary
+        };
+
+        console.log('[Scheduler] Auto-saving pet data to server:', schedulerData.household.map(p => ({ name: p.name, sex: p.sex })));
+
+        try {
+            await stateAdapter.saveToToken(schedulerData);
+        } catch (error) {
+            console.error('[Scheduler] Failed to auto-save:', error);
+        }
+    }
+
+    function updateStepDots(currentStep) {
+        const dots = document.querySelectorAll('.step-dot');
+        const stepOrder = getStepOrder();
+        const currentIndex = stepOrder.indexOf(currentStep);
+
+        dots.forEach((dot) => {
+            const dotStep = dot.dataset.step;
+            const dotIndex = stepOrder.indexOf(dotStep);
+            dot.classList.toggle('active', dotStep === currentStep);
+            dot.classList.toggle('completed', dotIndex !== -1 && dotIndex < currentIndex);
+        });
+    }
+
+    function showNewClientBooking() {
+        // For new clients: show simplified booking (virtual consultation only)
         const newContent = document.getElementById('new-customer-content');
         const existingContent = document.getElementById('existing-customer-content');
 
+        if (newContent) newContent.style.display = 'block';
+        if (existingContent) existingContent.style.display = 'none';
+    }
+
+    function showServicesContent() {
+        // For existing clients: show full services selection
+        const existingContent = document.getElementById('existing-customer-content');
+        if (existingContent) existingContent.style.display = 'block';
+    }
+
+    // Keep for backwards compatibility
+    function showClientTypeContent() {
         if (state.household.isNewClient) {
-            newContent.style.display = 'block';
-            existingContent.style.display = 'none';
+            showNewClientBooking();
         } else {
-            newContent.style.display = 'none';
-            existingContent.style.display = 'grid';
+            showServicesContent();
         }
     }
 
@@ -937,21 +697,69 @@ const Scheduler = (function() {
         const modal = document.getElementById('add-pet-modal');
         const nameInput = document.getElementById('pet-name-input');
         const typeButtons = document.querySelectorAll('.pet-type-btn');
+        const sexInput = document.getElementById('pet-sex-input');
+        const fixedInput = document.getElementById('pet-fixed-input');
         const cancelBtn = document.getElementById('pet-modal-cancel');
         const confirmBtn = document.getElementById('pet-modal-add');
 
         if (!addBtn || !modal) return;
 
         let selectedType = null;
+        let editingPetId = null; // Track if we're editing
 
-        addBtn.addEventListener('click', () => {
+        const modalTitle = modal.querySelector('.modal-header h3');
+
+        function openModal(pet = null) {
+            editingPetId = pet ? pet.id : null;
             modal.style.display = 'flex';
-            nameInput.value = '';
-            selectedType = null;
-            typeButtons.forEach(b => b.classList.remove('selected'));
-            confirmBtn.disabled = true;
+
+            if (pet) {
+                // Edit mode - pre-fill values
+                if (modalTitle) modalTitle.textContent = 'Edit Pet';
+                confirmBtn.textContent = 'Save Changes';
+                nameInput.value = pet.name;
+                selectedType = pet.type;
+                typeButtons.forEach(b => {
+                    b.classList.toggle('selected', b.dataset.type === pet.type);
+                });
+                // Pre-fill sex fields based on stored sex value
+                if (sexInput) {
+                    if (pet.sex === 'male' || pet.sex === 'neutered') {
+                        sexInput.value = 'male';
+                    } else if (pet.sex === 'female' || pet.sex === 'spayed') {
+                        sexInput.value = 'female';
+                    } else {
+                        sexInput.value = '';
+                    }
+                }
+                if (fixedInput) {
+                    if (pet.sex === 'neutered' || pet.sex === 'spayed') {
+                        fixedInput.value = 'yes';
+                    } else if (pet.sex === 'male' || pet.sex === 'female') {
+                        fixedInput.value = 'no';
+                    } else {
+                        fixedInput.value = '';
+                    }
+                }
+                confirmBtn.disabled = false;
+            } else {
+                // Add mode - clear values
+                if (modalTitle) modalTitle.textContent = 'Add a Pet';
+                confirmBtn.textContent = 'Add Pet';
+                nameInput.value = '';
+                selectedType = null;
+                typeButtons.forEach(b => b.classList.remove('selected'));
+                if (sexInput) sexInput.value = '';
+                if (fixedInput) fixedInput.value = '';
+                confirmBtn.disabled = true;
+            }
             nameInput.focus();
-        });
+        }
+
+        // Expose openModal for editing from pet cards
+        window.openPetModal = openModal;
+
+        addBtn.addEventListener('click', () => openModal(null));
 
         cancelBtn.addEventListener('click', () => modal.style.display = 'none');
         modal.addEventListener('click', (e) => {
@@ -975,24 +783,54 @@ const Scheduler = (function() {
             const name = nameInput.value.trim();
             if (!name || !selectedType) return;
 
-            addPet(name, selectedType);
+            // Compute sex value from sex and fixed inputs
+            const sexValue = sexInput ? sexInput.value : '';
+            const fixedValue = fixedInput ? fixedInput.value : '';
+            let sex = null;
+            if (sexValue === 'male') {
+                sex = fixedValue === 'yes' ? 'neutered' : 'male';
+            } else if (sexValue === 'female') {
+                sex = fixedValue === 'yes' ? 'spayed' : 'female';
+            }
+
+            if (editingPetId) {
+                // Update existing pet
+                updatePet(editingPetId, name, selectedType, sex);
+            } else {
+                // Add new pet
+                addPet(name, selectedType, sex);
+            }
             modal.style.display = 'none';
         });
     }
 
-    function addPet(name, type) {
+    function addPet(name, type, sex = null) {
         const pet = {
             id: Date.now(),
             name,
             type,
+            sex,
             services: { selectedIds: [], adviceTopics: [], adviceContext: '', customConcerns: [] }
         };
 
         state.household.pets.push(pet);
         renderPetCards();
         selectPet(pet.id);
-        saveState(); // Save immediately for critical changes
         updateHouseholdStepUI();
+        saveStateToSession();
+    }
+
+    function updatePet(petId, name, type, sex) {
+        const pet = state.household.pets.find(p => p.id === petId);
+        if (!pet) return;
+
+        pet.name = name;
+        pet.type = type;
+        pet.sex = sex;
+
+        renderPetCards();
+        updateHouseholdStepUI();
+        saveStateToSession();
     }
 
     function removePet(petId) {
@@ -1012,8 +850,8 @@ const Scheduler = (function() {
             updateEstimateDisplay();
         }
 
-        saveState(); // Save immediately for critical changes
         updateHouseholdStepUI();
+        saveStateToSession();
     }
 
     function selectPet(petId) {
@@ -1038,7 +876,6 @@ const Scheduler = (function() {
         initEstimator();
         restorePetSelections(pet);
         updateEstimateDisplay();
-        saveState(); // Save immediately when switching pets
     }
 
     function restorePetSelections(pet) {
@@ -1059,7 +896,6 @@ const Scheduler = (function() {
     }
 
     function renderPetCards() {
-        // Household step tabs
         const householdContainer = document.getElementById('pet-tabs');
         const addBtn = document.getElementById('add-pet-btn');
 
@@ -1082,7 +918,12 @@ const Scheduler = (function() {
                 });
 
                 tab.addEventListener('click', (e) => {
-                    if (!e.target.closest('.remove-pet')) selectPet(pet.id);
+                    if (!e.target.closest('.remove-pet')) {
+                        // Open edit modal when clicking on pet
+                        if (window.openPetModal) {
+                            window.openPetModal(pet);
+                        }
+                    }
                 });
 
                 if (addBtn) {
@@ -1093,7 +934,6 @@ const Scheduler = (function() {
             });
         }
 
-        // Services step inline tabs
         const servicesContainer = document.getElementById('pet-tabs-services');
         if (servicesContainer) {
             servicesContainer.innerHTML = '';
@@ -1316,7 +1156,7 @@ const Scheduler = (function() {
 
         if (isVaccines && checked.length > 0) {
             html += `
-                <span class="service-chiclet chiclet-free" title="A quick examination is included free with vaccinations to ensure your pet is healthy enough to receive them safely.">
+                <span class="service-chiclet chiclet-free" title="A quick examination is included free with vaccinations.">
                     <span class="chiclet-label">Free Quick Exam</span>
                 </span>
             `;
@@ -1352,7 +1192,6 @@ const Scheduler = (function() {
 
         container.innerHTML = html;
 
-        // Click handlers for removal
         container.querySelectorAll('.service-chiclet[data-service-id]').forEach(chiclet => {
             chiclet.addEventListener('click', () => {
                 const cb = accordion.querySelector(`input[value="${chiclet.dataset.serviceId}"]`);
@@ -1406,20 +1245,23 @@ const Scheduler = (function() {
         const resultContent = document.getElementById('result-content');
 
         if (!hasAnySelections()) {
-            resultEmpty.style.display = 'block';
-            resultContent.style.display = 'none';
+            if (resultEmpty) resultEmpty.style.display = 'block';
+            if (resultContent) resultContent.style.display = 'none';
             return;
         }
 
-        resultEmpty.style.display = 'none';
-        resultContent.style.display = 'block';
+        if (resultEmpty) resultEmpty.style.display = 'none';
+        if (resultContent) resultContent.style.display = 'block';
 
         const isInPerson = requiresInPersonVisit();
-        document.getElementById('visit-type-value').textContent = isInPerson ? 'In-Person Visit' : 'Virtual Visit';
-        document.getElementById('visit-type-location').textContent = isInPerson ? 'Greater Cleveland Area' : 'Anywhere in Ohio';
+        const visitTypeEl = document.getElementById('visit-type-value');
+        const visitLocEl = document.getElementById('visit-type-location');
+        if (visitTypeEl) visitTypeEl.textContent = isInPerson ? 'In-Person Visit' : 'Virtual Visit';
+        if (visitLocEl) visitLocEl.textContent = isInPerson ? 'Greater Cleveland Area' : 'Anywhere in Ohio';
 
         const timeEstimate = estimateAppointmentTime();
-        document.getElementById('duration-display').textContent = timeEstimate.formatted;
+        const durationEl = document.getElementById('duration-display');
+        if (durationEl) durationEl.textContent = timeEstimate.formatted;
         const reasoning = document.getElementById('duration-reasoning');
         if (reasoning) {
             reasoning.textContent = timeEstimate.reasoning;
@@ -1435,34 +1277,35 @@ const Scheduler = (function() {
         const consultationLabel = document.getElementById('consultation-label');
         const consultationFeeEl = document.getElementById('consultation-fee');
 
-        if (consultationFee > 0) {
+        if (consultationFee > 0 && consultationLine) {
             consultationLine.style.display = 'flex';
             const numPets = state.household.pets.length;
-            consultationLabel.textContent = numPets > 1 ? `Advice & Guidance (${numPets} pets)` : 'Advice & Guidance';
-            consultationFeeEl.textContent = `$${consultationFee}`;
-        } else {
+            if (consultationLabel) consultationLabel.textContent = numPets > 1 ? `Advice & Guidance (${numPets} pets)` : 'Advice & Guidance';
+            if (consultationFeeEl) consultationFeeEl.textContent = `$${consultationFee}`;
+        } else if (consultationLine) {
             consultationLine.style.display = 'none';
         }
 
         const itemizedLine = document.getElementById('itemized-fee-line');
         const itemizedFeeEl = document.getElementById('itemized-fee');
-        if (lineItemCosts > 0) {
+        if (lineItemCosts > 0 && itemizedLine) {
             itemizedLine.style.display = 'flex';
-            itemizedFeeEl.textContent = `$${lineItemCosts}`;
-        } else {
+            if (itemizedFeeEl) itemizedFeeEl.textContent = `$${lineItemCosts}`;
+        } else if (itemizedLine) {
             itemizedLine.style.display = 'none';
         }
 
         const travelLine = document.getElementById('travel-fee-line');
         const travelFeeEl = document.getElementById('travel-fee');
-        if (travelFee > 0) {
+        if (travelFee > 0 && travelLine) {
             travelLine.style.display = 'flex';
-            travelFeeEl.textContent = `$${travelFee}`;
-        } else {
+            if (travelFeeEl) travelFeeEl.textContent = `$${travelFee}`;
+        } else if (travelLine) {
             travelLine.style.display = 'none';
         }
 
-        document.getElementById('total-price').textContent = `$${total}`;
+        const totalEl = document.getElementById('total-price');
+        if (totalEl) totalEl.textContent = `$${total}`;
     }
 
     // =============================================================================
@@ -1489,16 +1332,6 @@ const Scheduler = (function() {
         { label: 'Skin rash or redness', type: 'virtual', time: 15 },
         { label: 'Nail trim', type: 'in-person', time: 10 },
         { label: 'Anal gland expression', type: 'in-person', time: 10 },
-        { label: 'Skin scraping', type: 'in-person', time: 15 },
-        { label: 'Abscess drainage', type: 'in-person', time: 25 },
-        { label: 'Suture removal', type: 'in-person', time: 15 },
-        { label: 'Bandage change', type: 'in-person', time: 15 },
-        { label: 'Fecal sample collection', type: 'in-person', time: 10 },
-        { label: 'Deworming treatment', type: 'in-person', time: 10 },
-        { label: 'Dental cleaning', type: 'unavailable', note: 'Requires anesthesia - referral needed' },
-        { label: 'Spay/neuter surgery', type: 'unavailable', note: 'Surgical procedure - referral needed' },
-        { label: 'X-rays', type: 'unavailable', note: 'Requires imaging equipment - referral needed' },
-        { label: 'Emergency care', type: 'unavailable', note: 'Please contact 24/7 emergency hospital' },
     ];
 
     function initCustomConcernAutocomplete(onChangeCallback) {
@@ -1525,10 +1358,9 @@ const Scheduler = (function() {
 
             list.innerHTML = concerns.map((c, i) => {
                 const typeLabel = c.type === 'virtual' ? 'Can discuss virtually' :
-                                 c.type === 'in-person' ? 'Requires in-person visit' :
-                                 c.note || 'Not available';
+                                 c.type === 'in-person' ? 'Requires in-person visit' : 'Not available';
                 return `
-                    <div class="autocomplete-item${c.type === 'unavailable' ? ' autocomplete-item-unavailable' : ''}" data-index="${i}">
+                    <div class="autocomplete-item" data-index="${i}">
                         <div class="autocomplete-item-label">${c.label}</div>
                         <div class="autocomplete-item-type">${typeLabel}</div>
                     </div>
@@ -1744,20 +1576,20 @@ const Scheduler = (function() {
     }
 
     // =============================================================================
-    // SCHEDULING BUTTON & REDIRECT
+    // SCHEDULING BUTTON & REDIRECT TO BOOK.HTML
     // =============================================================================
 
     function initSchedulingButton() {
         const btn = document.getElementById('continue-to-scheduling-btn');
         btn?.addEventListener('click', async () => {
             savePetSelections();
-            await redirectToLeveeBooking(btn, false);
+            await saveAndRedirectToBooking(btn, false);
         });
 
         const newClientBtn = document.getElementById('book-first-visit-btn');
         newClientBtn?.addEventListener('click', async (e) => {
             e.preventDefault();
-            await redirectToLeveeBooking(newClientBtn, true);
+            await saveAndRedirectToBooking(newClientBtn, true);
         });
 
         window.addEventListener('pageshow', () => {
@@ -1772,10 +1604,10 @@ const Scheduler = (function() {
         });
     }
 
-    async function redirectToLeveeBooking(btn, isNewClientParam = null) {
+    async function saveAndRedirectToBooking(btn, isNewClientParam = null) {
         const originalText = btn.textContent;
         btn.disabled = true;
-        btn.innerHTML = '<span class="loading-spinner"></span> Redirecting...';
+        btn.innerHTML = '<span class="loading-spinner"></span> Saving...';
 
         try {
             const newClient = isNewClientParam !== null ? isNewClientParam : state.household.isNewClient;
@@ -1798,13 +1630,11 @@ const Scheduler = (function() {
                 total = consultationFee + lineItemCosts + travelFee;
             }
 
-            const returnUrl = `${window.location.origin}${window.location.pathname}?booking=success`;
-
-            const appointmentData = {
-                siteKey: LEVEE_CONFIG.siteKey,
+            const schedulerData = {
                 household: state.household.pets.map(pet => ({
                     name: pet.name,
                     species: pet.type,
+                    sex: pet.sex || null,
                     services: {
                         adviceTopics: pet.services?.adviceTopics || [],
                         selectedIds: pet.services?.selectedIds || [],
@@ -1816,115 +1646,75 @@ const Scheduler = (function() {
                 durationMinutes: estimateAppointmentTime().minutes,
                 isNewClient: newClient,
                 pricing: { consultationFee, lineItems: lineItemCosts, travelFee, total },
-                returnUrl,
             };
 
-            const encodedData = encodeURIComponent(JSON.stringify(appointmentData));
-            window.location.href = `${LEVEE_CONFIG.apiUrl}/book-external.html?data=${encodedData}`;
+            // Debug: Log scheduler data being sent
+            console.log('[Scheduler] Saving to token:', JSON.stringify(schedulerData, null, 2));
+            console.log('[Scheduler] Pet sex values:', state.household.pets.map(p => ({ name: p.name, sex: p.sex })));
+
+            // Save scheduler data to token
+            const saved = await stateAdapter.saveToToken(schedulerData);
+            if (!saved) {
+                throw new Error('Failed to save scheduler data');
+            }
+
+            // Redirect to book.html with token
+            window.location.href = stateAdapter.getBookingUrl();
 
         } catch (error) {
-            console.error('Error redirecting to booking:', error);
+            console.error('Error saving scheduler data:', error);
             btn.disabled = false;
             btn.textContent = originalText;
-            alert('Unable to proceed to scheduling. Please try again.');
+            alert('Unable to proceed. Please try again.');
         }
-    }
-
-    // =============================================================================
-    // BOOKING SUCCESS
-    // =============================================================================
-
-    function showBookingSuccess() {
-        const petNames = state.household.pets.map(p => p.name).join(' & ') || 'your pet';
-
-        const scheduleSection = document.getElementById('schedule');
-        if (!scheduleSection) return;
-
-        const container = isStandalone ? scheduleSection : scheduleSection.querySelector('.container') || scheduleSection;
-
-        container.innerHTML = `
-            <div class="booking-success-screen">
-                <div class="success-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M8 12l2.5 2.5L16 9"/>
-                    </svg>
-                </div>
-                <h2>You're All Set!</h2>
-                <p class="success-message">
-                    Your appointment for <strong>${escapeHtml(petNames)}</strong> has been scheduled.
-                </p>
-                <p class="success-details">
-                    You'll receive a confirmation email shortly with all the details.
-                </p>
-                <div class="success-actions">
-                    <button class="btn-primary" onclick="Scheduler.dismissSuccess()">
-                        ${isStandalone ? 'Schedule Another' : 'Done'}
-                    </button>
-                    <a href="/" class="btn-secondary">
-                        Return to Home
-                    </a>
-                </div>
-            </div>
-        `;
-    }
-
-    function dismissSuccess() {
-        clearState();
-        if (isStandalone) {
-            window.location.href = window.location.pathname;
-        } else {
-            window.location.href = window.location.pathname + '#services';
-            window.location.reload();
-        }
-    }
-
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
     }
 
     // =============================================================================
     // PUBLIC API
     // =============================================================================
 
+    function personalizeHeading() {
+        const heading = document.getElementById('household-heading');
+        const subtitle = document.getElementById('household-subtitle');
+        if (!heading || !subtitle) return;
+
+        const firstName = state.client.name?.split(' ')[0];
+        if (firstName) {
+            if (state.household.isNewClient) {
+                // New client - first time booking
+                heading.textContent = `Hi ${firstName}!`;
+                subtitle.textContent = `Let's get to know your pets. Add each one you'd like us to see.`;
+            } else {
+                // Returning client - has completed appointments before
+                heading.textContent = `Welcome back, ${firstName}!`;
+                subtitle.textContent = `Select the pets you'd like us to see during this visit.`;
+            }
+        }
+    }
+
     return {
-        /**
-         * Initialize the scheduler
-         * @param {Object} options
-         * @param {boolean} options.standalone - true for standalone page
-         */
-        init(options = {}) {
-            isStandalone = options.standalone || false;
+        async init() {
+            // Initialize token state adapter
+            const tokenData = await stateAdapter.init();
 
-            // Check for booking success redirect
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('booking') === 'success') {
-                loadState();
-                showBookingSuccess();
-                history.replaceState({}, '', window.location.pathname + (isStandalone ? '' : '#services'));
-                return;
+            // Try to restore from sessionStorage first (preserves progress on refresh)
+            const hasSessionState = loadStateFromSession();
+
+            // Load state from token if available (but don't overwrite session progress)
+            if (tokenData && !hasSessionState) {
+                loadStateFromToken(tokenData);
+                personalizeHeading();
+            } else if (tokenData && hasSessionState) {
+                // Merge token data with session state (keep session progress, update token info)
+                if (tokenData.client) {
+                    state.client.name = state.client.name || tokenData.client.name || '';
+                    state.client.phone = state.client.phone || tokenData.client.phone || '';
+                    state.client.address = state.client.address || tokenData.client.address || '';
+                }
+                personalizeHeading();
             }
 
-            // Check if coming from a booking token link (skip phone-first)
-            const hasToken = urlParams.has('token');
-            const hasData = urlParams.has('data');
-
-            // Clear legacy ?s= state parameter from URL (no longer used with phone-first flow)
-            if (urlParams.has('s')) {
-                history.replaceState({}, '', window.location.pathname);
-            }
-
-            // Disable phone-first flow if user is coming from a Levee booking link
-            if (hasToken || hasData) {
-                isPhoneFirstFlow = false;
-            }
-
-            // Always initialize phone input (for formatting), even if not in phone-first mode
-            initPhoneFirstFlow();
-
-            // Initialize standard flow
+            // Initialize UI
             initPetManagement();
             initWizard();
 
@@ -1933,12 +1723,8 @@ const Scheduler = (function() {
             }
         },
 
-        // Expose for debugging and success dismiss
         getState: () => state,
-        clearState,
-        dismissSuccess,
     };
 })();
 
-// Expose globally
 window.Scheduler = Scheduler;

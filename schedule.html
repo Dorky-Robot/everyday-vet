@@ -326,6 +326,13 @@
         document.addEventListener('DOMContentLoaded', () => {
             Scheduler.init({ standalone: true });
         });
+
+        // Load mock SMS inbox only on localhost (for development)
+        if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+            const script = document.createElement('script');
+            script.src = 'http://localhost:3333/api/dev/mock-sms-inbox';
+            document.body.appendChild(script);
+        }
     </script>
 
 </body>

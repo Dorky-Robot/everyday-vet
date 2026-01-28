@@ -294,16 +294,41 @@
     <!-- Add Pet Modal (at body level for proper centering) -->
     <div class="add-pet-modal" id="add-pet-modal" style="display: none;">
         <div class="pet-modal-content">
-            <input type="text" id="pet-name-input" placeholder="Pet's name" maxlength="20">
-            <div class="pet-type-selector">
-                <button class="pet-type-btn" data-type="dog">
-                    <span class="pet-type-icon"><i class="ph ph-dog"></i></span>
-                    <span>Dog</span>
-                </button>
-                <button class="pet-type-btn" data-type="cat">
-                    <span class="pet-type-icon"><i class="ph ph-cat"></i></span>
-                    <span>Cat</span>
-                </button>
+            <div class="pet-modal-header">Add a Pet</div>
+            <div class="pet-modal-field">
+                <label class="pet-modal-label">Pet's Name</label>
+                <input type="text" id="pet-name-input" placeholder="e.g., Max, Luna, Whiskers" maxlength="20">
+            </div>
+            <div class="pet-modal-field">
+                <label class="pet-modal-label">Species</label>
+                <div class="pet-type-selector">
+                    <button class="pet-type-btn" data-type="dog">
+                        <span class="pet-type-icon"><i class="ph ph-dog"></i></span>
+                        <span>Dog</span>
+                    </button>
+                    <button class="pet-type-btn" data-type="cat">
+                        <span class="pet-type-icon"><i class="ph ph-cat"></i></span>
+                        <span>Cat</span>
+                    </button>
+                </div>
+            </div>
+            <div class="pet-modal-row">
+                <div class="pet-modal-field">
+                    <label class="pet-modal-label">Sex</label>
+                    <select id="pet-sex-input" class="pet-modal-select">
+                        <option value="">Unknown</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
+                </div>
+                <div class="pet-modal-field">
+                    <label class="pet-modal-label">Spayed/Neutered</label>
+                    <select id="pet-fixed-input" class="pet-modal-select">
+                        <option value="">Unknown</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                    </select>
+                </div>
             </div>
             <div class="pet-modal-actions">
                 <button class="pet-modal-cancel" id="pet-modal-cancel">Cancel</button>

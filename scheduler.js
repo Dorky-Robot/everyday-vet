@@ -899,6 +899,8 @@ const Scheduler = (function() {
         const modal = document.getElementById('add-pet-modal');
         const nameInput = document.getElementById('pet-name-input');
         const typeButtons = document.querySelectorAll('.pet-type-btn');
+        const sexInput = document.getElementById('pet-sex-input');
+        const fixedInput = document.getElementById('pet-fixed-input');
         const cancelBtn = document.getElementById('pet-modal-cancel');
         const confirmBtn = document.getElementById('pet-modal-add');
 
@@ -911,6 +913,8 @@ const Scheduler = (function() {
             nameInput.value = '';
             selectedType = null;
             typeButtons.forEach(b => b.classList.remove('selected'));
+            if (sexInput) sexInput.value = '';
+            if (fixedInput) fixedInput.value = '';
             confirmBtn.disabled = true;
             nameInput.focus();
         });
@@ -936,16 +940,28 @@ const Scheduler = (function() {
         confirmBtn.addEventListener('click', () => {
             const name = nameInput.value.trim();
             if (!name || !selectedType) return;
-            addPet(name, selectedType);
+
+            // Compute sex value from sex and fixed fields
+            const sexValue = sexInput ? sexInput.value : '';
+            const fixedValue = fixedInput ? fixedInput.value : '';
+            let sex = null;
+            if (sexValue === 'male') {
+                sex = fixedValue === 'yes' ? 'neutered' : 'male';
+            } else if (sexValue === 'female') {
+                sex = fixedValue === 'yes' ? 'spayed' : 'female';
+            }
+
+            addPet(name, selectedType, sex);
             modal.style.display = 'none';
         });
     }
 
-    function addPet(name, type) {
+    function addPet(name, type, sex = null) {
         const pet = {
             id: Date.now(),
             name,
             type,
+            sex,
             services: { selectedIds: [], adviceTopics: [], adviceContext: '', customConcerns: [] }
         };
 
@@ -1766,6 +1782,7 @@ const Scheduler = (function() {
                 household: state.household.pets.map(pet => ({
                     name: pet.name,
                     species: pet.type,
+                    sex: pet.sex || null,
                     services: {
                         adviceTopics: pet.services?.adviceTopics || [],
                         selectedIds: pet.services?.selectedIds || [],

@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# Pre-push hook for everyday_vet
+# Runs phone-first booking integration tests before pushing
+# This ensures the everyday_vet -> Levee integration doesn't break
+
+echo "🧪 Running phone-first booking integration tests..."
+echo ""
+
+# Check if Levee server is running on port 3333
+if ! curl -s http://localhost:3333/api/health > /dev/null 2>&1; then
+    echo "❌ Error: Levee server is not running on port 3333"
+    echo ""
+    echo "Please start Levee first:"
+    echo "  cd /path/to/levee && npm run dev"
+    echo ""
+    echo "Then try pushing again."
+    exit 1
+fi
+
+echo "✓ Levee server is running"
+echo ""
+
+# Run the phone-first booking tests
+npm run test:phone-first
+
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ Phone-first booking tests failed!"
+    echo ""
+    echo "This likely means there's a regression in the everyday_vet -> Levee integration."
+    echo "Common issues:"
+    echo "  - Token validation errors (check Levee logs)"
+    echo "  - Database schema changes not migrated"
+    echo "  - API response format changes"
+    echo ""
+    echo "Fix the tests before pushing."
+    exit 1
+fi
+
+echo ""
+echo "✅ All integration tests passed!"
+echo ""

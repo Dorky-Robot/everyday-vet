@@ -619,6 +619,12 @@ const Scheduler = (function() {
                 throw new Error(data.error || 'Failed to send booking link');
             }
 
+            // In dev mode, log the booking URL to console for easy testing
+            if (data.devBookingUrl) {
+                console.log('%c📱 BOOKING URL (dev mode):', 'color: #e91e8c; font-weight: bold; font-size: 14px;');
+                console.log('%c' + data.devBookingUrl, 'color: #0066cc; font-size: 12px;');
+            }
+
             // Success! Show confirmation step
             submittedName = name;
             submittedPhone = phone;

@@ -10,17 +10,6 @@
 // =============================================================================
 
 const UrlStateAdapter = {
-    encode(stateObj) {
-        try {
-            const json = JSON.stringify(stateObj);
-            return btoa(encodeURIComponent(json).replace(/%([0-9A-F]{2})/g, (_, p1) =>
-                String.fromCharCode('0x' + p1)
-            ));
-        } catch {
-            return null;
-        }
-    },
-
     decode(encoded) {
         try {
             const json = decodeURIComponent(atob(encoded).split('').map(c =>
@@ -94,13 +83,6 @@ const Scheduler = (function() {
         ADVICE_PER_ADDITIONAL_PET: 10,
         TRAVEL_FEE: 100,
     };
-
-    // Debounce for URL updates
-    let saveTimeout = null;
-    function debouncedSave() {
-        if (saveTimeout) clearTimeout(saveTimeout);
-        saveTimeout = setTimeout(() => saveState(), 300);
-    }
 
     // =============================================================================
     // STATE MANAGEMENT
@@ -730,20 +712,8 @@ const Scheduler = (function() {
     // =============================================================================
 
     function initWizard() {
-        const dots = document.querySelectorAll('.step-dot');
         const steps = document.querySelectorAll('.estimator-step');
-
-        if (!dots.length || !steps.length) return;
-
-        dots.forEach((dot, index) => {
-            dot.addEventListener('click', () => {
-                if (index < state.currentStep) {
-                    goToStep(index);
-                } else if (index === state.currentStep + 1 && canProceedFromStep(state.currentStep)) {
-                    goToStep(index);
-                }
-            });
-        });
+        if (!steps.length) return;
 
         document.getElementById('household-continue-btn')?.addEventListener('click', () => {
             if (state.household.pets.length > 0) goToStep(1);
@@ -785,11 +755,6 @@ const Scheduler = (function() {
 
         document.querySelectorAll('.estimator-step').forEach((step, i) => {
             step.classList.toggle('active', i === stepIndex);
-        });
-
-        document.querySelectorAll('.step-dot').forEach((dot, i) => {
-            dot.classList.toggle('active', i === stepIndex);
-            dot.classList.toggle('completed', i < stepIndex);
         });
 
         if (stepIndex === 1) {

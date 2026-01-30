@@ -29,13 +29,6 @@ test.describe('Schedule Form', () => {
       await expect(page.locator('#add-pet-btn')).toBeVisible();
     });
 
-    test('should have first step dot active initially', async ({ page }) => {
-      await page.goto('/#schedule');
-
-      const firstDot = page.locator('.step-dot').first();
-      await expect(firstDot).toHaveClass(/active/);
-    });
-
     test('should show disabled continue button initially', async ({ page }) => {
       await page.goto('/#schedule');
 
@@ -501,25 +494,4 @@ test.describe('Schedule Form', () => {
     });
   });
 
-  test.describe('Step Navigation', () => {
-    test('should navigate back to household step when clicking first dot', async ({ page }) => {
-      await page.goto('/#schedule');
-
-      // Add pet and go to customer type
-      await page.click('#add-pet-btn');
-      await page.fill('#pet-name-input', 'NavTest');
-      await page.click('.pet-type-btn[data-type="dog"]');
-      await page.click('#pet-modal-add');
-      await page.click('#household-continue-btn');
-
-      // Verify we're on customer type step
-      await expect(page.locator('#step-customer-type')).toHaveClass(/active/);
-
-      // Click first dot to go back to household
-      await page.locator('.step-dot').first().click();
-
-      // Should be back on household step
-      await expect(page.locator('#step-household')).toHaveClass(/active/);
-    });
-  });
 });

@@ -16,8 +16,7 @@ const UrlStateAdapter = {
             return btoa(encodeURIComponent(json).replace(/%([0-9A-F]{2})/g, (_, p1) =>
                 String.fromCharCode('0x' + p1)
             ));
-        } catch (e) {
-            console.warn('Could not encode state:', e);
+        } catch {
             return null;
         }
     },
@@ -28,104 +27,18 @@ const UrlStateAdapter = {
                 '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
             ).join(''));
             return JSON.parse(json);
-        } catch (e) {
-            console.warn('Could not decode state:', e);
+        } catch {
             return null;
-        }
-    },
-
-    save(state) {
-        const stateToEncode = {
-            step: state.currentStep,
-            isNewClient: state.household.isNewClient,
-            pets: state.household.pets,
-            currentPetId: state.currentPetId,
-            client: state.client,
-        };
-        const encoded = this.encode(stateToEncode);
-        if (encoded) {
-            const newUrl = `${window.location.pathname}?s=${encoded}`;
-            history.replaceState(null, '', newUrl);
         }
     },
 
     load() {
         const params = new URLSearchParams(window.location.search);
-
-        // Check for full encoded state first
         const encodedState = params.get('s');
         if (encodedState) {
-            const decoded = this.decode(encodedState);
-            if (decoded) return decoded;
+            return this.decode(encodedState);
         }
-
-        // Fall back to simple params
-        return this.parseSimpleParams(params);
-    },
-
-    parseSimpleParams(params) {
-        const state = {
-            step: 0,
-            isNewClient: null,
-            pets: [],
-            currentPetId: null,
-            client: { name: '', email: '', phone: '' },
-        };
-
-        // Parse new client flag
-        const newParam = params.get('new');
-        if (newParam !== null) {
-            state.isNewClient = newParam === 'true' || newParam === '1';
-        }
-
-        // Parse multiple pets format: pets=Luna:cat,Max:dog
-        const petsParam = params.get('pets');
-        if (petsParam) {
-            petsParam.split(',').forEach((entry, index) => {
-                const [name, type] = entry.split(':');
-                if (name && type && (type === 'dog' || type === 'cat')) {
-                    state.pets.push({
-                        id: Date.now() + index,
-                        name: name.trim(),
-                        type: type.trim(),
-                        services: { selectedIds: [], adviceTopics: [], adviceContext: '', customConcerns: [] }
-                    });
-                }
-            });
-        }
-
-        // Parse single pet format: pet=Luna&type=cat
-        const petName = params.get('pet');
-        const petType = params.get('type');
-        if (petName && petType && (petType === 'dog' || petType === 'cat')) {
-            if (!state.pets.find(p => p.name.toLowerCase() === petName.toLowerCase())) {
-                state.pets.push({
-                    id: Date.now(),
-                    name: petName.trim(),
-                    type: petType.trim(),
-                    services: { selectedIds: [], adviceTopics: [], adviceContext: '', customConcerns: [] }
-                });
-            }
-        }
-
-        // Parse services: svc=vaccine-rabies,vaccine-fvrcp
-        const svcParam = params.get('svc');
-        if (svcParam && state.pets.length > 0) {
-            state.pets[0].services.selectedIds = svcParam.split(',').map(s => s.trim());
-        }
-
-        // Parse client info
-        if (params.get('name')) state.client.name = params.get('name');
-        if (params.get('email')) state.client.email = params.get('email');
-        if (params.get('phone')) state.client.phone = params.get('phone');
-
-        // Set current pet and step
-        if (state.pets.length > 0) {
-            state.currentPetId = state.pets[0].id;
-            state.step = state.isNewClient !== null ? 2 : 1;
-        }
-
-        return state;
+        return null;
     },
 
     clear() {
@@ -141,7 +54,6 @@ const Scheduler = (function() {
     // Configuration
     const stateAdapter = UrlStateAdapter;
     let isStandalone = false;
-    let isPhoneFirstFlow = true; // Enable phone-first flow by default
 
     // Levee API configuration
     const isLocalDev = window.location.hostname === 'localhost' ||
@@ -206,8 +118,8 @@ const Scheduler = (function() {
                 client: state.client,
             };
             sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(stateToSave));
-        } catch (e) {
-            console.warn('Could not save state to sessionStorage:', e);
+        } catch {
+            // sessionStorage unavailable
         }
     }
 
@@ -215,9 +127,6 @@ const Scheduler = (function() {
         // First try URL params (for booking links)
         const saved = stateAdapter.load();
         if (saved) {
-            // Handle both state formats for backward compatibility:
-            // - Nested format: { household: { pets, isNewClient }, currentPetId, currentStep }
-            // - Flat format (from URL): { pets, isNewClient, currentPetId, step }
             if (saved.household?.pets) {
                 state.household.pets = saved.household.pets;
                 state.household.isNewClient = saved.household.isNewClient ?? null;
@@ -248,8 +157,8 @@ const Scheduler = (function() {
 
                 return state.household.pets.length > 0 || state.currentStep > 0;
             }
-        } catch (e) {
-            console.warn('Could not load state from sessionStorage:', e);
+        } catch {
+            // sessionStorage unavailable
         }
 
         return false;
@@ -703,8 +612,7 @@ const Scheduler = (function() {
                         LEVEE_CONFIG.recaptchaSiteKey,
                         { action: 'schedule' }
                     );
-                } catch (e) {
-                    console.warn('reCAPTCHA failed, continuing without token:', e);
+                } catch {
                     // Continue without token - backend will accept if configured to bypass
                 }
             }
@@ -729,12 +637,6 @@ const Scheduler = (function() {
                 throw new Error(data.error || 'Failed to send booking link');
             }
 
-            // In dev mode, log the booking URL to console for easy testing
-            if (data.devBookingUrl) {
-                console.log('%c📱 BOOKING URL (dev mode):', 'color: #e91e8c; font-weight: bold; font-size: 14px;');
-                console.log('%c' + data.devBookingUrl, 'color: #0066cc; font-size: 12px;');
-            }
-
             // Success! Show confirmation step
             submittedName = name;
             submittedPhone = phone;
@@ -746,7 +648,6 @@ const Scheduler = (function() {
             }
 
         } catch (error) {
-            console.error('Error submitting phone:', error);
             errorEl.textContent = error.message || 'Something went wrong. Please try again.';
             errorEl.style.display = 'block';
         } finally {
@@ -1822,8 +1723,7 @@ const Scheduler = (function() {
             const encodedData = encodeURIComponent(JSON.stringify(appointmentData));
             window.location.href = `${LEVEE_CONFIG.apiUrl}/book-external.html?data=${encodedData}`;
 
-        } catch (error) {
-            console.error('Error redirecting to booking:', error);
+        } catch {
             btn.disabled = false;
             btn.textContent = originalText;
             alert('Unable to proceed to scheduling. Please try again.');
@@ -1907,21 +1807,6 @@ const Scheduler = (function() {
                 return;
             }
 
-            // Check if coming from a booking token link (skip phone-first)
-            const hasToken = urlParams.has('token');
-            const hasData = urlParams.has('data');
-
-            // Clear legacy ?s= state parameter from URL (no longer used with phone-first flow)
-            if (urlParams.has('s')) {
-                history.replaceState({}, '', window.location.pathname);
-            }
-
-            // Disable phone-first flow if user is coming from a Levee booking link
-            if (hasToken || hasData) {
-                isPhoneFirstFlow = false;
-            }
-
-            // Always initialize phone input (for formatting), even if not in phone-first mode
             initPhoneFirstFlow();
 
             // Initialize standard flow

@@ -157,40 +157,45 @@
     /**
      * Available service IDs
      */
+    /**
+     * Available service IDs (must match services-config.js)
+     */
     const SERVICE_IDS = {
-        // Vaccines
-        vaccines: [
+        // Exam
+        exam: ['exam'],
+        // Vaccines (dog)
+        vaccines_dog: [
             'vaccine-rabies',
-            'vaccine-rabies-3yr',
             'vaccine-dhpp',
             'vaccine-bordetella',
             'vaccine-lepto',
             'vaccine-lyme',
             'vaccine-flu',
+        ],
+        // Vaccines (cat)
+        vaccines_cat: [
             'vaccine-fvrcp',
-            'vaccine-felv'
+            'vaccine-felv',
+            'vaccine-rabies1',
+            'vaccine-rabies3',
         ],
         // Lab Work
         labs: [
             'lab-heartworm',
-            'lab-fecal',
-            'lab-blood-panel',
-            'lab-urinalysis',
-            'lab-thyroid',
-            'lab-4dx'
+            'lab-felv-fiv',
         ],
         // Procedures
         procedures: [
             'proc-nail-trim',
             'proc-anal-glands',
             'proc-ear-clean',
-            'proc-wound-care'
+            'proc-wound-care',
         ],
         // Special Services
         special: [
-            'special-health-cert',
-            'special-euthanasia'
-        ]
+            'health-cert',
+            'euthanasia',
+        ],
     };
 
     // Export for different environments

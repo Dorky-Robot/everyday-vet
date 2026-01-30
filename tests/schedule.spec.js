@@ -4,7 +4,8 @@ const { test, expect } = require('@playwright/test');
 /**
  * Tests for the scheduling wizard.
  *
- * Current wizard flow (household-first):
+ * Entry point is phone-first flow (enter phone → receive SMS booking link).
+ * After the booking link, the wizard steps are:
  * - Step 0: Household (add pets)
  * - Step 1: Customer type (new/existing client)
  * - Step 2: Services selection

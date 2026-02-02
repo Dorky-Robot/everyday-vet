@@ -165,10 +165,10 @@ section {
     z-index: 0;
 }
 
-/* Base paw print using SVG */
+/* Base paw print */
 .paw {
     position: absolute;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 55' fill='white'%3E%3Cellipse cx='25' cy='38' rx='13' ry='11'/%3E%3Cellipse cx='12' cy='18' rx='6' ry='7'/%3E%3Cellipse cx='25' cy='13' rx='6' ry='7'/%3E%3Cellipse cx='38' cy='18' rx='6' ry='7'/%3E%3Cellipse cx='44' cy='30' rx='5' ry='6'/%3E%3C/svg%3E");
+    background-image: url('images/favicon-192-white.png');
     background-size: contain;
     background-repeat: no-repeat;
     opacity: var(--opacity, 0.15);
@@ -259,6 +259,11 @@ nav {
 .logo-icon {
     font-size: 1.75rem;
     line-height: 1;
+}
+
+.logo-img {
+    height: 3rem;
+    width: auto;
 }
 
 .logo-text {
@@ -571,22 +576,26 @@ nav {
 
 /* Paw print decorations */
 #schedule::before {
-    content: '🐾';
+    content: '';
     position: absolute;
-    font-size: 280px;
+    width: 280px;
+    height: 280px;
     top: -60px;
     left: -80px;
+    background: url('images/favicon-512.png') no-repeat center / contain;
     opacity: 0.06;
     transform: rotate(-25deg);
     pointer-events: none;
 }
 
 #schedule::after {
-    content: '🐾';
+    content: '';
     position: absolute;
-    font-size: 200px;
+    width: 200px;
+    height: 200px;
     bottom: 40px;
     right: -40px;
+    background: url('images/favicon-512.png') no-repeat center / contain;
     opacity: 0.05;
     transform: rotate(15deg);
     pointer-events: none;
@@ -896,6 +905,11 @@ nav {
     font-size: 2rem;
     position: relative;
     display: inline-block;
+}
+
+.btn-paw {
+    height: 2rem;
+    width: auto;
 }
 
 .customer-type-btn .icon-badge {

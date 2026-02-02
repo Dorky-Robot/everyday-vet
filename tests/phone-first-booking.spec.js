@@ -24,11 +24,18 @@ const { test, expect } = require('@playwright/test');
 
 const EVERYDAY_VET_URL = 'http://localhost:3334';
 const LEVEE_URL = 'http://localhost:3333';
-const TEST_PHONE = '3333333333';
 const TEST_NAME = 'Test User';
 
+// Generate a unique phone number per test run to avoid stale appointment data.
+// Clients with existing upcoming appointments get redirected to an appointments
+// view instead of the scheduler, which causes tests to fail.
+function uniquePhone() {
+  const suffix = Date.now().toString().slice(-7);
+  return `333${suffix}`;
+}
+
 // Helper to fill and submit the phone form
-async function submitPhoneForm(page) {
+async function submitPhoneForm(page, phone) {
   await page.goto(`${EVERYDAY_VET_URL}/schedule.html`, { waitUntil: 'networkidle' });
 
   const nameInput = page.locator('#name-input');
@@ -36,7 +43,7 @@ async function submitPhoneForm(page) {
 
   await expect(nameInput).toBeVisible({ timeout: 10000 });
   await nameInput.fill(TEST_NAME);
-  await phoneInput.fill(TEST_PHONE);
+  await phoneInput.fill(phone || uniquePhone());
 
   // Use force click to bypass any animation stability checks
   await page.locator('#send-link-btn').click({ force: true });
@@ -57,35 +64,31 @@ test.describe('Phone-First Booking Flow', () => {
     console.log('✅ Phone submitted, mock SMS inbox shows booking link');
   });
 
-  test('should validate token and load scheduler on Levee', async ({ page }) => {
-    // Step 1: Submit phone form on everyday_vet
-    await submitPhoneForm(page);
+  test('should validate token and load scheduler on Levee', async ({ page, request }) => {
+    // Create token via API with a fresh phone to avoid stale mock SMS issues
+    const phone = uniquePhone();
+    const scheduleResponse = await request.post(`${LEVEE_URL}/api/public/schedule`, {
+      data: { phone, name: TEST_NAME, siteKey: 'evv_everyday_vet_dev' },
+      headers: { 'Content-Type': 'application/json' }
+    });
+    expect(scheduleResponse.ok()).toBe(true);
 
-    // Step 2: Wait for mock SMS inbox to appear (dev mode)
-    const mockSmsInbox = page.locator('.mock-sms-inbox');
-    await expect(mockSmsInbox).toBeVisible({ timeout: 15000 });
-
-    // Step 3: Get the booking link from mock SMS
-    const bookingLink = mockSmsInbox.locator('a[href*="book-external.html?token="]').last();
-    await expect(bookingLink).toBeVisible({ timeout: 5000 });
-
-    const bookingUrl = await bookingLink.getAttribute('href');
+    const data = await scheduleResponse.json();
+    const bookingUrl = data.devBookingUrl;
     expect(bookingUrl).toContain('token=');
     console.log('Booking URL:', bookingUrl);
 
-    // Step 4: Navigate to the booking link (on Levee)
+    // Navigate to the booking link (on Levee)
     await page.goto(bookingUrl);
 
-    // Step 5: Verify the scheduler loads successfully (token is valid)
-    // If token validation fails, we'd see "Invalid Booking Link" error
-    const schedulerContainer = page.locator('#scheduler-container');
-    const errorMessage = page.locator('text=Invalid Booking Link');
+    // Verify the token was accepted - loading state should disappear
+    await expect(page.locator('#loading-state')).toBeHidden({ timeout: 15000 });
 
-    // Wait for scheduler to load
-    await expect(schedulerContainer).toBeVisible({ timeout: 15000 });
+    // Should NOT show the invalid state
+    await expect(page.locator('#invalid-state')).toBeHidden();
 
-    // Make sure there's no error
-    await expect(errorMessage).not.toBeVisible();
+    // Fresh client should see scheduler (no upcoming appointments)
+    await expect(page.locator('#scheduler-container')).toBeVisible({ timeout: 15000 });
 
     console.log('✅ Token validated successfully, scheduler loaded on Levee');
   });
@@ -98,28 +101,25 @@ test.describe('Phone-First Booking Flow', () => {
     await expect(page.locator('text=Invalid Booking Link')).toBeVisible({ timeout: 10000 });
   });
 
-  test('should load and display scheduler steps after token validation', async ({ page }) => {
-    // This test verifies the full flow including patient data loading
-    // which requires the pt.sex column fix
+  test('should load and display scheduler steps after token validation', async ({ page, request }) => {
+    // Create token via API with a fresh phone to ensure no existing appointments
+    const phone = uniquePhone();
+    const scheduleResponse = await request.post(`${LEVEE_URL}/api/public/schedule`, {
+      data: { phone, name: TEST_NAME, siteKey: 'evv_everyday_vet_dev' },
+      headers: { 'Content-Type': 'application/json' }
+    });
+    expect(scheduleResponse.ok()).toBe(true);
 
-    // Step 1: Submit phone form on everyday_vet
-    await submitPhoneForm(page);
+    const data = await scheduleResponse.json();
+    const bookingUrl = data.devBookingUrl;
 
-    // Step 2: Get link from mock SMS
-    const mockSmsInbox = page.locator('.mock-sms-inbox');
-    await expect(mockSmsInbox).toBeVisible({ timeout: 15000 });
-
-    const bookingLink = mockSmsInbox.locator('a[href*="book-external.html?token="]').last();
-    const bookingUrl = await bookingLink.getAttribute('href');
-
-    // Step 3: Go to Levee booking page
+    // Go to Levee booking page
     await page.goto(bookingUrl);
 
-    // Step 4: Verify scheduler loads with content
+    // Verify scheduler loads with content (fresh client = no upcoming appointments)
     await expect(page.locator('#scheduler-container')).toBeVisible({ timeout: 15000 });
 
     // Verify we're past loading state and showing actual content
-    // The scheduler should show step indicators and content
     await expect(page.locator('.step-progress')).toBeVisible({ timeout: 10000 });
 
     // The scheduler should show some step content (address, pets, services, or book)
@@ -137,7 +137,7 @@ test.describe('Token Validation API Direct Test', () => {
 
     const scheduleResponse = await request.post(`${LEVEE_URL}/api/public/schedule`, {
       data: {
-        phone: TEST_PHONE,
+        phone: uniquePhone(),
         name: TEST_NAME,
         siteKey: 'evv_everyday_vet_dev'
       },

@@ -1,0 +1,27 @@
+{
+  "name": "Everyday Vet LLC",
+  "short_name": "Everyday Vet",
+  "description": "Mobile & Virtual Veterinary Care in Ohio",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFF5FA",
+  "theme_color": "#E91E8C",
+  "icons": [
+    {
+      "src": "images/favicon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "images/favicon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "images/favicon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

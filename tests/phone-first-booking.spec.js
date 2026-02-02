@@ -24,11 +24,18 @@ const { test, expect } = require('@playwright/test');
 
 const EVERYDAY_VET_URL = 'http://localhost:3334';
 const LEVEE_URL = 'http://localhost:3333';
-const TEST_PHONE = '3333333333';
 const TEST_NAME = 'Test User';
 
+// Generate a unique phone number per test run to avoid stale appointment data.
+// Clients with existing upcoming appointments get redirected to an appointments
+// view instead of the scheduler, which causes tests to fail.
+function uniquePhone() {
+  const suffix = Date.now().toString().slice(-7);
+  return `333${suffix}`;
+}
+
 // Helper to fill and submit the phone form
-async function submitPhoneForm(page) {
+async function submitPhoneForm(page, phone) {
   await page.goto(`${EVERYDAY_VET_URL}/schedule.html`, { waitUntil: 'networkidle' });
 
   const nameInput = page.locator('#name-input');
@@ -36,7 +43,7 @@ async function submitPhoneForm(page) {
 
   await expect(nameInput).toBeVisible({ timeout: 10000 });
   await nameInput.fill(TEST_NAME);
-  await phoneInput.fill(TEST_PHONE);
+  await phoneInput.fill(phone || uniquePhone());
 
   // Use force click to bypass any animation stability checks
   await page.locator('#send-link-btn').click({ force: true });
@@ -76,18 +83,19 @@ test.describe('Phone-First Booking Flow', () => {
     // Step 4: Navigate to the booking link (on Levee)
     await page.goto(bookingUrl);
 
-    // Step 5: Verify the scheduler loads successfully (token is valid)
-    // If token validation fails, we'd see "Invalid Booking Link" error
-    const schedulerContainer = page.locator('#scheduler-container');
+    // Step 5: Verify the token was accepted (no invalid state)
     const errorMessage = page.locator('text=Invalid Booking Link');
+    const schedulerContainer = page.locator('#scheduler-container');
+    const appointmentsView = page.locator('#appointments-view');
 
-    // Wait for scheduler to load
-    await expect(schedulerContainer).toBeVisible({ timeout: 15000 });
+    // Either the scheduler or the appointments view should appear
+    // (appointments view shows when client has existing upcoming appointments)
+    await expect(schedulerContainer.or(appointmentsView)).toBeVisible({ timeout: 15000 });
 
     // Make sure there's no error
     await expect(errorMessage).not.toBeVisible();
 
-    console.log('✅ Token validated successfully, scheduler loaded on Levee');
+    console.log('✅ Token validated successfully, booking page loaded on Levee');
   });
 
   test('should show error for invalid/expired token on Levee', async ({ page }) => {
@@ -99,8 +107,9 @@ test.describe('Phone-First Booking Flow', () => {
   });
 
   test('should load and display scheduler steps after token validation', async ({ page }) => {
-    // This test verifies the full flow including patient data loading
-    // which requires the pt.sex column fix
+    // This test verifies the full flow including patient data loading.
+    // Uses a unique phone to ensure a fresh client with no existing appointments,
+    // so the scheduler (not appointments view) is shown.
 
     // Step 1: Submit phone form on everyday_vet
     await submitPhoneForm(page);
@@ -116,6 +125,7 @@ test.describe('Phone-First Booking Flow', () => {
     await page.goto(bookingUrl);
 
     // Step 4: Verify scheduler loads with content
+    // A fresh client should always see the scheduler (no upcoming appointments)
     await expect(page.locator('#scheduler-container')).toBeVisible({ timeout: 15000 });
 
     // Verify we're past loading state and showing actual content

@@ -1,0 +1,2 @@
+User-agent: *
+Disallow: /voicemail-greeting.wav

@@ -17,8 +17,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&family=Pacifico&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="styles.css">
-    <!-- reCAPTCHA v3 -->
-    <script src="https://www.google.com/recaptcha/api.js?render=6LfXdFIsAAAAAP-h2N5dXnIQSbztWPQa3VRr8iBV"></script>
+
 </head>
 <body>
     <header>
@@ -35,7 +34,6 @@
             <ul class="nav-links">
                 <li><a href="#about">About</a></li>
                 <li><a href="#services">Services</a></li>
-                <li><a href="#schedule">Schedule</a></li>
                 <li><a href="#team">Our Team</a></li>
                 <li><a href="#contact">Contact</a></li>
             </ul>
@@ -119,79 +117,6 @@
             </div>
         </section>
 
-        <section id="schedule" class="fade-in">
-            <h2>Schedule</h2>
-            <p class="pricing-intro">Book your appointment in just a few steps. Select the services you need and we'll help you find the right time.</p>
-
-            <div class="estimator-container">
-                <div class="estimator-steps-wrapper" id="estimator-steps-wrapper">
-                    <!-- Step: Phone Entry (Phone-First Flow) -->
-                    <div class="estimator-step active" id="step-phone" data-step-index="phone">
-                        <div class="step-content-centered">
-                            <h3>Let's get started</h3>
-                            <p class="step-subtitle">Enter your name and phone number and we'll text you a booking link</p>
-
-                            <div class="phone-entry-form">
-                                <div class="name-input-wrapper">
-                                    <input type="text" id="name-input" placeholder="Full Name" autocomplete="name">
-                                    <span class="input-icon"><i class="ph ph-user"></i></span>
-                                </div>
-                                <div class="phone-input-wrapper">
-                                    <input type="tel" id="phone-input" placeholder="(555) 555-5555" autocomplete="tel">
-                                    <span class="input-icon"><i class="ph ph-phone"></i></span>
-                                </div>
-                                <p class="phone-error" id="phone-error" style="display: none;"></p>
-                                <button class="btn estimator-btn" id="send-link-btn">
-                                    <span class="btn-text">Send me a link</span>
-                                    <span class="btn-loading" style="display: none;"><i class="ph ph-spinner ph-spin"></i> Sending...</span>
-                                </button>
-                            </div>
-
-                            <p class="phone-privacy-note">
-                                <i class="ph ph-lock-simple"></i>
-                                We'll send a one-time link to this number. Your info stays private.
-                            </p>
-
-                            <p class="recaptcha-branding">
-                                This site is protected by reCAPTCHA and the Google
-                                <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Privacy Policy</a> and
-                                <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Terms of Service</a> apply.
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Step: Check Your Phone (Confirmation) -->
-                    <div class="estimator-step" id="step-confirmation" data-step-index="confirmation">
-                        <div class="step-content-centered">
-                            <div class="confirmation-icon">
-                                <i class="ph ph-chat-circle-text"></i>
-                            </div>
-                            <h3>Check your phone!</h3>
-                            <p class="step-subtitle">We've sent a booking link to <span id="confirmation-phone"></span></p>
-                            <p class="confirmation-note">Click the link in your text message to continue scheduling your appointment.</p>
-
-                            <div class="confirmation-actions">
-                                <button class="btn-link" id="resend-link-btn">Didn't get it? <span class="resend-text">Resend</span></button>
-                                <span class="resend-cooldown" id="resend-cooldown" style="display: none;">Resend available in <span id="cooldown-timer">60</span>s</span>
-                            </div>
-
-                            <button class="btn-link different-phone-btn" id="different-phone-btn">Use a different phone number</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="pricing-notes">
-                <h3>Additional Information</h3>
-                <ul>
-                    <li>We do not provide emergency services—please contact a local 24/7 emergency hospital for urgent needs.</li>
-                    <li>Prices are subject to applicable Ohio sales tax.</li>
-                    <li>If extended or additional services are required, costs will be quoted based on your pet's specific needs.</li>
-                </ul>
-                <p class="safety-note"><strong>Safety Notice:</strong> If housing conditions or animal behavior create an unsafe environment upon arrival, we will be unable to proceed with the in-person visit. The standard exam fee and travel fee will remain due. Please disclose any known behavioral concerns or aggression issues in advance so we can address them appropriately through virtual consultation(s) prior to scheduling an in-person visit.</p>
-            </div>
-        </section>
-
         <section id="team" class="fade-in">
             <h2>Meet Our Team</h2>
             <div class="team-content">
@@ -232,15 +157,15 @@
             </div>
             <h2>Contact Us</h2>
             <div class="contact-content">
-                <p>Ready to schedule an appointment or have questions? We'd love to hear from you.</p>
+                <p>Ready to schedule an appointment or have questions? Give us a call or send an email — we'd love to hear from you.</p>
                 <div class="contact-methods">
                     <div class="contact-method">
                         <h3>Email</h3>
-                        <p><a href="mailto:sara@drmeiggs.com">sara@drmeiggs.com</a></p>
+                        <p><a href="mailto:sara@everyday.vet">sara@everyday.vet</a></p>
                     </div>
                     <div class="contact-method">
-                        <h3>Text</h3>
-                        <p><a href="sms:+12169995420">(216) 999-5420</a></p>
+                        <h3>Call or Text</h3>
+                        <p><a href="tel:+12169995420">(216) 999-5420</a></p>
                     </div>
                 </div>
                 <p class="contact-note">We typically respond within 24 hours during business days.</p>
@@ -253,20 +178,9 @@
         <p class="emergency-notice">We do not provide emergency services. For life-threatening situations, please contact your nearest 24/7 veterinary hospital.</p>
     </footer>
 
-    <!-- Floating Schedule Button -->
-    <a href="#schedule" class="floating-schedule-btn" id="floating-schedule-btn">
-        <i class="ph ph-calendar-plus"></i>
-        <span>Schedule</span>
-    </a>
-
-    <!-- Scheduler only needs phone-first flow, no pet modal needed here -->
-    <script src="scheduler.js"></script>
     <script>
         // Page-specific UI effects for index.html
         document.addEventListener('DOMContentLoaded', () => {
-            // Initialize scheduler
-            Scheduler.init();
-
             // Parallax effect
             const hero = document.querySelector('#hero');
             const heroContent = document.querySelector('.hero-content');

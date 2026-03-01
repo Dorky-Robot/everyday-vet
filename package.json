@@ -1,0 +1,16 @@
+{
+  "name": "everyday_vet",
+  "version": "1.0.0",
+  "scripts": {
+    "prepare": "git config core.hooksPath .husky"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "playwright": "^1.57.0",
+    "serve": "^14.2.0"
+  }
+}

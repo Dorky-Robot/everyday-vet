@@ -1,0 +1,12 @@
+{
+  "name": "everyday_vet",
+  "version": "1.0.0",
+  "main": "script.js",
+  "scripts": {
+    "prepare": "git config core.hooksPath .githooks"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

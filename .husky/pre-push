@@ -23,7 +23,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 
 # ── 1. Playwright E2E tests (BLOCKING) ───────────────────────────────────────
 step "[1/2] E2E tests (Playwright)"
-if command -v npx >/dev/null 2>&1 && [ -f "playwright.config.js" ] || [ -f "playwright.config.ts" ]; then
+if command -v npx >/dev/null 2>&1 && { [ -f "playwright.config.js" ] || [ -f "playwright.config.ts" ]; }; then
     if ! npx playwright test; then
         fail "E2E tests failed — push blocked. Fix test failures before pushing."
     fi

@@ -4250,3 +4250,11 @@ footer p {
         font-size: 2rem;
     }
 }
+
+.team-photo img {
+    width: 100%;
+    border-radius: 30px;
+    display: block;
+    object-fit: cover;
+    box-shadow: 0 8px 24px rgba(233, 30, 140, 0.2);
+}

@@ -55,6 +55,13 @@ a { color: var(--primary-color); text-decoration: none; transition: color 0.2s; 
 a:hover { color: var(--primary-light); }
 strong { font-weight: 800; color: var(--text-color); }
 .on-dark strong, .lede.on-dark strong { color: var(--white); }
+/* strong tags inside dark sections must never inherit the light-page ink —
+   dark plum on dark plum is unreadable (WCAG 1.4.3) */
+.dark-section strong { color: var(--white); }
+
+/* Visible keyboard focus everywhere (WCAG 2.4.7) */
+:focus-visible { outline: 3px solid var(--primary-color); outline-offset: 3px; border-radius: 4px; }
+.dark-section :focus-visible { outline-color: var(--accent-color); }
 
 /* Shared building blocks */
 .eyebrow {
@@ -250,6 +257,11 @@ nav { max-width: var(--maxw); margin: 0 auto; padding: 0.85rem 1.5rem; display: 
     .fade-in { opacity: 1; transform: none; transition: none; }
     .paw, .hero-background { animation: none; }
     html { scroll-behavior: auto; }
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }
 
 /* ============================================================

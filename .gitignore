@@ -14,3 +14,4 @@ test-results/
 # Strategy page plaintext source — only the StatiCrypt-encrypted
 # strategy/index.html gets committed (public repo)
 strategy/index.src.html
+deal-builder/index.src.html

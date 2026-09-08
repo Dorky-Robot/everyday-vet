@@ -69,6 +69,8 @@
       .legal-nav-bar .links { margin-left: auto; display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.95rem; }
       .legal-nav-bar .links a { color: var(--text-light); text-decoration: none; }
       .legal-nav-bar .links a:hover { color: var(--primary-color); }
+      .optin-card .kw { font-family: ui-monospace, Menlo, monospace; font-weight: 700; letter-spacing: .04em; }
+      .optin-card ol { padding-left: 1.25rem; margin: 0 0 1rem; }
       .optin-card {
         background: var(--bg-soft);
         border: 1px solid var(--border-color);
@@ -76,37 +78,6 @@
         padding: 1.5rem;
         margin: 1.5rem 0;
       }
-      .optin-card label.row {
-        display: flex;
-        gap: 0.75rem;
-        align-items: flex-start;
-        margin: 1rem 0;
-        cursor: pointer;
-      }
-      .optin-card input[type="tel"], .optin-card input[type="text"] {
-        width: 100%;
-        padding: 0.75rem 1rem;
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-sm);
-        font: inherit;
-      }
-      .optin-card input[type="checkbox"] {
-        width: 1.15rem;
-        height: 1.15rem;
-        margin-top: 0.2rem;
-        flex-shrink: 0;
-      }
-      .optin-card button {
-        background: var(--primary-color);
-        color: #fff;
-        border: 0;
-        border-radius: 999px;
-        padding: 0.75rem 1.4rem;
-        font: inherit;
-        font-weight: 700;
-        cursor: pointer;
-      }
-      .optin-card button:disabled { opacity: 0.45; cursor: not-allowed; }
       .optin-note { color: var(--text-light); font-size: 0.9rem; }
       .samples {
         background: #fff;
@@ -122,7 +93,6 @@
         margin: 0.4rem 0;
         color: var(--ink-soft);
       }
-      #optin-thanks { display: none; color: var(--primary-dark); font-weight: 600; margin-top: 1rem; }
       footer.legal-footer {
         text-align: center;
         padding: 2rem 1.5rem 3rem;
@@ -153,60 +123,29 @@
     <p>Everyday Vet LLC can text you about appointments, reminders, and care follow-ups. Two-way SMS for scheduling and care coordination — not marketing.</p>
 
     <div class="optin-card">
-      <h2 style="margin-top:0">Get appointment &amp; care texts</h2>
-      <form id="sms-optin-form" novalidate>
-        <p><label for="phone"><strong>Mobile phone number</strong></label></p>
-        <p><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(216) 555-0100" required></p>
-        <label class="row">
-          <input id="consent" name="consent" type="checkbox" required>
-          <span><strong>I agree to receive recurring automated and staff text messages from Everyday Vet LLC</strong> at the number provided. Message frequency varies. Message and data rates may apply. Reply <strong>STOP</strong> to opt out, <strong>HELP</strong> for help. Consent is not a condition of purchase or veterinary care.</span>
-        </label>
-        <p class="optin-note">No mobile information will be shared with third parties or affiliates for marketing or promotional purposes. Privacy Policy: <a href="/privacy/">everyday.vet/privacy/</a> · Terms: <a href="/terms/">everyday.vet/terms/</a></p>
-        <button type="submit" id="submit-btn">Submit</button>
-        <p id="optin-thanks" role="status">Thanks — your request was recorded for the clinic team. You can also text or call <a href="tel:+12169995420">(216) 999-5420</a>.</p>
-      </form>
+      <h2 style="margin-top:0">How to get appointment &amp; care texts</h2>
+      <ol>
+        <li><strong>Text <span class="kw">START</span> to <a href="sms:+12169995420?body=START">(216) 999-5420</a></strong>, or give the clinic your mobile number during intake.</li>
+        <li>You will receive <strong>one confirmation text</strong> from Everyday Vet LLC.</li>
+        <li><strong>Reply <span class="kw">YES</span></strong> to agree. Until you reply YES, no other texts are sent.</li>
+      </ol>
+      <p><strong>By replying YES you agree to receive recurring automated and staff text messages from Everyday Vet LLC</strong> about appointments, reminders, and care follow-ups at the number you texted from. Message frequency varies. Message and data rates may apply. Reply <strong>STOP</strong> to opt out, <strong>HELP</strong> for help. Consent is not a condition of purchase or veterinary care.</p>
+      <p class="optin-note">No mobile information will be shared with third parties or affiliates for marketing or promotional purposes. Privacy Policy: <a href="/privacy/">everyday.vet/privacy/</a> · Terms: <a href="/terms/">everyday.vet/terms/</a></p>
     </div>
 
     <h2>How opt-in works</h2>
-    <p>End users opt in by visiting this page, entering their mobile number, and checking the unchecked-by-default box agreeing to receive recurring appointment, reminder, and care-follow-up texts from Everyday Vet LLC. Message frequency varies. Message and data rates may apply. Reply STOP to cancel; HELP for help. Opt-in may also be collected during clinic intake using the same disclosures.</p>
+    <p>Opt-in is collected by text message. End users either text the keyword START to (216) 999-5420, or provide their mobile number to clinic staff during intake. In both cases Everyday Vet LLC sends a single confirmation text containing the program name, message frequency, rate disclosure, and STOP/HELP instructions, and the end user must reply YES before any further messages are sent. The inbound YES is the consent record. Reply STOP at any time to cancel; HELP for help. There is no web form and no pre-checked consent.</p>
 
     <h2>Sample messages</h2>
     <div class="samples" aria-label="Sample SMS messages">
+      <span class="msg">Everyday Vet: Reply YES to get appointment &amp; care texts from Everyday Vet LLC. Msg frequency varies. Msg&amp;data rates may apply. Reply STOP to opt out, HELP for help.</span>
+      <span class="msg">Everyday Vet: You're signed up for appointment &amp; care texts from Everyday Vet LLC. Msg frequency varies. Msg&amp;data rates may apply. Reply STOP to opt out, HELP for help.</span>
       <span class="msg">Everyday Vet: Hi Sara — we can see Luna Thu 9:00am. Reply YES to confirm, or text a better time. Reply STOP to opt out, HELP for help.</span>
       <span class="msg">Everyday Vet: Reminder — Luna’s visit is tomorrow at 9:00am. Reply STOP to opt out, HELP for help.</span>
       <span class="msg">Everyday Vet: Got your message — Dr. Meiggs will text you back shortly. Reply STOP to opt out, HELP for help.</span>
       <span class="msg">Everyday Vet: For help, call (216) 999-5420 or email sara@everyday.vet. Msg frequency varies. Msg&amp;data rates may apply. Reply STOP to opt out.</span>
       <span class="msg">Everyday Vet: You are unsubscribed and will receive no further texts. Reply START to re-subscribe.</span>
     </div>
-
-    <script>
-      (function () {
-        var form = document.getElementById('sms-optin-form');
-        var consent = document.getElementById('consent');
-        var phone = document.getElementById('phone');
-        var thanks = document.getElementById('optin-thanks');
-        // Ensure checkbox is never pre-checked (A2P / Twilio 30909)
-        consent.checked = false;
-        form.addEventListener('submit', function (e) {
-          e.preventDefault();
-          if (!consent.checked) {
-            consent.focus();
-            alert('Please check the box to agree to receive texts.');
-            return;
-          }
-          if (!phone.value.trim()) {
-            phone.focus();
-            return;
-          }
-          // Static site: capture locally for clinic follow-up via mailto (no backend yet)
-          var subject = encodeURIComponent('SMS opt-in — Everyday Vet website');
-          var body = encodeURIComponent('Mobile: ' + phone.value.trim() + '\nConsent: yes (unchecked-by-default checkbox)\nSource: https://everyday.vet/sms-opt-in/');
-          thanks.style.display = 'block';
-          // Open mailto for staff capture without blocking the thank-you UI
-          window.location.href = 'mailto:sara@everyday.vet?subject=' + subject + '&body=' + body;
-        });
-      })();
-    </script>
 
   </main>
   <footer class="legal-footer">

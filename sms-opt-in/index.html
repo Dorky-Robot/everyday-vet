@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS Opt-In | Everyday Vet</title>
+    <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="../images/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../images/apple-touch-icon.png">
+    <meta name="description" content="Opt in to Everyday Vet appointment and care text messages. Unchecked consent checkbox and SMS disclosures.">
+    <link rel="canonical" href="https://everyday.vet/sms-opt-in/">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css?v=3">
+    <style>
+      .legal-wrap {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 7rem 1.5rem 4rem;
+      }
+      .legal-wrap .meta {
+        color: var(--text-light);
+        font-size: 0.95rem;
+        margin-bottom: 1.75rem;
+      }
+      .legal-wrap h1 {
+        font-size: clamp(1.75rem, 4vw, 2.35rem);
+        margin-bottom: 0.5rem;
+        color: var(--ink);
+      }
+      .legal-wrap h2 {
+        font-size: 1.15rem;
+        margin: 2rem 0 0.75rem;
+        color: var(--ink);
+      }
+      .legal-wrap p, .legal-wrap li {
+        margin-bottom: 0.75rem;
+        color: var(--text-color);
+      }
+      .legal-wrap ul {
+        padding-left: 1.25rem;
+        margin-bottom: 1rem;
+      }
+      .legal-wrap a { color: var(--primary-color); }
+      .legal-nav-bar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: rgba(255,255,255,0.92);
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid var(--border-color);
+        padding: 0.85rem 1.5rem;
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .legal-nav-bar a.logo {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        color: var(--ink);
+        font-family: var(--font-display);
+        font-weight: 700;
+      }
+      .legal-nav-bar .logo-img { height: 28px; width: auto; }
+      .legal-nav-bar .links { margin-left: auto; display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.95rem; }
+      .legal-nav-bar .links a { color: var(--text-light); text-decoration: none; }
+      .legal-nav-bar .links a:hover { color: var(--primary-color); }
+      .optin-card .kw { font-family: ui-monospace, Menlo, monospace; font-weight: 700; letter-spacing: .04em; }
+      .optin-card ol { padding-left: 1.25rem; margin: 0 0 1rem; }
+      .optin-card {
+        background: var(--bg-soft);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+      }
+      .optin-note { color: var(--text-light); font-size: 0.9rem; }
+      .samples {
+        background: #fff;
+        border: 1px dashed var(--border-color);
+        border-radius: var(--radius-sm);
+        padding: 1rem 1.15rem;
+        margin-top: 1.25rem;
+      }
+      .samples code, .samples .msg {
+        display: block;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.85rem;
+        margin: 0.4rem 0;
+        color: var(--ink-soft);
+      }
+      footer.legal-footer {
+        text-align: center;
+        padding: 2rem 1.5rem 3rem;
+        color: var(--text-light);
+        font-size: 0.9rem;
+      }
+      footer.legal-footer a { color: var(--primary-color); }
+    </style>
+    
+</head>
+<body>
+  <nav class="legal-nav-bar" aria-label="Site">
+    <a class="logo" href="/">
+      <img class="logo-img" src="../images/logo.png" alt="">
+      <span>Everyday Vet</span>
+    </a>
+    <div class="links">
+      <a href="/privacy/">Privacy</a>
+      <a href="/terms/">Terms</a>
+      <a href="/sms-opt-in/">SMS Opt-In</a>
+      <a href="/#contact">Contact</a>
+    </div>
+  </nav>
+  <main class="legal-wrap">
+
+    <h1>SMS Opt-In</h1>
+    <p class="meta">Public page for appointment &amp; care texts · Everyday Vet LLC</p>
+    <p>Everyday Vet LLC can text you about appointments, reminders, and care follow-ups. Two-way SMS for scheduling and care coordination — not marketing.</p>
+
+    <div class="optin-card">
+      <h2 style="margin-top:0">How to get appointment &amp; care texts</h2>
+      <ol>
+        <li><strong>Give us your mobile number</strong> when you become a client — through Dogtopia's sign-up at <a href="https://dogtopia.everyday.vet">dogtopia.everyday.vet</a>, in person, or by phone — <strong>or text us</strong> at <a href="sms:+12169995420">(216) 999-5420</a> (texting <span class="kw">START</span> works too).</li>
+        <li>Where you sign up on a form, it tells you our veterinarian will text you to follow up — so our first text is one you are expecting.</li>
+        <li>Reply <span class="kw">STOP</span> at any time. STOP ends our automated texts, and Twilio, our texting provider, blocks all texts from this number to you after a STOP until you text <span class="kw">START</span>.</li>
+      </ol>
+      <p><strong>By giving us your mobile number or texting us, you agree to receive text messages from Everyday Vet LLC</strong>, sent by our staff and scheduled by them, about your pets' appointments, reminders, and care follow-ups, and replies to your questions. Message frequency varies. Message and data rates may apply. Reply <strong>STOP</strong> to opt out (STOP ends automated texts; Twilio blocks all texts after a STOP to this number until you text <strong>START</strong>), <strong>HELP</strong> for help. Consent is not a condition of purchase or veterinary care.</p>
+      <p class="optin-note">No mobile information will be shared with third parties or affiliates for marketing or promotional purposes. Privacy Policy: <a href="/privacy/">everyday.vet/privacy/</a> · Terms: <a href="/terms/">everyday.vet/terms/</a></p>
+    </div>
+
+    <h2>How opt-in works</h2>
+    <p>End users opt in by providing their mobile number to Everyday Vet LLC as a client — on the partner sign-up form at dogtopia.everyday.vet, in person, or by phone — or by texting (216) 999-5420, including the keyword START. Where a number is collected on a form, the form states, in a note its phone field points to, that the clinic's veterinarian will text them to follow up on their sign-up and about their pet's care, that message frequency varies, that message and data rates may apply, and to reply STOP to opt out or HELP for help. Messages are informational and conversational only — appointment scheduling, reminders, care follow-ups, and replies to client questions — and never marketing. Reply STOP at any time to opt out: STOP ends automated texts, and Twilio blocks all texts after a STOP to this number until the client texts START. HELP for help. There is no pre-checked consent.</p>
+    <p>When your own text to us is only a quick acknowledgment — "thanks," "ok," a 👍 — we may send back one short, fixed reply to close it out, such as "Happy to help :)". That reply goes only once, only in direct response to your own message, never opens a new conversation, and carries no marketing content.</p>
+
+    <h2>Sample messages</h2>
+    <p class="optin-note">Our staff write their texts themselves, for example:</p>
+    <div class="samples" aria-label="Sample SMS messages">
+      <span class="msg">Hi Morgan, this is Sara at Everyday Vet — thanks for signing up through Dogtopia! Would Thursday at 10 work for Auggie's first visit?</span>
+    </div>
+    <p class="optin-note">If you text START, we reply with one of these, and when you answer YES, with the thank-you that goes with it:</p>
+    <div class="samples" aria-label="The texts sent without a person typing them">
+      <span class="msg">One bit of admin, sorry: Everyday Vet sends automatic appointment reminders only with a YES from you. Reply YES and that's it :) STOP anytime to stop the texts, HELP if you need help. (Msg frequency varies, msg and data rates may apply.)</span>
+      <span class="msg">Everyday Vet can also send you automatic reminders (appointments, vaccines coming due) once there's a YES on record. Reply YES to turn them on. STOP anytime to stop the texts, HELP if you need help. (Msg frequency varies, msg and data rates may apply.)</span>
+      <span class="msg">Want automatic appointment reminders from Everyday Vet? Those need a YES from you, legal stuff! Reply YES to turn them on. STOP anytime to stop the texts, HELP if you need help. (Msg frequency varies, msg and data rates may apply.)</span>
+      <span class="msg">Quick thing: for Everyday Vet to send you automatic reminders, the phone companies need a YES from you on record. Reply YES and we're set :) STOP anytime to stop the texts, HELP if you need help. (Msg frequency varies, msg and data rates may apply.)</span>
+      <span class="msg">That's the boring bit done, thank you :) reminders will come to this number. STOP anytime and they stop.</span>
+      <span class="msg">Thank you :) reminders about appointments and anything coming due will come here. STOP anytime and they stop.</span>
+      <span class="msg">Thank you :) reminders will come here. STOP anytime and they stop.</span>
+      <span class="msg">Perfect, thank you :) that's on record now. Reminders come here, STOP anytime and they stop.</span>
+    </div>
+    <p class="optin-note">Questions? Email <a href="mailto:sara@everyday.vet">sara@everyday.vet</a> or call (216) 999-5420.</p>
+
+  </main>
+  <footer class="legal-footer">
+    <p>&copy; 2026 Everyday Vet LLC. All rights reserved.</p>
+    <p>Everyday Vet LLC · 629 Euclid Ave, Suite 1510, Cleveland, OH 44114 (business address; not a walk-in location) · <a href="tel:+12169995420" style="color:inherit">(216) 999-5420</a> · <a href="mailto:sara@everyday.vet" style="color:inherit">sara@everyday.vet</a></p>
+    <p><a href="/privacy/">Privacy</a> · <a href="/terms/">Terms</a> · <a href="/sms-opt-in/">SMS Opt-In</a> · <a href="/">Home</a></p>
+    <p class="emergency-notice">We do not provide emergency services. For life-threatening situations, contact your nearest 24/7 veterinary hospital.</p>
+  </footer>
+</body>
+</html>
